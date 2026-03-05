@@ -1,0 +1,129 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: revival-frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: revival-frontend
+        run: npm ci
+
+      - name: Build Next.js frontend
+        working-directory: revival-frontend
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          command_timeout: 20m
+          script: |
+            cd /home/indegnnk/revivalRepo
+            git pull origin main
+
+            DEPLOYPATH=/home/indegnnk/revivalstudio.co.uk
+
+            # ============================================
+            # DEPLOY LARAVEL API
+            # ============================================
+            /bin/rsync -av --delete \
+              --exclude='.git' \
+              --exclude='.env' \
+              --exclude='.htaccess' \
+              --exclude='public/.htaccess' \
+              --exclude='vendor' \
+              --exclude='node_modules' \
+              --exclude='storage/logs/*' \
+              --exclude='storage/framework/cache/*' \
+              --exclude='storage/framework/sessions/*' \
+              --exclude='storage/framework/views/*' \
+              --exclude='storage/app/public/*' \
+              --exclude='public/storage' \
+              --exclude='bootstrap/cache/*.php' \
+              ./revival-api/ $DEPLOYPATH/revival-api/
+
+            chmod 755 $DEPLOYPATH/revival-api
+            mkdir -p $DEPLOYPATH/revival-api/storage/framework/cache/data
+            mkdir -p $DEPLOYPATH/revival-api/storage/framework/sessions
+            mkdir -p $DEPLOYPATH/revival-api/storage/framework/views
+            mkdir -p $DEPLOYPATH/revival-api/storage/logs
+            mkdir -p $DEPLOYPATH/revival-api/bootstrap/cache
+            chmod -R 775 $DEPLOYPATH/revival-api/storage $DEPLOYPATH/revival-api/bootstrap/cache
+            chown -R indegnnk:indegnnk $DEPLOYPATH/revival-api
+
+            cd $DEPLOYPATH/revival-api
+            php artisan storage:link 2>/dev/null || true
+            composer install --no-dev --optimize-autoloader --no-interaction
+            php artisan migrate --force
+            php artisan optimize:clear
+            php artisan view:cache
+
+            echo "API Deployment completed: $(date)"
+
+            # ============================================
+            # DEPLOY NEXT.JS FRONTEND (source files only)
+            # ============================================
+            cd /home/indegnnk/revivalRepo
+
+            /bin/rsync -av --delete \
+              --exclude='.git' \
+              --exclude='node_modules' \
+              --exclude='.next' \
+              --exclude='.env' \
+              --exclude='.env.local' \
+              ./revival-frontend/ $DEPLOYPATH/revival-frontend/
+
+            chown -R indegnnk:indegnnk $DEPLOYPATH/revival-frontend
+
+            echo "Frontend source synced: $(date)"
+
+      - name: Upload built Next.js files
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          source: "revival-frontend/.next"
+          target: "/home/indegnnk/revivalstudio.co.uk"
+          strip_components: 1
+
+      - name: Install dependencies and restart frontend
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            DEPLOYPATH=/home/indegnnk/revivalstudio.co.uk/revival-frontend
+
+            cd $DEPLOYPATH
+            chown -R indegnnk:indegnnk $DEPLOYPATH
+            npm ci --production
+
+            # Restart PM2 process
+            pm2 restart revival-studio 2>/dev/null || pm2 start npm --name "revival-studio" -- start
+            pm2 save
+
+            echo "Frontend Deployment completed: $(date)"

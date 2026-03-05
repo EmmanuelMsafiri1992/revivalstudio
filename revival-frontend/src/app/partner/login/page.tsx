@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Loader2, LogIn } from 'lucide-react'
 import { api } from '@/lib/api'
 
@@ -34,8 +35,13 @@ export default function PartnerLoginPage() {
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-[#3d4a3a] to-[#7a9b76]">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#3d4a3a] to-[#7a9b76] flex items-center justify-center">
-            <span className="text-white text-2xl font-bold">R</span>
+          <div className="w-20 h-20 mx-auto mb-4 relative">
+            <Image
+              src="/logo.jpg"
+              alt="Revival Studio"
+              fill
+              className="object-contain rounded-full"
+            />
           </div>
           <h1 className="text-2xl font-bold text-[#3d4a3a]">Partner Login</h1>
           <p className="text-[#666] mt-2">Access your outlet marketplace dashboard</p>
@@ -95,13 +101,6 @@ export default function PartnerLoginPage() {
               Contact us
             </Link>
           </p>
-        </div>
-
-        {/* Demo credentials */}
-        <div className="mt-6 p-4 bg-[#faf8f5] rounded-xl text-sm">
-          <p className="font-medium text-[#3d4a3a] mb-1">Demo Credentials:</p>
-          <p className="text-[#666]">Email: london@revivalstudio.co.uk</p>
-          <p className="text-[#666]">Password: revival2024</p>
         </div>
       </div>
     </div>

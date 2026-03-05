@@ -14,7 +14,12 @@
       "Bash(npm run build:*)",
       "mcp__ide__getDiagnostics",
       "WebFetch(domain:revivalstudio.uk)",
-      "WebFetch(domain:api.revivalstudio.uk)"
+      "WebFetch(domain:api.revivalstudio.uk)",
+      "Bash(gh workflow run:*)",
+      "Bash(git commit --allow-empty -m \"$\\(cat <<''EOF''\nTrigger deployment - fix SSH key\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Loader2, Shield } from 'lucide-react'
 import { api } from '@/lib/api'
 
@@ -33,8 +34,13 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-[#1a1a2e] to-[#16213e]">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#1a1a2e] to-[#0f3460] flex items-center justify-center">
-            <Shield className="w-8 h-8 text-white" />
+          <div className="w-20 h-20 mx-auto mb-4 relative">
+            <Image
+              src="/logo.jpg"
+              alt="Revival Studio"
+              fill
+              className="object-contain rounded-full"
+            />
           </div>
           <h1 className="text-2xl font-bold text-[#1a1a2e]">Admin Portal</h1>
           <p className="text-[#666] mt-2">Sign in to manage Revival Studio</p>
@@ -86,12 +92,6 @@ export default function AdminLoginPage() {
             Sign In
           </button>
         </form>
-
-        <div className="mt-6 p-4 bg-[#f8f9fa] rounded-xl text-sm">
-          <p className="font-medium text-[#1a1a2e] mb-1">Demo Credentials:</p>
-          <p className="text-[#666]">Email: admin@revivalstudio.co.uk</p>
-          <p className="text-[#666]">Password: admin2024</p>
-        </div>
       </div>
     </div>
   )

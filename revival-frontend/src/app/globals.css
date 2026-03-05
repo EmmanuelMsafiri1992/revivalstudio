@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+:root {
+  /* Revival Studio Brand Colors */
+  --primary-green: #3d4a3a;
+  --gold: #c9a962;
+  --wood-brown: #8b6b4a;
+  --sage-green: #7a9b76;
+  --cream: #faf8f5;
+  --white: #ffffff;
+  --dark-text: #2c2c2c;
+  --light-text: #666666;
+  --border-color: #e5e5e5;
+
+  --background: var(--cream);
+  --foreground: var(--dark-text);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary-green);
+  --color-gold: var(--gold);
+  --color-sage: var(--sage-green);
+  --color-wood: var(--wood-brown);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--sage-green);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-green);
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid var(--sage-green);
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background: var(--sage-green);
+  color: var(--white);
+}
+
+/* Smooth transitions */
+* {
+  transition-property: color, background-color, border-color, box-shadow;
+  transition-duration: 200ms;
+  transition-timing-function: ease-in-out;
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+/* Custom gradient backgrounds */
+.gradient-primary {
+  background: linear-gradient(135deg, var(--primary-green) 0%, var(--sage-green) 100%);
+}
+
+.gradient-gold {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--wood-brown) 100%);
+}

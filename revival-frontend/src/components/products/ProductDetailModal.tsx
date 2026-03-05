@@ -28,15 +28,15 @@ interface Product {
   outlet?: {
     id: number
     name: string
-    email: string
-    phone: string | null
-    address: string | null
+    email?: string
+    phone?: string | null
+    address?: string | null
     city: string | null
     postcode: string | null
-    latitude: number | null
-    longitude: number | null
-    description: string | null
-    opening_hours: any | null
+    latitude?: number | null
+    longitude?: number | null
+    description?: string | null
+    opening_hours?: any | null
   }
 }
 

@@ -341,29 +341,18 @@ export function FurnitureShowcase() {
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          handleBuyClick(product)
-                        }}
-                        className="flex items-center gap-1 px-2 sm:px-3 py-1 bg-[#c9a962] text-[#3d4a3a] rounded-full text-xs sm:text-sm font-semibold hover:bg-[#d4b46d] transition-colors cursor-pointer"
-                      >
-                        <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span>Buy</span>
-                      </button>
-                      <a
-                        href={`https://wa.me/447570578520?text=Hi, I'm interested in the ${product.name} (${formatPrice(product.price)})`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-xs sm:text-sm text-[#666] hover:text-[#25D366] font-medium transition-colors"
-                      >
-                        <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span className="hidden sm:inline">Enquire</span>
-                      </a>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleBuyClick(product)
+                      }}
+                      className="flex items-center gap-1 px-3 sm:px-4 py-1.5 bg-[#c9a962] text-[#3d4a3a] rounded-full text-xs sm:text-sm font-semibold hover:bg-[#d4b46d] transition-colors cursor-pointer"
+                    >
+                      <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span>Buy</span>
+                    </button>
                   </div>
                 </div>
               </motion.div>

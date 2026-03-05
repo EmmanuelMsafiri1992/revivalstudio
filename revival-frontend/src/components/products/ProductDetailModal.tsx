@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
-import { X, MapPin, Phone, Mail, Clock, ShoppingBag, MessageCircle, ChevronLeft, ChevronRight, Star, Shield, Truck } from 'lucide-react'
+import { X, MapPin, Phone, Mail, Clock, ChevronLeft, ChevronRight, Star, Shield, Truck } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 interface Product {
@@ -104,11 +104,22 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
 
   const formatOpeningHours = (hours: any) => {
     if (!hours) return null
-    if (typeof hours === 'string') return hours
-    if (Array.isArray(hours)) return hours.join(', ')
-    return Object.entries(hours)
-      .map(([day, time]) => `${day}: ${time}`)
-      .join(' | ')
+    // Parse JSON string if needed
+    let parsedHours = hours
+    if (typeof hours === 'string') {
+      try {
+        parsedHours = JSON.parse(hours)
+      } catch {
+        return hours // Return as-is if not valid JSON
+      }
+    }
+    if (Array.isArray(parsedHours)) return parsedHours.join(', ')
+    if (typeof parsedHours === 'object') {
+      return Object.entries(parsedHours)
+        .map(([day, time]) => `${day}: ${time}`)
+        .join(' | ')
+    }
+    return String(parsedHours)
   }
 
   return (
@@ -358,27 +369,6 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                     </div>
                   )}
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-3 mt-auto">
-                    <a
-                      href={`https://wa.me/447570578520?text=Hi, I want to buy: ${product.name} (£${formatPrice(product.price)})${product.outlet ? ` from ${product.outlet.name}` : ''}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[#c9a962] text-[#3d4a3a] rounded-full font-semibold hover:bg-[#d4b46d] transition-colors"
-                    >
-                      <ShoppingBag className="w-5 h-5" />
-                      Buy Now
-                    </a>
-                    <a
-                      href={`https://wa.me/447570578520?text=Hi, I'm interested in: ${product.name} (£${formatPrice(product.price)}). Can I get more details?`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 px-6 py-3 border-2 border-[#25D366] text-[#25D366] rounded-full font-semibold hover:bg-[#25D366] hover:text-white transition-colors"
-                    >
-                      <MessageCircle className="w-5 h-5" />
-                      Enquire
-                    </a>
-                  </div>
                 </div>
               </div>
             </div>

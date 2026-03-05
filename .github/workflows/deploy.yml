@@ -42,7 +42,7 @@ jobs:
             cd /home/indegnnk/revivalRepo
             git pull origin main
 
-            DEPLOYPATH=/home/indegnnk/revivalstudio.co.uk
+            DEPLOYPATH=/home/indegnnk/revivalstudio.uk
 
             # ============================================
             # DEPLOY LARAVEL API
@@ -69,7 +69,7 @@ jobs:
             mkdir -p $DEPLOYPATH/revival-api/storage/framework/views
             mkdir -p $DEPLOYPATH/revival-api/storage/logs
             mkdir -p $DEPLOYPATH/revival-api/bootstrap/cache
-            chmod -R 775 $DEPLOYPATH/revival-api/storage $DEPLOYPATH/revival-api/bootstrap/cache
+            chmod -R 777 $DEPLOYPATH/revival-api/storage $DEPLOYPATH/revival-api/bootstrap/cache
             chown -R indegnnk:indegnnk $DEPLOYPATH/revival-api
 
             cd $DEPLOYPATH/revival-api
@@ -78,6 +78,9 @@ jobs:
             php artisan migrate --force
             php artisan optimize:clear
             php artisan view:cache
+
+            # Create /api symlink for Apache routing
+            ln -sfn $DEPLOYPATH/revival-api/public $DEPLOYPATH/api
 
             echo "API Deployment completed: $(date)"
 
@@ -106,7 +109,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           source: "revival-frontend/.next"
-          target: "/home/indegnnk/revivalstudio.co.uk"
+          target: "/home/indegnnk/revivalstudio.uk"
           strip_components: 1
 
       - name: Install dependencies and restart frontend
@@ -117,7 +120,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           script: |
-            DEPLOYPATH=/home/indegnnk/revivalstudio.co.uk/revival-frontend
+            DEPLOYPATH=/home/indegnnk/revivalstudio.uk/revival-frontend
 
             cd $DEPLOYPATH
             chown -R indegnnk:indegnnk $DEPLOYPATH

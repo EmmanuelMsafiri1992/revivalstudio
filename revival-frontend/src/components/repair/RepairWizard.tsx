@@ -548,35 +548,48 @@ export function RepairWizard() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
               >
-                <div className="text-center mb-6">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#7a9b76]/10 text-[#7a9b76] rounded-full text-sm font-medium mb-3">
-                    <Sparkles className="w-4 h-4" />
-                    AI-Powered Estimate
+                {/* Thank You Message */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-gradient-to-br from-[#3d4a3a] via-[#4a5a46] to-[#7a9b76] rounded-2xl p-6 sm:p-8 text-center text-white mb-6"
+                >
+                  <div className="w-16 h-16 bg-[#c9a962]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Sparkles className="w-8 h-8 text-[#c9a962]" />
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-[#3d4a3a]">Your Repair Estimate</h3>
-                </div>
+                  <h3 className="text-xl sm:text-2xl font-bold mb-4">Thank You!</h3>
+                  <p className="text-white/90 leading-relaxed mb-4">
+                    Thank you for providing the necessary details about your damaged furniture.
+                    Our technical team is going through it thoroughly.
+                  </p>
+                  <p className="text-[#c9a962] font-semibold">
+                    We will revert back with repair cost details within just a few minutes.
+                  </p>
+                  <p className="text-white/80 mt-2 text-sm">Thank you for your patience.</p>
+                </motion.div>
 
-                {/* Main Estimate Card */}
+                {/* Preliminary Estimate Card */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={animateResult ? { opacity: 1, y: 0 } : {}}
                   transition={{ delay: 0.2 }}
-                  className="bg-gradient-to-br from-[#3d4a3a] via-[#4a5a46] to-[#7a9b76] rounded-2xl p-6 sm:p-8 text-center text-white mb-6"
+                  className="bg-[#faf8f5] rounded-2xl p-6 sm:p-8 text-center mb-6 border-2 border-[#c9a962]/30"
                 >
-                  <p className="text-white/80 mb-2">Estimated Repair Cost</p>
-                  <p className="text-4xl sm:text-5xl font-bold text-[#c9a962] mb-2">
+                  <p className="text-[#666] mb-2 text-sm">Preliminary Estimate Range</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-[#3d4a3a] mb-2">
                     {formatCurrency(getAdjustedEstimate().min)} - {formatCurrency(getAdjustedEstimate().max)}
                   </p>
                   {selectedUrgency === 'flexible' && (
-                    <span className="inline-block px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-sm font-medium">
+                    <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
                       10% flexible discount applied
                     </span>
                   )}
                   {selectedUrgency === 'urgent' && (
-                    <span className="inline-block px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-sm font-medium">
+                    <span className="inline-block px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
                       Urgent service premium included
                     </span>
                   )}
+                  <p className="text-xs text-[#666] mt-3">*Final cost will be confirmed after technical review</p>
                 </motion.div>
 
                 {/* Stats Grid */}

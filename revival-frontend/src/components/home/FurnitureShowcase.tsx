@@ -2,10 +2,11 @@
 
 import { motion } from 'framer-motion'
 import Image from 'next/image'
-import { MessageCircle, ShoppingBag, Loader2 } from 'lucide-react'
+import { MessageCircle, ShoppingBag, Loader2, Scale } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
 import { ProductDetailModal } from '@/components/products/ProductDetailModal'
+import { CompareModal } from '@/components/products/CompareModal'
 
 interface Product {
   id: number
@@ -195,6 +196,8 @@ export function FurnitureShowcase() {
   const [loading, setLoading] = useState(true)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [compareProduct, setCompareProduct] = useState<Product | null>(null)
+  const [compareModalOpen, setCompareModalOpen] = useState(false)
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -237,6 +240,11 @@ export function FurnitureShowcase() {
       // Keep using the product we already set
       console.log('Using local product data')
     }
+  }
+
+  const handleCompareClick = (product: Product) => {
+    setCompareProduct(product)
+    setCompareModalOpen(true)
   }
 
   const formatPrice = (price: number | string | null | undefined) => {
@@ -341,18 +349,33 @@ export function FurnitureShowcase() {
                         </span>
                       )}
                     </div>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        handleBuyClick(product)
-                      }}
-                      className="flex items-center gap-1 px-3 sm:px-4 py-1.5 bg-[#c9a962] text-[#3d4a3a] rounded-full text-xs sm:text-sm font-semibold hover:bg-[#d4b46d] transition-colors cursor-pointer"
-                    >
-                      <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span>Buy</span>
-                    </button>
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleCompareClick(product)
+                        }}
+                        className="flex items-center gap-1 px-2 sm:px-3 py-1.5 bg-[#3d4a3a] text-white rounded-full text-xs sm:text-sm font-semibold hover:bg-[#2d3a2a] transition-colors cursor-pointer"
+                        title="Compare with IKEA prices"
+                      >
+                        <Scale className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">Compare</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleBuyClick(product)
+                        }}
+                        className="flex items-center gap-1 px-3 sm:px-4 py-1.5 bg-[#c9a962] text-[#3d4a3a] rounded-full text-xs sm:text-sm font-semibold hover:bg-[#d4b46d] transition-colors cursor-pointer"
+                      >
+                        <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span>Buy</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -400,6 +423,16 @@ export function FurnitureShowcase() {
         onClose={() => {
           setModalOpen(false)
           setSelectedProduct(null)
+        }}
+      />
+
+      {/* Compare Modal */}
+      <CompareModal
+        product={compareProduct}
+        isOpen={compareModalOpen}
+        onClose={() => {
+          setCompareModalOpen(false)
+          setCompareProduct(null)
         }}
       />
     </section>

@@ -5,10 +5,11 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import {
   ShoppingBag, Search, Filter, MapPin, Grid, List,
-  ChevronDown, Loader2, X, SlidersHorizontal
+  ChevronDown, Loader2, X, SlidersHorizontal, Scale
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { ProductDetailModal } from '@/components/products/ProductDetailModal'
+import { CompareModal } from '@/components/products/CompareModal'
 
 interface Product {
   id: number
@@ -71,6 +72,8 @@ export default function BuyPage() {
   const [loading, setLoading] = useState(true)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [compareProduct, setCompareProduct] = useState<Product | null>(null)
+  const [compareModalOpen, setCompareModalOpen] = useState(false)
 
   // Filters
   const [search, setSearch] = useState('')
@@ -176,6 +179,11 @@ export default function BuyPage() {
     } catch (error) {
       console.log('Using local product data')
     }
+  }
+
+  const handleCompareClick = (product: Product) => {
+    setCompareProduct(product)
+    setCompareModalOpen(true)
   }
 
   const getImageUrl = (product: Product) => {
@@ -508,16 +516,29 @@ export default function BuyPage() {
                         </div>
                       </div>
 
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleProductClick(product)
-                        }}
-                        className="mt-3 w-full py-2 bg-[#3d4a3a] text-white rounded-xl text-sm font-medium hover:bg-[#2d3a2a] transition-colors flex items-center justify-center gap-2"
-                      >
-                        <ShoppingBag className="w-4 h-4" />
-                        View Details
-                      </button>
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleCompareClick(product)
+                          }}
+                          className="flex-1 py-2 bg-[#faf8f5] text-[#3d4a3a] rounded-xl text-sm font-medium hover:bg-[#3d4a3a]/10 transition-colors flex items-center justify-center gap-1 border border-[#3d4a3a]/20"
+                          title="Compare with IKEA prices"
+                        >
+                          <Scale className="w-4 h-4" />
+                          Compare
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleProductClick(product)
+                          }}
+                          className="flex-1 py-2 bg-[#3d4a3a] text-white rounded-xl text-sm font-medium hover:bg-[#2d3a2a] transition-colors flex items-center justify-center gap-2"
+                        >
+                          <ShoppingBag className="w-4 h-4" />
+                          Buy
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 ))}
@@ -584,6 +605,16 @@ export default function BuyPage() {
         onClose={() => {
           setModalOpen(false)
           setSelectedProduct(null)
+        }}
+      />
+
+      {/* Compare Modal */}
+      <CompareModal
+        product={compareProduct}
+        isOpen={compareModalOpen}
+        onClose={() => {
+          setCompareModalOpen(false)
+          setCompareProduct(null)
         }}
       />
     </div>

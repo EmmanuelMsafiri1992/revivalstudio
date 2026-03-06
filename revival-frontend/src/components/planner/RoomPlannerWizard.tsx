@@ -316,6 +316,25 @@ export function RoomPlannerWizard() {
 
             {step === 5 && result && (
               <motion.div key="step5" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+                {/* Thank You Message */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-gradient-to-br from-[#3d4a3a] via-[#4a5a46] to-[#7a9b76] rounded-2xl p-6 sm:p-8 text-center text-white mb-6"
+                >
+                  <div className="w-16 h-16 bg-[#c9a962]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Sparkles className="w-8 h-8 text-[#c9a962]" />
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-bold mb-4">Thank You!</h3>
+                  <p className="text-white/90 leading-relaxed mb-4">
+                    Thank you for providing the necessary details about your building and room.
+                    Our technical team is going through it and we will revert back with personalized recommendations.
+                  </p>
+                  <p className="text-[#c9a962] font-semibold">
+                    Your Personalised Furniture Plan is Ready!
+                  </p>
+                </motion.div>
+
                 <div className="text-center mb-6 sm:mb-8">
                   <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#7a9b76]/10 text-[#7a9b76] rounded-full text-sm font-medium mb-3">
                     <Sparkles className="w-4 h-4" />

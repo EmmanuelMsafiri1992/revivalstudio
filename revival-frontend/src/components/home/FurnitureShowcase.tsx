@@ -265,12 +265,20 @@ export function FurnitureShowcase() {
     }
     if (images && Array.isArray(images) && images.length > 0) {
       const img = images[0]
-      // If it's an absolute URL or starts with /, use as is
-      if (img.startsWith('http') || img.startsWith('/')) {
+      // If it's an absolute URL (http/https), use as is
+      if (img.startsWith('http')) {
+        return img
+      }
+      // For storage paths, prepend API URL
+      const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'https://api.revivalstudio.uk'
+      if (img.startsWith('/storage/')) {
+        return `${apiBase}${img}`
+      }
+      if (img.startsWith('/')) {
         return img
       }
       // Otherwise prepend the API storage path
-      return `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}/storage/${img}`
+      return `${apiBase}/storage/${img}`
     }
     return '/products/placeholder.jpg'
   }

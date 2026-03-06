@@ -143,8 +143,13 @@ export function CompareModal({ product, isOpen, onClose }: CompareModalProps) {
     }
     if (Array.isArray(parsed) && parsed.length > 0) {
       const img = parsed[0]
-      if (img.startsWith('http') || img.startsWith('/')) return img
-      return `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}/storage/${img}`
+      // If it's an absolute URL (http/https), use as is
+      if (img.startsWith('http')) return img
+      // For storage paths, prepend API URL
+      const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'https://api.revivalstudio.uk'
+      if (img.startsWith('/storage/')) return `${apiBase}${img}`
+      if (img.startsWith('/')) return img
+      return `${apiBase}/storage/${img}`
     }
     return '/products/placeholder.jpg'
   }

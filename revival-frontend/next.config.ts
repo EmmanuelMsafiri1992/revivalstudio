@@ -9,6 +9,16 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
+        protocol: 'https',
+        hostname: 'api.revivalstudio.uk',
+        pathname: '/storage/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'revivalstudio.uk',
+        pathname: '/storage/**',
+      },
+      {
         protocol: 'http',
         hostname: 'localhost',
         port: '8000',

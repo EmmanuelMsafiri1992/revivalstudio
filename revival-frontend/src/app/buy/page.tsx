@@ -203,7 +203,7 @@ export default function BuyPage() {
         return img
       }
       // For storage paths, prepend API URL
-      const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'https://api.revivalstudio.uk'
+      const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || 'https://api.revivalstudio.uk'
       if (img.startsWith('/storage/')) {
         return `${apiBase}${img}`
       }

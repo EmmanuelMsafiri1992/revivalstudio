@@ -88,7 +88,7 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
   // Transform image URLs to include API base
   const transformImageUrl = (img: string) => {
     if (img.startsWith('http')) return img
-    const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'https://api.revivalstudio.uk'
+    const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || 'https://api.revivalstudio.uk'
     if (img.startsWith('/storage/')) return `${apiBase}${img}`
     if (img.startsWith('/')) return img
     return `${apiBase}/storage/${img}`

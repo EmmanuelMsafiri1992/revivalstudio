@@ -146,7 +146,7 @@ export function CompareModal({ product, isOpen, onClose }: CompareModalProps) {
       // If it's an absolute URL (http/https), use as is
       if (img.startsWith('http')) return img
       // For storage paths, prepend API URL
-      const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'https://api.revivalstudio.uk'
+      const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || 'https://api.revivalstudio.uk'
       if (img.startsWith('/storage/')) return `${apiBase}${img}`
       if (img.startsWith('/')) return img
       return `${apiBase}/storage/${img}`

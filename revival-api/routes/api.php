@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\RepairController;
 use App\Http\Controllers\Api\ResaleController;
 use App\Http\Controllers\Api\RoomPlannerController;
+use App\Http\Controllers\Api\SiteSettingController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -48,6 +49,11 @@ Route::get('/products/{id}', [ProductController::class, 'show']);
 // Public routes - Comparison prices
 Route::get('/comparison-prices', [ComparisonPriceController::class, 'index']);
 Route::get('/comparison-prices/furniture-type/{id}', [ComparisonPriceController::class, 'getByFurnitureType']);
+
+// Public routes - Site settings (for frontend to fetch dynamic content)
+Route::get('/site-settings', [SiteSettingController::class, 'index']);
+Route::get('/site-settings/group/{group}', [SiteSettingController::class, 'getByGroup']);
+Route::get('/site-settings/{key}', [SiteSettingController::class, 'show']);
 
 // Outlet authentication
 Route::post('/outlet/login', [OutletAuthController::class, 'login']);
@@ -115,14 +121,25 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
 
     // Products management
     Route::get('/products', [ProductController::class, 'adminIndex']);
+    Route::post('/products', [ProductController::class, 'adminStore']);
+    Route::get('/products/{id}', [ProductController::class, 'adminShow']);
+    Route::post('/products/{id}', [ProductController::class, 'adminUpdate']); // Use POST with _method for file uploads
     Route::put('/products/{id}', [ProductController::class, 'adminUpdate']);
     Route::delete('/products/{id}', [ProductController::class, 'adminDestroy']);
+    Route::delete('/products/{id}/images/{imageIndex}', [ProductController::class, 'adminDeleteImage']);
 
     // Comparison prices management
     Route::get('/comparison-prices', [ComparisonPriceController::class, 'adminIndex']);
     Route::post('/comparison-prices', [ComparisonPriceController::class, 'store']);
     Route::put('/comparison-prices/{comparisonPrice}', [ComparisonPriceController::class, 'update']);
     Route::delete('/comparison-prices/{comparisonPrice}', [ComparisonPriceController::class, 'destroy']);
+
+    // Site settings management
+    Route::get('/site-settings', [SiteSettingController::class, 'adminIndex']);
+    Route::post('/site-settings', [SiteSettingController::class, 'store']);
+    Route::put('/site-settings/{key}', [SiteSettingController::class, 'update']);
+    Route::post('/site-settings/bulk', [SiteSettingController::class, 'bulkUpdate']);
+    Route::delete('/site-settings/{key}', [SiteSettingController::class, 'destroy']);
 });
 
 // Health check

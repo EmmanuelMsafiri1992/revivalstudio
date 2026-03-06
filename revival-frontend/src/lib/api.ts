@@ -600,25 +600,53 @@ class ApiClient {
   }
 
   // Admin - Products management
-  async getAdminProducts(params?: { status?: string; outlet_id?: number; page?: number; per_page?: number }) {
+  async getAdminProducts(params?: { status?: string; outlet_id?: number; search?: string; page?: number; per_page?: number }) {
     const searchParams = new URLSearchParams()
     if (params?.status) searchParams.append('status', params.status)
     if (params?.outlet_id) searchParams.append('outlet_id', params.outlet_id.toString())
+    if (params?.search) searchParams.append('search', params.search)
     if (params?.page) searchParams.append('page', params.page.toString())
     if (params?.per_page) searchParams.append('per_page', params.per_page.toString())
     const query = searchParams.toString() ? `?${searchParams.toString()}` : ''
     return this.request<any>(`/admin/products${query}`, {}, true)
   }
 
-  async updateAdminProduct(id: number, data: {
-    name?: string
-    description?: string
-    price?: number
-    condition?: string
-    status?: string
-    featured?: boolean
-  }) {
-    return this.request<{ message: string; data: any }>(
+  async getAdminProduct(id: number) {
+    return this.request<{ success: boolean; data: any }>(`/admin/products/${id}`, {}, true)
+  }
+
+  async createAdminProduct(data: FormData) {
+    const token = this.getAdminToken()
+    const response = await fetch(`${this.baseUrl}/admin/products`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+      body: data,
+    })
+    return response.json()
+  }
+
+  async updateAdminProduct(id: number, data: FormData | Record<string, any>) {
+    const token = this.getAdminToken()
+
+    // Check if it's FormData (file upload) or regular data
+    if (data instanceof FormData) {
+      data.append('_method', 'PUT')
+      const response = await fetch(`${this.baseUrl}/admin/products/${id}`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+        body: data,
+      })
+      return response.json()
+    }
+
+    // Regular JSON update
+    return this.request<{ success: boolean; message: string; data: any }>(
       `/admin/products/${id}`,
       { method: 'PUT', body: JSON.stringify(data) },
       true
@@ -626,8 +654,16 @@ class ApiClient {
   }
 
   async deleteAdminProduct(id: number) {
-    return this.request<{ message: string }>(
+    return this.request<{ success: boolean; message: string }>(
       `/admin/products/${id}`,
+      { method: 'DELETE' },
+      true
+    )
+  }
+
+  async deleteAdminProductImage(productId: number, imageIndex: number) {
+    return this.request<{ success: boolean; message: string; data: any }>(
+      `/admin/products/${productId}/images/${imageIndex}`,
       { method: 'DELETE' },
       true
     )
@@ -682,6 +718,63 @@ class ApiClient {
   async deleteAdminComparisonPrice(id: number) {
     return this.request<{ success: boolean; message: string }>(
       `/admin/comparison-prices/${id}`,
+      { method: 'DELETE' },
+      true
+    )
+  }
+
+  // Public - Site settings
+  async getSiteSettings() {
+    return this.request<{ success: boolean; data: any }>('/site-settings')
+  }
+
+  async getSiteSettingsByGroup(group: string) {
+    return this.request<{ success: boolean; data: any }>(`/site-settings/group/${group}`)
+  }
+
+  async getSiteSetting(key: string) {
+    return this.request<{ success: boolean; data: any }>(`/site-settings/${key}`)
+  }
+
+  // Admin - Site settings management
+  async getAdminSiteSettings() {
+    return this.request<{ success: boolean; data: any[] }>('/admin/site-settings', {}, true)
+  }
+
+  async updateAdminSiteSetting(key: string, value: any) {
+    return this.request<{ success: boolean; data: any; message: string }>(
+      `/admin/site-settings/${key}`,
+      { method: 'PUT', body: JSON.stringify({ value }) },
+      true
+    )
+  }
+
+  async bulkUpdateAdminSiteSettings(settings: Record<string, any>) {
+    return this.request<{ success: boolean; message: string }>(
+      '/admin/site-settings/bulk',
+      { method: 'POST', body: JSON.stringify({ settings }) },
+      true
+    )
+  }
+
+  async createAdminSiteSetting(data: {
+    key: string
+    value: any
+    type: 'text' | 'json' | 'number' | 'boolean'
+    group: string
+    label?: string
+    description?: string
+  }) {
+    return this.request<{ success: boolean; data: any; message: string }>(
+      '/admin/site-settings',
+      { method: 'POST', body: JSON.stringify(data) },
+      true
+    )
+  }
+
+  async deleteAdminSiteSetting(key: string) {
+    return this.request<{ success: boolean; message: string }>(
+      `/admin/site-settings/${key}`,
       { method: 'DELETE' },
       true
     )

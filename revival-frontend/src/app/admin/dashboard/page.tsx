@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Loader2, LogOut, Store, Wrench, DollarSign, Package, Users,
   LayoutDashboard, BoxIcon, Settings, ChevronLeft, ChevronRight,
   Bell, Search, User, TrendingUp, Shield, Armchair, Hammer, AlertTriangle,
-  CheckCircle, Clock, XCircle, Eye, Edit2, Trash2, Plus, X, ShoppingBag, Star, Scale
+  CheckCircle, Clock, XCircle, Eye, Edit2, Trash2, Plus, X, ShoppingBag, Star, Scale,
+  Upload, Image as ImageIcon, Globe, MessageSquare, BarChart3, Save
 } from 'lucide-react'
 import Image from 'next/image'
 import { api } from '@/lib/api'
@@ -38,6 +39,7 @@ const sidebarItems = [
   { id: 'materials', label: 'Materials', icon: Hammer },
   { id: 'damage-types', label: 'Damage Types', icon: AlertTriangle },
   { id: 'comparison-prices', label: 'Comparison Prices', icon: Scale },
+  { id: 'site-settings', label: 'Site Settings', icon: Globe },
   { id: 'settings', label: 'Settings', icon: Settings },
 ]
 
@@ -74,9 +76,11 @@ export default function AdminDashboardPage() {
   const [materials, setMaterials] = useState<any[]>([])
   const [damageTypes, setDamageTypes] = useState<any[]>([])
   const [comparisonPrices, setComparisonPrices] = useState<any[]>([])
+  const [siteSettings, setSiteSettings] = useState<any[]>([])
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Modal states
   const [showModal, setShowModal] = useState(false)
@@ -118,8 +122,16 @@ export default function AdminDashboardPage() {
           setOutlets(outletsRes.data.data || [])
           break
         case 'products':
-          const productsRes = await api.getAdminProducts({ status: statusFilter !== 'all' ? statusFilter : undefined })
+          const productsRes = await api.getAdminProducts({
+            status: statusFilter !== 'all' ? statusFilter : undefined,
+            search: searchQuery || undefined
+          })
           setProducts(productsRes.data || [])
+          // Load furniture types and outlets for product form
+          const ftForProducts = await api.getAdminFurnitureTypes()
+          setFurnitureTypes(ftForProducts.data || [])
+          const outletsForProducts = await api.getAdminOutlets()
+          setOutlets(outletsForProducts.data.data || [])
           break
         case 'repair-requests':
           const repairRes = await api.getAdminRepairRequests({ status: statusFilter !== 'all' ? statusFilter : undefined })
@@ -148,9 +160,12 @@ export default function AdminDashboardPage() {
         case 'comparison-prices':
           const cpRes = await api.getAdminComparisonPrices()
           setComparisonPrices(cpRes.data || [])
-          // Also load furniture types for the dropdown
           const ftForCp = await api.getAdminFurnitureTypes()
           setFurnitureTypes(ftForCp.data || [])
+          break
+        case 'site-settings':
+          const ssRes = await api.getAdminSiteSettings()
+          setSiteSettings(ssRes.data || [])
           break
       }
     } catch (error) {
@@ -163,6 +178,16 @@ export default function AdminDashboardPage() {
       loadSectionData(activeSection)
     }
   }, [activeSection, statusFilter, loading])
+
+  // Debounced search for products
+  useEffect(() => {
+    if (!loading && activeSection === 'products') {
+      const timer = setTimeout(() => {
+        loadSectionData('products')
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [searchQuery])
 
   async function handleLogout() {
     try {
@@ -274,6 +299,16 @@ export default function AdminDashboardPage() {
     }
   }
 
+  // Helper to get image URL
+  const getImageUrl = (img: string) => {
+    if (!img) return '/products/placeholder.jpg'
+    if (img.startsWith('http')) return img
+    const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || 'https://api.revivalstudio.uk'
+    if (img.startsWith('/storage/')) return `${apiBase}${img}`
+    if (img.startsWith('/')) return img
+    return `${apiBase}/storage/${img}`
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#f8f9fa]">
@@ -362,14 +397,18 @@ export default function AdminDashboardPage() {
               <p className="text-sm text-[#666]">Welcome back, {admin?.name}</p>
             </div>
             <div className="flex items-center gap-4">
-              <div className="relative hidden md:block">
-                <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-[#666]" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="pl-10 pr-4 py-2 border-2 border-[#e5e5e5] rounded-xl w-64 focus:border-[#0f3460] focus:outline-none"
-                />
-              </div>
+              {activeSection === 'products' && (
+                <div className="relative hidden md:block">
+                  <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-[#666]" />
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-4 py-2 border-2 border-[#e5e5e5] rounded-xl w-64 focus:border-[#0f3460] focus:outline-none"
+                  />
+                </div>
+              )}
               <button className="relative p-2 hover:bg-[#f8f9fa] rounded-xl transition-colors">
                 <Bell className="w-6 h-6 text-[#1a1a2e]" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
@@ -466,7 +505,15 @@ export default function AdminDashboardPage() {
           {activeSection === 'products' && (
             <div className="bg-white rounded-2xl shadow-sm">
               <div className="p-6 border-b border-[#e5e5e5]">
-                <h2 className="font-bold text-lg text-[#1a1a2e] mb-4">All Products</h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="font-bold text-lg text-[#1a1a2e]">All Products</h2>
+                  <button
+                    onClick={() => { setModalType('product'); setEditItem(null); setShowModal(true); }}
+                    className="flex items-center gap-2 px-4 py-2 bg-[#0f3460] text-white rounded-xl hover:bg-[#1a1a2e] transition-colors"
+                  >
+                    <Plus className="w-4 h-4" /> Add Product
+                  </button>
+                </div>
                 <div className="flex gap-2 flex-wrap">
                   {['all', 'available', 'reserved', 'sold', 'draft'].map(status => (
                     <button
@@ -487,83 +534,94 @@ export default function AdminDashboardPage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {products.map((product: any) => (
-                      <div key={product.id} className="border border-[#e5e5e5] rounded-xl overflow-hidden hover:shadow-lg transition-shadow group">
-                        <div className="relative h-40 bg-gray-100">
-                          {product.images && product.images[0] ? (
-                            <Image
-                              src={product.images[0]}
-                              alt={product.name}
-                              fill
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="flex items-center justify-center h-full">
-                              <ShoppingBag className="w-10 h-10 text-gray-300" />
-                            </div>
-                          )}
-                          <div className="absolute top-2 left-2 flex flex-col gap-1">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[product.status] || 'bg-gray-100 text-gray-800'}`}>
-                              {product.status}
-                            </span>
-                            {product.featured && (
-                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 flex items-center gap-1">
-                                <Star className="w-3 h-3" /> Featured
-                              </span>
+                    {products.map((product: any) => {
+                      const productImages = Array.isArray(product.images) ? product.images : (product.images ? JSON.parse(product.images) : [])
+                      return (
+                        <div key={product.id} className="border border-[#e5e5e5] rounded-xl overflow-hidden hover:shadow-lg transition-shadow group">
+                          <div className="relative h-40 bg-gray-100">
+                            {productImages && productImages[0] ? (
+                              <Image
+                                src={getImageUrl(productImages[0])}
+                                alt={product.name}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="flex items-center justify-center h-full">
+                                <ShoppingBag className="w-10 h-10 text-gray-300" />
+                              </div>
                             )}
-                          </div>
-                          {/* Hover Actions */}
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                            <button
-                              onClick={() => toggleProductFeatured(product)}
-                              className={`p-2 rounded-full ${product.featured ? 'bg-yellow-500 text-white' : 'bg-white hover:bg-gray-100'}`}
-                              title={product.featured ? 'Remove from featured' : 'Mark as featured'}
-                            >
-                              <Star className="w-5 h-5" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteProduct(product.id)}
-                              className="p-2 bg-white rounded-full hover:bg-gray-100"
-                            >
-                              <Trash2 className="w-5 h-5 text-red-500" />
-                            </button>
-                          </div>
-                        </div>
-                        <div className="p-4">
-                          <h3 className="font-medium text-[#1a1a2e] truncate mb-1">{product.name}</h3>
-                          <p className="text-xs text-[#666] mb-1">{product.furniture_type?.name || 'Furniture'}</p>
-                          <p className="text-xs text-[#666] mb-2">
-                            Partner: {product.outlet?.name || 'Unknown'}
-                          </p>
-                          <div className="flex items-center justify-between mb-3">
-                            <div>
-                              <p className="text-lg font-bold text-[#0f3460]">£{formatPrice(product.price)}</p>
-                              {product.original_price && (
-                                <p className="text-xs text-gray-400 line-through">£{formatPrice(product.original_price)}</p>
+                            <div className="absolute top-2 left-2 flex flex-col gap-1">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[product.status] || 'bg-gray-100 text-gray-800'}`}>
+                                {product.status}
+                              </span>
+                              {product.featured && (
+                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 flex items-center gap-1">
+                                  <Star className="w-3 h-3" /> Featured
+                                </span>
                               )}
                             </div>
-                            <span className={`px-2 py-1 rounded text-xs capitalize ${
-                              product.condition === 'excellent' ? 'bg-green-100 text-green-800' :
-                              product.condition === 'good' ? 'bg-blue-100 text-blue-800' :
-                              product.condition === 'fair' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              {product.condition}
-                            </span>
+                            {/* Hover Actions */}
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => { setModalType('product'); setEditItem(product); setShowModal(true); }}
+                                className="p-2 bg-white rounded-full hover:bg-gray-100"
+                                title="Edit product"
+                              >
+                                <Edit2 className="w-5 h-5 text-blue-600" />
+                              </button>
+                              <button
+                                onClick={() => toggleProductFeatured(product)}
+                                className={`p-2 rounded-full ${product.featured ? 'bg-yellow-500 text-white' : 'bg-white hover:bg-gray-100'}`}
+                                title={product.featured ? 'Remove from featured' : 'Mark as featured'}
+                              >
+                                <Star className="w-5 h-5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteProduct(product.id)}
+                                className="p-2 bg-white rounded-full hover:bg-gray-100"
+                                title="Delete product"
+                              >
+                                <Trash2 className="w-5 h-5 text-red-500" />
+                              </button>
+                            </div>
                           </div>
-                          <select
-                            value={product.status}
-                            onChange={(e) => updateProductStatus(product.id, e.target.value)}
-                            className="w-full px-3 py-2 text-sm border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-[#0f3460]"
-                          >
-                            <option value="available">Available</option>
-                            <option value="reserved">Reserved</option>
-                            <option value="sold">Sold</option>
-                            <option value="draft">Draft</option>
-                          </select>
+                          <div className="p-4">
+                            <h3 className="font-medium text-[#1a1a2e] truncate mb-1">{product.name}</h3>
+                            <p className="text-xs text-[#666] mb-1">{product.furniture_type?.name || 'Furniture'}</p>
+                            <p className="text-xs text-[#666] mb-2">
+                              Partner: {product.outlet?.name || 'Admin'}
+                            </p>
+                            <div className="flex items-center justify-between mb-3">
+                              <div>
+                                <p className="text-lg font-bold text-[#0f3460]">£{formatPrice(product.price)}</p>
+                                {product.original_price && (
+                                  <p className="text-xs text-gray-400 line-through">£{formatPrice(product.original_price)}</p>
+                                )}
+                              </div>
+                              <span className={`px-2 py-1 rounded text-xs capitalize ${
+                                product.condition === 'excellent' ? 'bg-green-100 text-green-800' :
+                                product.condition === 'good' ? 'bg-blue-100 text-blue-800' :
+                                product.condition === 'fair' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {product.condition}
+                              </span>
+                            </div>
+                            <select
+                              value={product.status}
+                              onChange={(e) => updateProductStatus(product.id, e.target.value)}
+                              className="w-full px-3 py-2 text-sm border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-[#0f3460]"
+                            >
+                              <option value="available">Available</option>
+                              <option value="reserved">Reserved</option>
+                              <option value="sold">Sold</option>
+                              <option value="draft">Draft</option>
+                            </select>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </div>
@@ -593,6 +651,7 @@ export default function AdminDashboardPage() {
                     <tr className="bg-[#f8f9fa]">
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Customer</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Furniture</th>
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Address</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Estimate</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Status</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Actions</th>
@@ -604,12 +663,16 @@ export default function AdminDashboardPage() {
                         <td className="p-4">
                           <div className="font-medium text-[#1a1a2e]">{req.customer_name}</div>
                           <div className="text-sm text-[#666]">{req.email}</div>
+                          {req.phone && <div className="text-sm text-[#666]">{req.phone}</div>}
                         </td>
                         <td className="p-4">
                           <div className="flex items-center gap-2">
                             <span className="text-xl">{req.furniture_type?.icon || '🪑'}</span>
                             <span>{req.furniture_type?.name || 'Unknown'}</span>
                           </div>
+                        </td>
+                        <td className="p-4 text-[#666] max-w-xs truncate">
+                          {req.address || 'No address'}
                         </td>
                         <td className="p-4 text-[#666]">
                           {formatCurrency(req.estimated_min)} - {formatCurrency(req.estimated_max)}
@@ -663,6 +726,7 @@ export default function AdminDashboardPage() {
                     <tr className="bg-[#f8f9fa]">
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Customer</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Furniture</th>
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Address</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Condition</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Estimate</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Status</th>
@@ -675,12 +739,16 @@ export default function AdminDashboardPage() {
                         <td className="p-4">
                           <div className="font-medium text-[#1a1a2e]">{req.customer_name}</div>
                           <div className="text-sm text-[#666]">{req.email}</div>
+                          {req.phone && <div className="text-sm text-[#666]">{req.phone}</div>}
                         </td>
                         <td className="p-4">
                           <div className="flex items-center gap-2">
                             <span className="text-xl">{req.furniture_type?.icon || '🪑'}</span>
                             <span>{req.furniture_type?.name || 'Unknown'}</span>
                           </div>
+                        </td>
+                        <td className="p-4 text-[#666] max-w-xs truncate">
+                          {req.address || 'No address'}
                         </td>
                         <td className="p-4 text-[#666]">{req.condition}</td>
                         <td className="p-4 text-[#666]">
@@ -1014,6 +1082,11 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
+          {/* Site Settings Section */}
+          {activeSection === 'site-settings' && (
+            <SiteSettingsSection settings={siteSettings} onRefresh={() => loadSectionData('site-settings')} />
+          )}
+
           {/* Settings Section */}
           {activeSection === 'settings' && (
             <div className="max-w-2xl mx-auto">
@@ -1054,6 +1127,8 @@ export default function AdminDashboardPage() {
         <Modal
           type={modalType}
           item={editItem}
+          furnitureTypes={furnitureTypes}
+          outlets={outlets}
           onClose={() => setShowModal(false)}
           onSave={() => { setShowModal(false); loadSectionData(activeSection); }}
         />
@@ -1087,16 +1162,277 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any, label: strin
   )
 }
 
-function Modal({ type, item, onClose, onSave }: { type: string, item: any, onClose: () => void, onSave: () => void }) {
+// Site Settings Component
+function SiteSettingsSection({ settings, onRefresh }: { settings: any[], onRefresh: () => void }) {
+  const [editingSettings, setEditingSettings] = useState<Record<string, any>>({})
+  const [saving, setSaving] = useState<Record<string, boolean>>({})
+  const [activeGroup, setActiveGroup] = useState('hero')
+
+  const groups = [
+    { id: 'hero', label: 'Hero Section', icon: LayoutDashboard },
+    { id: 'stats', label: 'Statistics', icon: BarChart3 },
+    { id: 'contact', label: 'Contact Info', icon: MessageSquare },
+    { id: 'cta', label: 'Call to Action', icon: Bell },
+    { id: 'testimonials', label: 'Testimonials', icon: Star },
+    { id: 'features', label: 'Features', icon: BoxIcon },
+    { id: 'how_it_works', label: 'How It Works', icon: Settings },
+    { id: 'social', label: 'Social Media', icon: Globe },
+    { id: 'general', label: 'General', icon: Settings },
+  ]
+
+  const groupedSettings = settings.reduce((acc: Record<string, any[]>, setting) => {
+    const group = setting.group || 'general'
+    if (!acc[group]) acc[group] = []
+    acc[group].push(setting)
+    return acc
+  }, {})
+
+  const handleSave = async (key: string, value: any) => {
+    setSaving(prev => ({ ...prev, [key]: true }))
+    try {
+      await api.updateAdminSiteSetting(key, value)
+      setEditingSettings(prev => {
+        const newState = { ...prev }
+        delete newState[key]
+        return newState
+      })
+      onRefresh()
+    } catch (error) {
+      console.error('Error saving setting:', error)
+    } finally {
+      setSaving(prev => ({ ...prev, [key]: false }))
+    }
+  }
+
+  const renderSettingInput = (setting: any) => {
+    const isEditing = editingSettings[setting.key] !== undefined
+    const currentValue = isEditing ? editingSettings[setting.key] : setting.value
+
+    if (setting.type === 'json') {
+      return (
+        <div className="space-y-2">
+          <textarea
+            value={typeof currentValue === 'string' ? currentValue : JSON.stringify(currentValue, null, 2)}
+            onChange={(e) => {
+              try {
+                const parsed = JSON.parse(e.target.value)
+                setEditingSettings(prev => ({ ...prev, [setting.key]: parsed }))
+              } catch {
+                setEditingSettings(prev => ({ ...prev, [setting.key]: e.target.value }))
+              }
+            }}
+            rows={6}
+            className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none font-mono text-sm"
+          />
+          {isEditing && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleSave(setting.key, currentValue)}
+                disabled={saving[setting.key]}
+                className="px-4 py-2 bg-[#0f3460] text-white rounded-lg hover:bg-[#1a1a2e] disabled:opacity-50 flex items-center gap-2"
+              >
+                {saving[setting.key] ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Save
+              </button>
+              <button
+                onClick={() => setEditingSettings(prev => {
+                  const newState = { ...prev }
+                  delete newState[setting.key]
+                  return newState
+                })}
+                className="px-4 py-2 border border-[#e5e5e5] rounded-lg hover:bg-[#f8f9fa]"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      )
+    }
+
+    return (
+      <div className="flex gap-2">
+        <input
+          type={setting.type === 'number' ? 'number' : 'text'}
+          value={currentValue || ''}
+          onChange={(e) => setEditingSettings(prev => ({ ...prev, [setting.key]: e.target.value }))}
+          className="flex-1 px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+        />
+        {isEditing && (
+          <>
+            <button
+              onClick={() => handleSave(setting.key, currentValue)}
+              disabled={saving[setting.key]}
+              className="px-4 py-3 bg-[#0f3460] text-white rounded-xl hover:bg-[#1a1a2e] disabled:opacity-50"
+            >
+              {saving[setting.key] ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+            </button>
+            <button
+              onClick={() => setEditingSettings(prev => {
+                const newState = { ...prev }
+                delete newState[setting.key]
+                return newState
+              })}
+              className="px-4 py-3 border border-[#e5e5e5] rounded-xl hover:bg-[#f8f9fa]"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      {/* Group Navigation */}
+      <div className="lg:col-span-1">
+        <div className="bg-white rounded-2xl shadow-sm p-4">
+          <h3 className="font-bold text-[#1a1a2e] mb-4">Settings Groups</h3>
+          <nav className="space-y-1">
+            {groups.map(group => (
+              <button
+                key={group.id}
+                onClick={() => setActiveGroup(group.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                  activeGroup === group.id
+                    ? 'bg-[#0f3460] text-white'
+                    : 'hover:bg-[#f8f9fa] text-[#666]'
+                }`}
+              >
+                <group.icon className="w-5 h-5" />
+                <span className="font-medium">{group.label}</span>
+              </button>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      {/* Settings Content */}
+      <div className="lg:col-span-3">
+        <div className="bg-white rounded-2xl shadow-sm p-6">
+          <h2 className="font-bold text-xl text-[#1a1a2e] mb-6">
+            {groups.find(g => g.id === activeGroup)?.label || 'Settings'}
+          </h2>
+
+          {groupedSettings[activeGroup]?.length > 0 ? (
+            <div className="space-y-6">
+              {groupedSettings[activeGroup].map((setting: any) => (
+                <div key={setting.key} className="border-b border-[#e5e5e5] pb-6 last:border-0 last:pb-0">
+                  <label className="block text-sm font-semibold text-[#1a1a2e] mb-1">
+                    {setting.label || setting.key}
+                  </label>
+                  {setting.description && (
+                    <p className="text-sm text-[#666] mb-3">{setting.description}</p>
+                  )}
+                  {renderSettingInput(setting)}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-[#666]">
+              <Settings className="w-16 h-16 mx-auto mb-4 text-[#e5e5e5]" />
+              <p>No settings in this group yet.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Modal Component
+function Modal({
+  type,
+  item,
+  furnitureTypes,
+  outlets,
+  onClose,
+  onSave
+}: {
+  type: string
+  item: any
+  furnitureTypes: any[]
+  outlets: any[]
+  onClose: () => void
+  onSave: () => void
+}) {
   const [formData, setFormData] = useState<any>(item || {})
   const [loading, setLoading] = useState(false)
+  const [selectedImages, setSelectedImages] = useState<File[]>([])
+  const [existingImages, setExistingImages] = useState<string[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (item && type === 'product') {
+      const images = Array.isArray(item.images) ? item.images : (item.images ? JSON.parse(item.images) : [])
+      setExistingImages(images)
+    }
+  }, [item, type])
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setSelectedImages(prev => [...prev, ...Array.from(e.target.files!)])
+    }
+  }
+
+  const removeSelectedImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const removeExistingImage = async (index: number) => {
+    if (!item?.id) return
+    try {
+      await api.deleteAdminProductImage(item.id, index)
+      setExistingImages(prev => prev.filter((_, i) => i !== index))
+    } catch (error) {
+      console.error('Error deleting image:', error)
+    }
+  }
+
+  // Helper to get image URL
+  const getImageUrl = (img: string) => {
+    if (!img) return '/products/placeholder.jpg'
+    if (img.startsWith('http')) return img
+    const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || 'https://api.revivalstudio.uk'
+    if (img.startsWith('/storage/')) return `${apiBase}${img}`
+    if (img.startsWith('/')) return img
+    return `${apiBase}/storage/${img}`
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
 
     try {
-      if (type === 'furniture-type') {
+      if (type === 'product') {
+        const formDataToSend = new FormData()
+        formDataToSend.append('name', formData.name || '')
+        formDataToSend.append('description', formData.description || '')
+        formDataToSend.append('price', formData.price?.toString() || '0')
+        if (formData.original_price) formDataToSend.append('original_price', formData.original_price.toString())
+        if (formData.furniture_type_id) formDataToSend.append('furniture_type_id', formData.furniture_type_id.toString())
+        if (formData.outlet_id) formDataToSend.append('outlet_id', formData.outlet_id.toString())
+        formDataToSend.append('condition', formData.condition || 'good')
+        if (formData.brand) formDataToSend.append('brand', formData.brand)
+        if (formData.material) formDataToSend.append('material', formData.material)
+        if (formData.dimensions) formDataToSend.append('dimensions', formData.dimensions)
+        if (formData.color) formDataToSend.append('color', formData.color)
+        formDataToSend.append('quantity', formData.quantity?.toString() || '1')
+        formDataToSend.append('status', formData.status || 'available')
+        formDataToSend.append('featured', formData.featured ? '1' : '0')
+
+        // Add new images
+        selectedImages.forEach(img => {
+          formDataToSend.append('images[]', img)
+        })
+
+        if (item) {
+          await api.updateAdminProduct(item.id, formDataToSend)
+        } else {
+          await api.createAdminProduct(formDataToSend)
+        }
+      } else if (type === 'furniture-type') {
         if (item) {
           await api.updateAdminFurnitureType(item.id, formData)
         } else {
@@ -1171,8 +1507,8 @@ function Modal({ type, item, onClose, onSave }: { type: string, item: any, onClo
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md p-6">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl w-full max-w-2xl p-6 my-8 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-[#1a1a2e]">
             {item ? 'Edit' : 'Add'} {type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
@@ -1183,6 +1519,247 @@ function Modal({ type, item, onClose, onSave }: { type: string, item: any, onClo
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Product Form */}
+          {type === 'product' && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Product Name *</label>
+                  <input
+                    type="text"
+                    value={formData.name || ''}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    required
+                    placeholder="e.g. Vintage Oak Dining Table"
+                    className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Description</label>
+                  <textarea
+                    value={formData.description || ''}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                    rows={3}
+                    placeholder="Describe the product..."
+                    className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Price (GBP) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.price || ''}
+                    onChange={e => setFormData({ ...formData, price: e.target.value })}
+                    required
+                    placeholder="0.00"
+                    className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Original Price</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.original_price || ''}
+                    onChange={e => setFormData({ ...formData, original_price: e.target.value })}
+                    placeholder="0.00"
+                    className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Furniture Type</label>
+                  <select
+                    value={formData.furniture_type_id || ''}
+                    onChange={e => setFormData({ ...formData, furniture_type_id: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                  >
+                    <option value="">Select type...</option>
+                    {furnitureTypes.map(ft => (
+                      <option key={ft.id} value={ft.id}>{ft.icon} {ft.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Condition *</label>
+                  <select
+                    value={formData.condition || 'good'}
+                    onChange={e => setFormData({ ...formData, condition: e.target.value })}
+                    required
+                    className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                  >
+                    <option value="excellent">Excellent</option>
+                    <option value="good">Good</option>
+                    <option value="fair">Fair</option>
+                    <option value="poor">Poor</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Partner Outlet</label>
+                  <select
+                    value={formData.outlet_id || ''}
+                    onChange={e => setFormData({ ...formData, outlet_id: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                  >
+                    <option value="">Admin (No outlet)</option>
+                    {outlets.map(outlet => (
+                      <option key={outlet.id} value={outlet.id}>{outlet.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Status</label>
+                  <select
+                    value={formData.status || 'available'}
+                    onChange={e => setFormData({ ...formData, status: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                  >
+                    <option value="available">Available</option>
+                    <option value="reserved">Reserved</option>
+                    <option value="sold">Sold</option>
+                    <option value="draft">Draft</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Brand</label>
+                  <input
+                    type="text"
+                    value={formData.brand || ''}
+                    onChange={e => setFormData({ ...formData, brand: e.target.value })}
+                    placeholder="e.g. IKEA"
+                    className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Material</label>
+                  <input
+                    type="text"
+                    value={formData.material || ''}
+                    onChange={e => setFormData({ ...formData, material: e.target.value })}
+                    placeholder="e.g. Solid Oak"
+                    className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Dimensions</label>
+                  <input
+                    type="text"
+                    value={formData.dimensions || ''}
+                    onChange={e => setFormData({ ...formData, dimensions: e.target.value })}
+                    placeholder="e.g. 120cm x 80cm x 75cm"
+                    className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Color</label>
+                  <input
+                    type="text"
+                    value={formData.color || ''}
+                    onChange={e => setFormData({ ...formData, color: e.target.value })}
+                    placeholder="e.g. Natural Oak"
+                    className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Quantity</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formData.quantity || 1}
+                    onChange={e => setFormData({ ...formData, quantity: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="featured"
+                      checked={formData.featured || false}
+                      onChange={e => setFormData({ ...formData, featured: e.target.checked })}
+                      className="w-5 h-5 rounded border-2 border-[#e5e5e5] text-[#0f3460] focus:ring-[#0f3460]"
+                    />
+                    <label htmlFor="featured" className="text-sm font-medium text-[#1a1a2e]">Mark as Featured Product</label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Images Section */}
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Product Images</label>
+
+                {/* Existing Images */}
+                {existingImages.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-xs text-[#666] mb-2">Current Images:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {existingImages.map((img, idx) => (
+                        <div key={idx} className="relative group">
+                          <img
+                            src={getImageUrl(img)}
+                            alt={`Product ${idx + 1}`}
+                            className="w-20 h-20 object-cover rounded-lg border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeExistingImage(idx)}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* New Images Preview */}
+                {selectedImages.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-xs text-[#666] mb-2">New Images to Upload:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedImages.map((img, idx) => (
+                        <div key={idx} className="relative group">
+                          <img
+                            src={URL.createObjectURL(img)}
+                            alt={`New ${idx + 1}`}
+                            className="w-20 h-20 object-cover rounded-lg border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeSelectedImage(idx)}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Upload Button */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-[#e5e5e5] rounded-xl hover:border-[#0f3460] transition-colors w-full justify-center"
+                >
+                  <Upload className="w-5 h-5" />
+                  <span>Click to upload images</span>
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* Outlet Form */}
           {type === 'outlet' && (
             <>
               <div>
@@ -1228,6 +1805,7 @@ function Modal({ type, item, onClose, onSave }: { type: string, item: any, onClo
             </>
           )}
 
+          {/* Furniture Type Form */}
           {type === 'furniture-type' && (
             <>
               <div>
@@ -1275,6 +1853,7 @@ function Modal({ type, item, onClose, onSave }: { type: string, item: any, onClo
             </>
           )}
 
+          {/* Material Form */}
           {type === 'material' && (
             <>
               <div>
@@ -1311,6 +1890,7 @@ function Modal({ type, item, onClose, onSave }: { type: string, item: any, onClo
             </>
           )}
 
+          {/* Damage Type Form */}
           {type === 'damage-type' && (
             <>
               <div>
@@ -1347,8 +1927,80 @@ function Modal({ type, item, onClose, onSave }: { type: string, item: any, onClo
             </>
           )}
 
+          {/* Comparison Price Form */}
           {type === 'comparison-price' && (
-            <ComparisonPriceForm formData={formData} setFormData={setFormData} />
+            <>
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Furniture Type</label>
+                <select
+                  value={formData.furniture_type_id || ''}
+                  onChange={e => setFormData({ ...formData, furniture_type_id: e.target.value })}
+                  required
+                  className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                >
+                  <option value="">Select furniture type...</option>
+                  {furnitureTypes.map(ft => (
+                    <option key={ft.id} value={ft.id}>
+                      {ft.icon || '🪑'} {ft.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Retailer Name</label>
+                <input
+                  type="text"
+                  value={formData.retailer_name || ''}
+                  onChange={e => setFormData({ ...formData, retailer_name: e.target.value })}
+                  required
+                  placeholder="e.g. IKEA, Argos, Amazon"
+                  className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Product Name</label>
+                <input
+                  type="text"
+                  value={formData.product_name || ''}
+                  onChange={e => setFormData({ ...formData, product_name: e.target.value })}
+                  required
+                  placeholder="e.g. MALM Bed Frame, KIVIK Sofa"
+                  className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Retail Price (GBP)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.retail_price || ''}
+                  onChange={e => setFormData({ ...formData, retail_price: e.target.value })}
+                  required
+                  placeholder="e.g. 299.00"
+                  className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Product URL (optional)</label>
+                <input
+                  type="url"
+                  value={formData.product_url || ''}
+                  onChange={e => setFormData({ ...formData, product_url: e.target.value })}
+                  placeholder="https://www.ikea.com/..."
+                  className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="is_active"
+                  checked={formData.is_active !== false}
+                  onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
+                  className="w-5 h-5 rounded border-2 border-[#e5e5e5] text-[#0f3460] focus:ring-[#0f3460]"
+                />
+                <label htmlFor="is_active" className="text-sm font-medium text-[#1a1a2e]">Active</label>
+              </div>
+            </>
           )}
 
           <button
@@ -1362,105 +2014,5 @@ function Modal({ type, item, onClose, onSave }: { type: string, item: any, onClo
         </form>
       </div>
     </div>
-  )
-}
-
-function ComparisonPriceForm({ formData, setFormData }: { formData: any, setFormData: (data: any) => void }) {
-  const [furnitureTypes, setFurnitureTypes] = useState<any[]>([])
-  const [loadingTypes, setLoadingTypes] = useState(true)
-
-  useEffect(() => {
-    async function loadFurnitureTypes() {
-      try {
-        const res = await api.getAdminFurnitureTypes()
-        setFurnitureTypes(res.data || [])
-      } catch (error) {
-        console.error('Error loading furniture types:', error)
-      } finally {
-        setLoadingTypes(false)
-      }
-    }
-    loadFurnitureTypes()
-  }, [])
-
-  return (
-    <>
-      <div>
-        <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Furniture Type</label>
-        {loadingTypes ? (
-          <div className="flex items-center justify-center py-3">
-            <Loader2 className="w-5 h-5 animate-spin text-[#0f3460]" />
-          </div>
-        ) : (
-          <select
-            value={formData.furniture_type_id || ''}
-            onChange={e => setFormData({ ...formData, furniture_type_id: e.target.value })}
-            required
-            className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
-          >
-            <option value="">Select furniture type...</option>
-            {furnitureTypes.map(ft => (
-              <option key={ft.id} value={ft.id}>
-                {ft.icon || '🪑'} {ft.name}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Retailer Name</label>
-        <input
-          type="text"
-          value={formData.retailer_name || ''}
-          onChange={e => setFormData({ ...formData, retailer_name: e.target.value })}
-          required
-          placeholder="e.g. IKEA, Argos, Amazon"
-          className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Product Name</label>
-        <input
-          type="text"
-          value={formData.product_name || ''}
-          onChange={e => setFormData({ ...formData, product_name: e.target.value })}
-          required
-          placeholder="e.g. MALM Bed Frame, KIVIK Sofa"
-          className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Retail Price (GBP)</label>
-        <input
-          type="number"
-          step="0.01"
-          value={formData.retail_price || ''}
-          onChange={e => setFormData({ ...formData, retail_price: e.target.value })}
-          required
-          placeholder="e.g. 299.00"
-          className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Product URL (optional)</label>
-        <input
-          type="url"
-          value={formData.product_url || ''}
-          onChange={e => setFormData({ ...formData, product_url: e.target.value })}
-          placeholder="https://www.ikea.com/..."
-          className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
-        />
-      </div>
-      <div className="flex items-center gap-3">
-        <input
-          type="checkbox"
-          id="is_active"
-          checked={formData.is_active !== false}
-          onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
-          className="w-5 h-5 rounded border-2 border-[#e5e5e5] text-[#0f3460] focus:ring-[#0f3460]"
-        />
-        <label htmlFor="is_active" className="text-sm font-medium text-[#1a1a2e]">Active</label>
-      </div>
-    </>
   )
 }

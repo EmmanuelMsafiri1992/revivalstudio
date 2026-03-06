@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\ComparisonPriceController;
 use App\Http\Controllers\Api\FurnitureController;
 use App\Http\Controllers\Api\MarketplaceController;
 use App\Http\Controllers\Api\OutletAuthController;
@@ -43,6 +44,10 @@ Route::post('/planner/submit', [RoomPlannerController::class, 'submit']);
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/featured', [ProductController::class, 'featured']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
+
+// Public routes - Comparison prices
+Route::get('/comparison-prices', [ComparisonPriceController::class, 'index']);
+Route::get('/comparison-prices/furniture-type/{id}', [ComparisonPriceController::class, 'getByFurnitureType']);
 
 // Outlet authentication
 Route::post('/outlet/login', [OutletAuthController::class, 'login']);
@@ -112,6 +117,12 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
     Route::get('/products', [ProductController::class, 'adminIndex']);
     Route::put('/products/{id}', [ProductController::class, 'adminUpdate']);
     Route::delete('/products/{id}', [ProductController::class, 'adminDestroy']);
+
+    // Comparison prices management
+    Route::get('/comparison-prices', [ComparisonPriceController::class, 'adminIndex']);
+    Route::post('/comparison-prices', [ComparisonPriceController::class, 'store']);
+    Route::put('/comparison-prices/{comparisonPrice}', [ComparisonPriceController::class, 'update']);
+    Route::delete('/comparison-prices/{comparisonPrice}', [ComparisonPriceController::class, 'destroy']);
 });
 
 // Health check

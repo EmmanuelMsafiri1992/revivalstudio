@@ -633,6 +633,60 @@ class ApiClient {
     )
   }
 
+  // Public - Comparison prices
+  async getComparisonPrices() {
+    return this.request<{ success: boolean; data: any[] }>('/comparison-prices')
+  }
+
+  async getComparisonPriceByFurnitureType(furnitureTypeId: number) {
+    return this.request<{ success: boolean; data: any }>(`/comparison-prices/furniture-type/${furnitureTypeId}`)
+  }
+
+  // Admin - Comparison prices management
+  async getAdminComparisonPrices() {
+    return this.request<{ success: boolean; data: any[] }>('/admin/comparison-prices', {}, true)
+  }
+
+  async createAdminComparisonPrice(data: {
+    furniture_type_id: number
+    retailer_name: string
+    product_name: string
+    retail_price: number
+    product_url?: string
+    image?: string
+    is_active?: boolean
+  }) {
+    return this.request<{ success: boolean; data: any; message: string }>(
+      '/admin/comparison-prices',
+      { method: 'POST', body: JSON.stringify(data) },
+      true
+    )
+  }
+
+  async updateAdminComparisonPrice(id: number, data: {
+    furniture_type_id?: number
+    retailer_name?: string
+    product_name?: string
+    retail_price?: number
+    product_url?: string
+    image?: string
+    is_active?: boolean
+  }) {
+    return this.request<{ success: boolean; data: any; message: string }>(
+      `/admin/comparison-prices/${id}`,
+      { method: 'PUT', body: JSON.stringify(data) },
+      true
+    )
+  }
+
+  async deleteAdminComparisonPrice(id: number) {
+    return this.request<{ success: boolean; message: string }>(
+      `/admin/comparison-prices/${id}`,
+      { method: 'DELETE' },
+      true
+    )
+  }
+
   // Health check
   async healthCheck() {
     return this.request<{ success: boolean; message: string; version: string }>('/health')

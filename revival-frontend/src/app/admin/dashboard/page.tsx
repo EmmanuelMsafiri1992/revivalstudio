@@ -6,7 +6,7 @@ import {
   Loader2, LogOut, Store, Wrench, DollarSign, Package, Users,
   LayoutDashboard, BoxIcon, Settings, ChevronLeft, ChevronRight,
   Bell, Search, User, TrendingUp, Shield, Armchair, Hammer, AlertTriangle,
-  CheckCircle, Clock, XCircle, Eye, Edit2, Trash2, Plus, X, ShoppingBag, Star
+  CheckCircle, Clock, XCircle, Eye, Edit2, Trash2, Plus, X, ShoppingBag, Star, Scale
 } from 'lucide-react'
 import Image from 'next/image'
 import { api } from '@/lib/api'
@@ -37,6 +37,7 @@ const sidebarItems = [
   { id: 'furniture-types', label: 'Furniture Types', icon: Armchair },
   { id: 'materials', label: 'Materials', icon: Hammer },
   { id: 'damage-types', label: 'Damage Types', icon: AlertTriangle },
+  { id: 'comparison-prices', label: 'Comparison Prices', icon: Scale },
   { id: 'settings', label: 'Settings', icon: Settings },
 ]
 
@@ -72,6 +73,7 @@ export default function AdminDashboardPage() {
   const [furnitureTypes, setFurnitureTypes] = useState<any[]>([])
   const [materials, setMaterials] = useState<any[]>([])
   const [damageTypes, setDamageTypes] = useState<any[]>([])
+  const [comparisonPrices, setComparisonPrices] = useState<any[]>([])
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState('all')
@@ -142,6 +144,13 @@ export default function AdminDashboardPage() {
         case 'damage-types':
           const dtRes = await api.getAdminDamageTypes()
           setDamageTypes(dtRes.data || [])
+          break
+        case 'comparison-prices':
+          const cpRes = await api.getAdminComparisonPrices()
+          setComparisonPrices(cpRes.data || [])
+          // Also load furniture types for the dropdown
+          const ftForCp = await api.getAdminFurnitureTypes()
+          setFurnitureTypes(ftForCp.data || [])
           break
       }
     } catch (error) {
@@ -243,6 +252,25 @@ export default function AdminDashboardPage() {
       loadSectionData('damage-types')
     } catch (error) {
       console.error('Error deleting:', error)
+    }
+  }
+
+  async function handleDeleteComparisonPrice(id: number) {
+    if (!confirm('Are you sure you want to delete this comparison price?')) return
+    try {
+      await api.deleteAdminComparisonPrice(id)
+      loadSectionData('comparison-prices')
+    } catch (error) {
+      console.error('Error deleting:', error)
+    }
+  }
+
+  async function toggleComparisonPriceActive(item: any) {
+    try {
+      await api.updateAdminComparisonPrice(item.id, { is_active: !item.is_active })
+      loadSectionData('comparison-prices')
+    } catch (error) {
+      console.error('Error updating:', error)
     }
   }
 
@@ -910,6 +938,82 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
+          {/* Comparison Prices Section */}
+          {activeSection === 'comparison-prices' && (
+            <div className="bg-white rounded-2xl shadow-sm">
+              <div className="p-6 border-b border-[#e5e5e5] flex justify-between items-center">
+                <div>
+                  <h2 className="font-bold text-lg text-[#1a1a2e]">Comparison Prices</h2>
+                  <p className="text-sm text-[#666] mt-1">Set retail prices for comparing with Revival products</p>
+                </div>
+                <button
+                  onClick={() => { setModalType('comparison-price'); setEditItem(null); setShowModal(true); }}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#0f3460] text-white rounded-xl hover:bg-[#1a1a2e] transition-colors"
+                >
+                  <Plus className="w-4 h-4" /> Add Comparison
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-[#f8f9fa]">
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Furniture Type</th>
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Retailer</th>
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Product Name</th>
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Retail Price</th>
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Status</th>
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {comparisonPrices.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-8 text-center text-[#666]">
+                          <Scale className="w-12 h-12 mx-auto mb-4 text-[#ccc]" />
+                          <p>No comparison prices set yet.</p>
+                          <p className="text-sm mt-1">Add comparison prices to show customers how much they save.</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      comparisonPrices.map(cp => (
+                        <tr key={cp.id} className="border-t border-[#e5e5e5] hover:bg-[#f8f9fa]">
+                          <td className="p-4 font-medium text-[#1a1a2e]">
+                            {cp.furniture_type?.icon || '🪑'} {cp.furniture_type?.name || 'Unknown'}
+                          </td>
+                          <td className="p-4 text-[#666]">{cp.retailer_name}</td>
+                          <td className="p-4 text-[#666]">{cp.product_name}</td>
+                          <td className="p-4 font-semibold text-[#0f3460]">{formatCurrency(cp.retail_price)}</td>
+                          <td className="p-4">
+                            <button
+                              onClick={() => toggleComparisonPriceActive(cp)}
+                              className={`px-3 py-1 rounded-full text-xs font-medium ${cp.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                            >
+                              {cp.is_active ? 'Active' : 'Inactive'}
+                            </button>
+                          </td>
+                          <td className="p-4 flex gap-2">
+                            <button
+                              onClick={() => { setModalType('comparison-price'); setEditItem(cp); setShowModal(true); }}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteComparisonPrice(cp.id)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {/* Settings Section */}
           {activeSection === 'settings' && (
             <div className="max-w-2xl mx-auto">
@@ -1035,6 +1139,26 @@ function Modal({ type, item, onClose, onSave }: { type: string, item: any, onClo
             location: formData.location,
             phone: formData.phone,
             address: formData.address,
+          })
+        }
+      } else if (type === 'comparison-price') {
+        if (item) {
+          await api.updateAdminComparisonPrice(item.id, {
+            furniture_type_id: parseInt(formData.furniture_type_id),
+            retailer_name: formData.retailer_name,
+            product_name: formData.product_name,
+            retail_price: parseFloat(formData.retail_price) || 0,
+            product_url: formData.product_url || null,
+            is_active: formData.is_active !== false,
+          })
+        } else {
+          await api.createAdminComparisonPrice({
+            furniture_type_id: parseInt(formData.furniture_type_id),
+            retailer_name: formData.retailer_name,
+            product_name: formData.product_name,
+            retail_price: parseFloat(formData.retail_price) || 0,
+            product_url: formData.product_url || null,
+            is_active: formData.is_active !== false,
           })
         }
       }
@@ -1223,6 +1347,10 @@ function Modal({ type, item, onClose, onSave }: { type: string, item: any, onClo
             </>
           )}
 
+          {type === 'comparison-price' && (
+            <ComparisonPriceForm formData={formData} setFormData={setFormData} />
+          )}
+
           <button
             type="submit"
             disabled={loading}
@@ -1234,5 +1362,105 @@ function Modal({ type, item, onClose, onSave }: { type: string, item: any, onClo
         </form>
       </div>
     </div>
+  )
+}
+
+function ComparisonPriceForm({ formData, setFormData }: { formData: any, setFormData: (data: any) => void }) {
+  const [furnitureTypes, setFurnitureTypes] = useState<any[]>([])
+  const [loadingTypes, setLoadingTypes] = useState(true)
+
+  useEffect(() => {
+    async function loadFurnitureTypes() {
+      try {
+        const res = await api.getAdminFurnitureTypes()
+        setFurnitureTypes(res.data || [])
+      } catch (error) {
+        console.error('Error loading furniture types:', error)
+      } finally {
+        setLoadingTypes(false)
+      }
+    }
+    loadFurnitureTypes()
+  }, [])
+
+  return (
+    <>
+      <div>
+        <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Furniture Type</label>
+        {loadingTypes ? (
+          <div className="flex items-center justify-center py-3">
+            <Loader2 className="w-5 h-5 animate-spin text-[#0f3460]" />
+          </div>
+        ) : (
+          <select
+            value={formData.furniture_type_id || ''}
+            onChange={e => setFormData({ ...formData, furniture_type_id: e.target.value })}
+            required
+            className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+          >
+            <option value="">Select furniture type...</option>
+            {furnitureTypes.map(ft => (
+              <option key={ft.id} value={ft.id}>
+                {ft.icon || '🪑'} {ft.name}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Retailer Name</label>
+        <input
+          type="text"
+          value={formData.retailer_name || ''}
+          onChange={e => setFormData({ ...formData, retailer_name: e.target.value })}
+          required
+          placeholder="e.g. IKEA, Argos, Amazon"
+          className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Product Name</label>
+        <input
+          type="text"
+          value={formData.product_name || ''}
+          onChange={e => setFormData({ ...formData, product_name: e.target.value })}
+          required
+          placeholder="e.g. MALM Bed Frame, KIVIK Sofa"
+          className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Retail Price (GBP)</label>
+        <input
+          type="number"
+          step="0.01"
+          value={formData.retail_price || ''}
+          onChange={e => setFormData({ ...formData, retail_price: e.target.value })}
+          required
+          placeholder="e.g. 299.00"
+          className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Product URL (optional)</label>
+        <input
+          type="url"
+          value={formData.product_url || ''}
+          onChange={e => setFormData({ ...formData, product_url: e.target.value })}
+          placeholder="https://www.ikea.com/..."
+          className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+        />
+      </div>
+      <div className="flex items-center gap-3">
+        <input
+          type="checkbox"
+          id="is_active"
+          checked={formData.is_active !== false}
+          onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
+          className="w-5 h-5 rounded border-2 border-[#e5e5e5] text-[#0f3460] focus:ring-[#0f3460]"
+        />
+        <label htmlFor="is_active" className="text-sm font-medium text-[#1a1a2e]">Active</label>
+      </div>
+    </>
   )
 }

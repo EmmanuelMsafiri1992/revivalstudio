@@ -69,7 +69,7 @@ export default function CheckoutPage() {
           api.getPaymentMethods(),
         ])
 
-        if (productRes.success && productRes.data) {
+        if (productRes.data) {
           if (productRes.data.status !== 'available') {
             setError('This product is no longer available for purchase.')
           } else {

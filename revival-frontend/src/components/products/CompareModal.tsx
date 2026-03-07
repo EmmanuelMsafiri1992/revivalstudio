@@ -80,7 +80,7 @@ export function CompareModal({ product, isOpen, onClose }: CompareModalProps) {
           furniture_type_id: product.furniture_type?.id || 0,
           retailer_name: product.comparison_retailer,
           product_name: product.comparison_product_name || 'Similar Product',
-          retail_price: parseFloat(product.comparison_price),
+          retail_price: product.comparison_price,
           product_url: product.comparison_url || null,
           is_default: false
         })

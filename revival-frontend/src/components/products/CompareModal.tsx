@@ -68,8 +68,22 @@ export function CompareModal({ product, isOpen, onClose }: CompareModalProps) {
 
   useEffect(() => {
     async function fetchComparisonData() {
+      // Priority 1: Use product-specific comparison data if available
+      if (product?.comparison_retailer && product?.comparison_price) {
+        setComparisonData({
+          id: null,
+          furniture_type_id: product.furniture_type?.id || 0,
+          retailer_name: product.comparison_retailer,
+          product_name: product.comparison_product_name || 'Similar Product',
+          retail_price: parseFloat(product.comparison_price),
+          product_url: product.comparison_url || null,
+          is_default: false
+        })
+        return
+      }
+
+      // Priority 2: Use fallback if no furniture type
       if (!product || !product.furniture_type?.id) {
-        // Use fallback if no furniture type
         const typeName = product?.furniture_type?.name || 'default'
         const fallback = fallbackPrices[typeName] || fallbackPrices['default']
         setComparisonData({
@@ -83,6 +97,7 @@ export function CompareModal({ product, isOpen, onClose }: CompareModalProps) {
         return
       }
 
+      // Priority 3: Fetch from API by furniture type
       setLoading(true)
       try {
         const response = await api.getComparisonPriceByFurnitureType(product.furniture_type.id)

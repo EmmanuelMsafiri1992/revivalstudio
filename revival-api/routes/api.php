@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\ComparisonPriceController;
 use App\Http\Controllers\Api\FurnitureController;
 use App\Http\Controllers\Api\MarketplaceController;
+use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\OutletAuthController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\RepairController;
@@ -54,6 +55,11 @@ Route::get('/comparison-prices/furniture-type/{id}', [ComparisonPriceController:
 Route::get('/site-settings', [SiteSettingController::class, 'index']);
 Route::get('/site-settings/group/{group}', [SiteSettingController::class, 'getByGroup']);
 Route::get('/site-settings/{key}', [SiteSettingController::class, 'show']);
+
+// Public routes - Orders and checkout
+Route::get('/payment-methods', [OrderController::class, 'paymentMethods']);
+Route::post('/orders', [OrderController::class, 'store']);
+Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
 
 // Outlet authentication
 Route::post('/outlet/login', [OutletAuthController::class, 'login']);
@@ -140,6 +146,23 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
     Route::put('/site-settings/{key}', [SiteSettingController::class, 'update']);
     Route::post('/site-settings/bulk', [SiteSettingController::class, 'bulkUpdate']);
     Route::delete('/site-settings/{key}', [SiteSettingController::class, 'destroy']);
+
+    // Room plans management
+    Route::get('/room-plans', [AdminController::class, 'roomPlans']);
+    Route::get('/room-plans/{id}', [AdminController::class, 'showRoomPlan']);
+    Route::put('/room-plans/{id}', [AdminController::class, 'updateRoomPlan']);
+    Route::delete('/room-plans/{id}', [AdminController::class, 'deleteRoomPlan']);
+
+    // Payment methods management
+    Route::get('/payment-methods', [AdminController::class, 'paymentMethods']);
+    Route::post('/payment-methods', [AdminController::class, 'createPaymentMethod']);
+    Route::put('/payment-methods/{id}', [AdminController::class, 'updatePaymentMethod']);
+    Route::delete('/payment-methods/{id}', [AdminController::class, 'deletePaymentMethod']);
+
+    // Orders management
+    Route::get('/orders', [AdminController::class, 'orders']);
+    Route::get('/orders/{id}', [AdminController::class, 'showOrder']);
+    Route::put('/orders/{id}', [AdminController::class, 'updateOrder']);
 });
 
 // Health check

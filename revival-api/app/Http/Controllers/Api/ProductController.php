@@ -331,6 +331,10 @@ class ProductController extends Controller
             'images.*' => 'image|max:10240', // 10MB max per image
             'status' => 'nullable|in:available,reserved,sold,draft',
             'featured' => 'nullable|boolean',
+            'comparison_retailer' => 'nullable|string|max:100',
+            'comparison_product_name' => 'nullable|string|max:255',
+            'comparison_price' => 'nullable|numeric|min:0',
+            'comparison_url' => 'nullable|url|max:500',
         ]);
 
         $data = $request->except('images');
@@ -378,6 +382,10 @@ class ProductController extends Controller
             'featured' => 'nullable|boolean',
             'images' => 'nullable|array',
             'images.*' => 'image|max:10240',
+            'comparison_retailer' => 'nullable|string|max:100',
+            'comparison_product_name' => 'nullable|string|max:255',
+            'comparison_price' => 'nullable|numeric|min:0',
+            'comparison_url' => 'nullable|url|max:500',
         ]);
 
         $data = $request->except('images');

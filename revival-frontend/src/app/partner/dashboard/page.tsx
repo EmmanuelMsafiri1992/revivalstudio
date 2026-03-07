@@ -277,9 +277,10 @@ export default function DashboardPage() {
 
       setShowProductForm(false)
       loadProducts(productTab !== 'all' ? productTab : undefined)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving product:', error)
-      alert('Failed to save product. Please try again.')
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to save product. Please try again.'
+      alert(errorMessage)
     } finally {
       setSubmitting(false)
     }

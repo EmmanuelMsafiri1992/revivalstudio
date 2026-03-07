@@ -7,8 +7,11 @@ use App\Models\DamageType;
 use App\Models\FurnitureType;
 use App\Models\InventoryItem;
 use App\Models\Material;
+use App\Models\Order;
 use App\Models\Outlet;
+use App\Models\PaymentMethod;
 use App\Models\RepairRequest;
+use App\Models\RoomPlan;
 use App\Models\SellRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -455,6 +458,210 @@ class AdminController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Damage type deleted successfully',
+        ]);
+    }
+
+    // Room Plans Management
+    public function roomPlans(Request $request)
+    {
+        $query = RoomPlan::query();
+
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('customer_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('city', 'like', "%{$search}%")
+                    ->orWhere('postcode', 'like', "%{$search}%");
+            });
+        }
+
+        $plans = $query->latest()->paginate($request->per_page ?? 20);
+
+        return response()->json([
+            'success' => true,
+            'data' => $plans,
+        ]);
+    }
+
+    public function showRoomPlan($id)
+    {
+        $plan = RoomPlan::findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => $plan,
+        ]);
+    }
+
+    public function updateRoomPlan(Request $request, $id)
+    {
+        $plan = RoomPlan::findOrFail($id);
+
+        $validated = $request->validate([
+            'status' => 'sometimes|in:draft,submitted,contacted,completed',
+            'notes' => 'sometimes|nullable|string',
+        ]);
+
+        $plan->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Room plan updated successfully',
+            'data' => $plan->fresh(),
+        ]);
+    }
+
+    public function deleteRoomPlan($id)
+    {
+        $plan = RoomPlan::findOrFail($id);
+        $plan->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Room plan deleted successfully',
+        ]);
+    }
+
+    // Payment Methods Management
+    public function paymentMethods(Request $request)
+    {
+        $methods = PaymentMethod::orderBy('sort_order')->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $methods,
+        ]);
+    }
+
+    public function createPaymentMethod(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50|unique:payment_methods,code',
+            'description' => 'nullable|string',
+            'instructions' => 'nullable|string',
+            'is_active' => 'boolean',
+            'sort_order' => 'nullable|integer',
+        ]);
+
+        $validated['is_active'] = $validated['is_active'] ?? true;
+        $validated['sort_order'] = $validated['sort_order'] ?? PaymentMethod::max('sort_order') + 1;
+
+        $method = PaymentMethod::create($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment method created successfully',
+            'data' => $method,
+        ]);
+    }
+
+    public function updatePaymentMethod(Request $request, $id)
+    {
+        $method = PaymentMethod::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'code' => 'sometimes|string|max:50|unique:payment_methods,code,' . $id,
+            'description' => 'nullable|string',
+            'instructions' => 'nullable|string',
+            'is_active' => 'sometimes|boolean',
+            'sort_order' => 'nullable|integer',
+        ]);
+
+        $method->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment method updated successfully',
+            'data' => $method->fresh(),
+        ]);
+    }
+
+    public function deletePaymentMethod($id)
+    {
+        $method = PaymentMethod::findOrFail($id);
+        $method->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment method deleted successfully',
+        ]);
+    }
+
+    // Orders Management
+    public function orders(Request $request)
+    {
+        $query = Order::with(['product.furnitureType', 'product.outlet']);
+
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('order_status', $request->status);
+        }
+
+        if ($request->has('payment_status') && $request->payment_status !== 'all') {
+            $query->where('payment_status', $request->payment_status);
+        }
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('order_number', 'like', "%{$search}%")
+                    ->orWhere('customer_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        $orders = $query->latest()->paginate($request->per_page ?? 20);
+
+        return response()->json([
+            'success' => true,
+            'data' => $orders,
+        ]);
+    }
+
+    public function showOrder($id)
+    {
+        $order = Order::with(['product.furnitureType', 'product.outlet'])->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => $order,
+        ]);
+    }
+
+    public function updateOrder(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+
+        $validated = $request->validate([
+            'order_status' => 'sometimes|in:pending,confirmed,shipped,delivered,cancelled',
+            'payment_status' => 'sometimes|in:pending,paid,failed',
+            'notes' => 'nullable|string',
+        ]);
+
+        $order->update($validated);
+
+        // If order is cancelled, make product available again
+        if (isset($validated['order_status']) && $validated['order_status'] === 'cancelled') {
+            $order->product->update(['status' => 'available']);
+        }
+
+        // If order is delivered and payment was COD, mark as paid
+        if (isset($validated['order_status']) && $validated['order_status'] === 'delivered' && $order->payment_method === 'cod') {
+            $order->update(['payment_status' => 'paid']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order updated successfully',
+            'data' => $order->fresh(['product.furnitureType', 'product.outlet']),
         ]);
     }
 }

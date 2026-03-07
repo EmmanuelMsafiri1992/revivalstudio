@@ -55,7 +55,12 @@ class RoomPlannerController extends Controller
             'total_cost' => 'nullable|numeric|min:0',
             'customer_name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:50',
+            'phone' => 'required|string|max:50',
+            'house_number' => 'required|string|max:50',
+            'address_line1' => 'required|string|max:255',
+            'address_line2' => 'nullable|string|max:255',
+            'city' => 'required|string|max:100',
+            'postcode' => 'required|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -76,6 +81,11 @@ class RoomPlannerController extends Controller
             'customer_name' => $request->customer_name,
             'email' => $request->email,
             'phone' => $request->phone,
+            'house_number' => $request->house_number,
+            'address_line1' => $request->address_line1,
+            'address_line2' => $request->address_line2,
+            'city' => $request->city,
+            'postcode' => $request->postcode,
             'status' => 'submitted',
         ]);
 

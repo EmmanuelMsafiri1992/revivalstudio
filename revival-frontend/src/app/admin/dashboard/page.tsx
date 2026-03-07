@@ -7,7 +7,8 @@ import {
   LayoutDashboard, BoxIcon, Settings, ChevronLeft, ChevronRight,
   Bell, Search, User, TrendingUp, Shield, Armchair, Hammer, AlertTriangle,
   CheckCircle, Clock, XCircle, Eye, Edit2, Trash2, Plus, X, ShoppingBag, Star, Scale,
-  Upload, Image as ImageIcon, Globe, MessageSquare, BarChart3, Save
+  Upload, Image as ImageIcon, Globe, MessageSquare, BarChart3, Save, Home, MapPin, Phone, Mail,
+  CreditCard, Receipt
 } from 'lucide-react'
 import Image from 'next/image'
 import { api } from '@/lib/api'
@@ -32,13 +33,16 @@ const sidebarItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'outlets', label: 'Outlets', icon: Store },
   { id: 'products', label: 'Products', icon: ShoppingBag },
+  { id: 'orders', label: 'Orders', icon: Receipt },
   { id: 'repair-requests', label: 'Repair Requests', icon: Wrench },
   { id: 'sell-requests', label: 'Sell Requests', icon: DollarSign },
+  { id: 'room-plans', label: 'Room Plans', icon: Home },
   { id: 'inventory', label: 'Inventory', icon: BoxIcon },
   { id: 'furniture-types', label: 'Furniture Types', icon: Armchair },
   { id: 'materials', label: 'Materials', icon: Hammer },
   { id: 'damage-types', label: 'Damage Types', icon: AlertTriangle },
   { id: 'comparison-prices', label: 'Comparison Prices', icon: Scale },
+  { id: 'payment-methods', label: 'Payment Methods', icon: CreditCard },
   { id: 'site-settings', label: 'Site Settings', icon: Globe },
   { id: 'settings', label: 'Settings', icon: Settings },
 ]
@@ -56,6 +60,13 @@ const statusColors: Record<string, string> = {
   available: 'bg-green-100 text-green-800',
   reserved: 'bg-yellow-100 text-yellow-800',
   draft: 'bg-gray-100 text-gray-800',
+  // Order statuses
+  confirmed: 'bg-blue-100 text-blue-800',
+  shipped: 'bg-indigo-100 text-indigo-800',
+  delivered: 'bg-green-100 text-green-800',
+  // Payment statuses
+  paid: 'bg-green-100 text-green-800',
+  failed: 'bg-red-100 text-red-800',
 }
 
 export default function AdminDashboardPage() {
@@ -77,6 +88,9 @@ export default function AdminDashboardPage() {
   const [damageTypes, setDamageTypes] = useState<any[]>([])
   const [comparisonPrices, setComparisonPrices] = useState<any[]>([])
   const [siteSettings, setSiteSettings] = useState<any[]>([])
+  const [roomPlans, setRoomPlans] = useState<any[]>([])
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([])
+  const [orders, setOrders] = useState<any[]>([])
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState('all')
@@ -162,6 +176,18 @@ export default function AdminDashboardPage() {
           setComparisonPrices(cpRes.data || [])
           const ftForCp = await api.getAdminFurnitureTypes()
           setFurnitureTypes(ftForCp.data || [])
+          break
+        case 'room-plans':
+          const rpRes = await api.getAdminRoomPlans({ status: statusFilter !== 'all' ? statusFilter : undefined })
+          setRoomPlans(rpRes.data?.data || [])
+          break
+        case 'payment-methods':
+          const pmRes = await api.getAdminPaymentMethods()
+          setPaymentMethods(pmRes.data || [])
+          break
+        case 'orders':
+          const ordRes = await api.getAdminOrders({ status: statusFilter !== 'all' ? statusFilter : undefined })
+          setOrders(ordRes.data?.data || ordRes.data || [])
           break
         case 'site-settings':
           const ssRes = await api.getAdminSiteSettings()
@@ -296,6 +322,53 @@ export default function AdminDashboardPage() {
       loadSectionData('comparison-prices')
     } catch (error) {
       console.error('Error updating:', error)
+    }
+  }
+
+  async function handleUpdateRoomPlanStatus(id: number, status: string) {
+    try {
+      await api.updateAdminRoomPlan(id, { status })
+      loadSectionData('room-plans')
+    } catch (error) {
+      console.error('Error updating room plan:', error)
+    }
+  }
+
+  async function handleDeleteRoomPlan(id: number) {
+    if (!confirm('Are you sure you want to delete this room plan submission?')) return
+    try {
+      await api.deleteAdminRoomPlan(id)
+      loadSectionData('room-plans')
+    } catch (error) {
+      console.error('Error deleting room plan:', error)
+    }
+  }
+
+  async function handleTogglePaymentMethod(method: any) {
+    try {
+      await api.updateAdminPaymentMethod(method.id, { is_active: !method.is_active })
+      loadSectionData('payment-methods')
+    } catch (error) {
+      console.error('Error updating payment method:', error)
+    }
+  }
+
+  async function handleDeletePaymentMethod(id: number) {
+    if (!confirm('Are you sure you want to delete this payment method?')) return
+    try {
+      await api.deleteAdminPaymentMethod(id)
+      loadSectionData('payment-methods')
+    } catch (error) {
+      console.error('Error deleting payment method:', error)
+    }
+  }
+
+  async function handleUpdateOrderStatus(id: number, field: 'order_status' | 'payment_status', value: string) {
+    try {
+      await api.updateAdminOrder(id, { [field]: value })
+      loadSectionData('orders')
+    } catch (error) {
+      console.error('Error updating order:', error)
     }
   }
 
@@ -1082,6 +1155,340 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
+          {/* Room Plans Section */}
+          {activeSection === 'room-plans' && (
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-[#e5e5e5] flex items-center justify-between">
+                <div>
+                  <h2 className="font-bold text-xl text-[#1a1a2e]">Room Plans</h2>
+                  <p className="text-sm text-[#666] mt-1">Customer room planner submissions</p>
+                </div>
+              </div>
+
+              {/* Status Filter */}
+              <div className="p-4 border-b border-[#e5e5e5] flex gap-2">
+                {['all', 'submitted', 'contacted', 'completed'].map(status => (
+                  <button
+                    key={status}
+                    onClick={() => {
+                      setStatusFilter(status)
+                      setTimeout(() => loadSectionData('room-plans'), 0)
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
+                      statusFilter === status
+                        ? 'bg-[#0f3460] text-white'
+                        : 'bg-[#f8f9fa] text-[#666] hover:bg-[#e5e5e5]'
+                    }`}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-[#f8f9fa]">
+                    <tr>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Customer</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Contact</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Address</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Room</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Budget</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Status</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Date</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#e5e5e5]">
+                    {roomPlans.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="p-8 text-center text-[#666]">
+                          <Home className="w-16 h-16 mx-auto mb-4 text-[#e5e5e5]" />
+                          <p>No room plan submissions yet.</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      roomPlans.map((plan: any) => (
+                        <tr key={plan.id} className="hover:bg-[#faf8f5]">
+                          <td className="p-4">
+                            <div className="font-medium text-[#1a1a2e]">{plan.customer_name}</div>
+                          </td>
+                          <td className="p-4">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 text-sm text-[#666]">
+                                <Mail className="w-3 h-3" />
+                                <a href={`mailto:${plan.email}`} className="hover:text-[#0f3460]">{plan.email}</a>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-[#666]">
+                                <Phone className="w-3 h-3" />
+                                <a href={`tel:${plan.phone}`} className="hover:text-[#0f3460]">{plan.phone}</a>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <div className="text-sm text-[#666]">
+                              <div>{plan.house_number} {plan.address_line1}</div>
+                              {plan.address_line2 && <div>{plan.address_line2}</div>}
+                              <div>{plan.city}, {plan.postcode}</div>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <div className="text-sm">
+                              <div className="font-medium text-[#1a1a2e] capitalize">{plan.room_type?.replace(/([A-Z])/g, ' $1').trim()}</div>
+                              <div className="text-[#666]">{plan.style} / {plan.room_size}</div>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <div className="font-medium text-[#1a1a2e]">{formatCurrency(plan.budget || 0)}</div>
+                            {plan.total_cost && (
+                              <div className="text-xs text-[#666]">Est: {formatCurrency(plan.total_cost)}</div>
+                            )}
+                          </td>
+                          <td className="p-4">
+                            <select
+                              value={plan.status}
+                              onChange={(e) => handleUpdateRoomPlanStatus(plan.id, e.target.value)}
+                              className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[plan.status] || 'bg-gray-100 text-gray-800'}`}
+                            >
+                              <option value="submitted">Submitted</option>
+                              <option value="contacted">Contacted</option>
+                              <option value="completed">Completed</option>
+                            </select>
+                          </td>
+                          <td className="p-4 text-sm text-[#666]">
+                            {new Date(plan.created_at).toLocaleDateString('en-GB')}
+                          </td>
+                          <td className="p-4">
+                            <button
+                              onClick={() => handleDeleteRoomPlan(plan.id)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Orders Section */}
+          {activeSection === 'orders' && (
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-[#e5e5e5]">
+                <div>
+                  <h2 className="font-bold text-xl text-[#1a1a2e]">Orders</h2>
+                  <p className="text-sm text-[#666] mt-1">Manage customer orders</p>
+                </div>
+              </div>
+
+              {/* Status Filter */}
+              <div className="p-4 border-b border-[#e5e5e5] flex gap-2 flex-wrap">
+                {['all', 'pending', 'confirmed', 'shipped', 'delivered', 'cancelled'].map(status => (
+                  <button
+                    key={status}
+                    onClick={() => {
+                      setStatusFilter(status)
+                      setTimeout(() => loadSectionData('orders'), 0)
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
+                      statusFilter === status
+                        ? 'bg-[#0f3460] text-white'
+                        : 'bg-[#f8f9fa] text-[#666] hover:bg-[#e5e5e5]'
+                    }`}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-[#f8f9fa]">
+                    <tr>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Order #</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Customer</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Product</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Delivery Address</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Total</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Payment</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Status</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#e5e5e5]">
+                    {orders.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="p-8 text-center text-[#666]">
+                          <Receipt className="w-16 h-16 mx-auto mb-4 text-[#e5e5e5]" />
+                          <p>No orders yet.</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      orders.map((order: any) => (
+                        <tr key={order.id} className="hover:bg-[#faf8f5]">
+                          <td className="p-4">
+                            <div className="font-mono font-medium text-[#1a1a2e]">{order.order_number}</div>
+                          </td>
+                          <td className="p-4">
+                            <div className="font-medium text-[#1a1a2e]">{order.customer_name}</div>
+                            <div className="text-xs text-[#666]">{order.email}</div>
+                            <div className="text-xs text-[#666]">{order.phone}</div>
+                          </td>
+                          <td className="p-4">
+                            <div className="text-sm font-medium text-[#1a1a2e]">{order.product?.name || 'N/A'}</div>
+                          </td>
+                          <td className="p-4">
+                            <div className="text-sm text-[#666]">
+                              <div>{order.house_number} {order.address_line1}</div>
+                              {order.address_line2 && <div>{order.address_line2}</div>}
+                              <div>{order.city}, {order.postcode}</div>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <div className="font-medium text-[#1a1a2e]">{formatCurrency(order.total_amount || 0)}</div>
+                            <div className="text-xs text-[#666] capitalize">{order.payment_method?.replace(/_/g, ' ')}</div>
+                          </td>
+                          <td className="p-4">
+                            <select
+                              value={order.payment_status}
+                              onChange={(e) => handleUpdateOrderStatus(order.id, 'payment_status', e.target.value)}
+                              className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[order.payment_status] || 'bg-gray-100 text-gray-800'}`}
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="paid">Paid</option>
+                              <option value="failed">Failed</option>
+                            </select>
+                          </td>
+                          <td className="p-4">
+                            <select
+                              value={order.order_status}
+                              onChange={(e) => handleUpdateOrderStatus(order.id, 'order_status', e.target.value)}
+                              className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[order.order_status] || 'bg-gray-100 text-gray-800'}`}
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="confirmed">Confirmed</option>
+                              <option value="shipped">Shipped</option>
+                              <option value="delivered">Delivered</option>
+                              <option value="cancelled">Cancelled</option>
+                            </select>
+                          </td>
+                          <td className="p-4 text-sm text-[#666]">
+                            {new Date(order.created_at).toLocaleDateString('en-GB')}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Payment Methods Section */}
+          {activeSection === 'payment-methods' && (
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-[#e5e5e5] flex items-center justify-between">
+                <div>
+                  <h2 className="font-bold text-xl text-[#1a1a2e]">Payment Methods</h2>
+                  <p className="text-sm text-[#666] mt-1">Configure available payment options</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setModalType('payment-method')
+                    setEditItem(null)
+                    setShowModal(true)
+                  }}
+                  className="px-4 py-2 bg-[#0f3460] text-white rounded-lg hover:bg-[#1a4a7a] transition-colors flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Method
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-[#f8f9fa]">
+                    <tr>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Name</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Code</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Description</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Order</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Status</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#e5e5e5]">
+                    {paymentMethods.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-8 text-center text-[#666]">
+                          <CreditCard className="w-16 h-16 mx-auto mb-4 text-[#e5e5e5]" />
+                          <p>No payment methods configured.</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      paymentMethods.map((method: any) => (
+                        <tr key={method.id} className="hover:bg-[#faf8f5]">
+                          <td className="p-4">
+                            <div className="flex items-center gap-3">
+                              <CreditCard className="w-5 h-5 text-[#c9a962]" />
+                              <span className="font-medium text-[#1a1a2e]">{method.name}</span>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <code className="px-2 py-1 bg-[#f8f9fa] rounded text-sm">{method.code}</code>
+                          </td>
+                          <td className="p-4 text-sm text-[#666] max-w-xs truncate">
+                            {method.description || '-'}
+                          </td>
+                          <td className="p-4 text-sm text-[#666]">
+                            {method.sort_order}
+                          </td>
+                          <td className="p-4">
+                            <button
+                              onClick={() => handleTogglePaymentMethod(method)}
+                              className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                method.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              {method.is_active ? 'Active' : 'Inactive'}
+                            </button>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setModalType('payment-method')
+                                  setEditItem(method)
+                                  setShowModal(true)
+                                }}
+                                className="p-2 text-[#0f3460] hover:bg-[#f8f9fa] rounded-lg"
+                                title="Edit"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeletePaymentMethod(method.id)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {/* Site Settings Section */}
           {activeSection === 'site-settings' && (
             <SiteSettingsSection settings={siteSettings} onRefresh={() => loadSectionData('site-settings')} />
@@ -1363,10 +1770,15 @@ function Modal({
   const [existingImages, setExistingImages] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Reset form when item changes (switching between create/edit)
   useEffect(() => {
+    setFormData(item || {})
+    setSelectedImages([])
     if (item && type === 'product') {
       const images = Array.isArray(item.images) ? item.images : (item.images ? JSON.parse(item.images) : [])
       setExistingImages(images)
+    } else {
+      setExistingImages([])
     }
   }, [item, type])
 
@@ -1421,6 +1833,12 @@ function Modal({
         formDataToSend.append('quantity', formData.quantity?.toString() || '1')
         formDataToSend.append('status', formData.status || 'available')
         formDataToSend.append('featured', formData.featured ? '1' : '0')
+
+        // Add comparison fields
+        if (formData.comparison_retailer) formDataToSend.append('comparison_retailer', formData.comparison_retailer)
+        if (formData.comparison_product_name) formDataToSend.append('comparison_product_name', formData.comparison_product_name)
+        if (formData.comparison_price) formDataToSend.append('comparison_price', formData.comparison_price.toString())
+        if (formData.comparison_url) formDataToSend.append('comparison_url', formData.comparison_url)
 
         // Add new images
         selectedImages.forEach(img => {
@@ -1497,10 +1915,32 @@ function Modal({
             is_active: formData.is_active !== false,
           })
         }
+      } else if (type === 'payment-method') {
+        if (item) {
+          await api.updateAdminPaymentMethod(item.id, {
+            name: formData.name,
+            code: formData.code,
+            description: formData.description || null,
+            instructions: formData.instructions || null,
+            is_active: formData.is_active !== false,
+            sort_order: parseInt(formData.sort_order) || 0,
+          })
+        } else {
+          await api.createAdminPaymentMethod({
+            name: formData.name,
+            code: formData.code,
+            description: formData.description || null,
+            instructions: formData.instructions || null,
+            is_active: formData.is_active !== false,
+            sort_order: parseInt(formData.sort_order) || 0,
+          })
+        }
       }
       onSave()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving:', error)
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to save. Please try again.'
+      alert(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -1680,6 +2120,55 @@ function Modal({
                       className="w-5 h-5 rounded border-2 border-[#e5e5e5] text-[#0f3460] focus:ring-[#0f3460]"
                     />
                     <label htmlFor="featured" className="text-sm font-medium text-[#1a1a2e]">Mark as Featured Product</label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Comparison Data Section */}
+              <div className="border-t pt-4">
+                <h4 className="font-medium text-[#1a1a2e] mb-3">Price Comparison (Optional)</h4>
+                <p className="text-xs text-[#666] mb-4">Set custom comparison data for this product. If not set, the furniture type default will be used.</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Comparison Retailer</label>
+                    <input
+                      type="text"
+                      value={formData.comparison_retailer || ''}
+                      onChange={e => setFormData({ ...formData, comparison_retailer: e.target.value })}
+                      placeholder="e.g. IKEA, Argos, Amazon"
+                      className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Comparison Product Name</label>
+                    <input
+                      type="text"
+                      value={formData.comparison_product_name || ''}
+                      onChange={e => setFormData({ ...formData, comparison_product_name: e.target.value })}
+                      placeholder="e.g. MALM Bed Frame"
+                      className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Comparison Price (GBP)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.comparison_price || ''}
+                      onChange={e => setFormData({ ...formData, comparison_price: e.target.value })}
+                      placeholder="e.g. 299.00"
+                      className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Comparison URL</label>
+                    <input
+                      type="url"
+                      value={formData.comparison_url || ''}
+                      onChange={e => setFormData({ ...formData, comparison_url: e.target.value })}
+                      placeholder="https://www.ikea.com/..."
+                      className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                    />
                   </div>
                 </div>
               </div>
@@ -1999,6 +2488,76 @@ function Modal({
                   className="w-5 h-5 rounded border-2 border-[#e5e5e5] text-[#0f3460] focus:ring-[#0f3460]"
                 />
                 <label htmlFor="is_active" className="text-sm font-medium text-[#1a1a2e]">Active</label>
+              </div>
+            </>
+          )}
+
+          {/* Payment Method Form */}
+          {type === 'payment-method' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Method Name *</label>
+                <input
+                  type="text"
+                  value={formData.name || ''}
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  required
+                  placeholder="e.g. Cash on Delivery"
+                  className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Code *</label>
+                <input
+                  type="text"
+                  value={formData.code || ''}
+                  onChange={e => setFormData({ ...formData, code: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
+                  required
+                  placeholder="e.g. cod, bank_transfer"
+                  className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none font-mono"
+                />
+                <p className="text-xs text-gray-500 mt-1">Unique identifier (lowercase, no spaces)</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Description</label>
+                <input
+                  type="text"
+                  value={formData.description || ''}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="e.g. Pay when your order arrives"
+                  className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Payment Instructions</label>
+                <textarea
+                  value={formData.instructions || ''}
+                  onChange={e => setFormData({ ...formData, instructions: e.target.value })}
+                  rows={3}
+                  placeholder="Instructions shown to customer at checkout..."
+                  className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Sort Order</label>
+                <input
+                  type="number"
+                  value={formData.sort_order || 0}
+                  onChange={e => setFormData({ ...formData, sort_order: e.target.value })}
+                  placeholder="0"
+                  className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                />
+                <p className="text-xs text-gray-500 mt-1">Lower numbers appear first</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="pm_is_active"
+                  checked={formData.is_active !== false}
+                  onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
+                  className="w-5 h-5 rounded border-2 border-[#e5e5e5] text-[#0f3460] focus:ring-[#0f3460]"
+                />
+                <label htmlFor="pm_is_active" className="text-sm font-medium text-[#1a1a2e]">Active</label>
               </div>
             </>
           )}

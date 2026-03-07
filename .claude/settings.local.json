@@ -23,7 +23,8 @@
       "Bash(ssh -o ConnectTimeout=10 root@82.180.175.89 \"cat /home/indegnnk/revivalstudio.uk/revival-api/config/cors.php\")",
       "Bash(ssh:*)",
       "Bash(node scripts/generate-favicon.js:*)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(grep:*)"
     ]
   }
 }

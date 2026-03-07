@@ -16,6 +16,11 @@ class RoomPlan extends Model
         'customer_name',
         'email',
         'phone',
+        'house_number',
+        'address_line1',
+        'address_line2',
+        'city',
+        'postcode',
         'status',
         'notes',
     ];

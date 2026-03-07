@@ -25,11 +25,16 @@ class Product extends Model
         'images',
         'status',
         'featured',
+        'comparison_retailer',
+        'comparison_product_name',
+        'comparison_price',
+        'comparison_url',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'original_price' => 'decimal:2',
+        'comparison_price' => 'decimal:2',
         'images' => 'array',
         'featured' => 'boolean',
     ];

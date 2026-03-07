@@ -2,7 +2,8 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
-import { X, MapPin, Phone, Mail, Clock, ChevronLeft, ChevronRight, Star, Shield, Truck } from 'lucide-react'
+import { X, MapPin, Phone, Mail, Clock, ChevronLeft, ChevronRight, Star, Shield, Truck, ShoppingCart } from 'lucide-react'
+import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
 interface Product {
@@ -376,6 +377,20 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                           </a>
                         )}
                       </div>
+                    </div>
+                  )}
+
+                  {/* Buy Button */}
+                  {product.status === 'available' && (
+                    <div className="mt-auto pt-4">
+                      <Link
+                        href={`/checkout/${product.id}`}
+                        onClick={onClose}
+                        className="w-full py-4 bg-[#c9a962] hover:bg-[#b8994e] text-[#3d4a3a] font-bold rounded-xl flex items-center justify-center gap-2 transition-colors"
+                      >
+                        <ShoppingCart className="w-5 h-5" />
+                        Buy Now - £{formatPrice(product.price)}
+                      </Link>
                     </div>
                   )}
 

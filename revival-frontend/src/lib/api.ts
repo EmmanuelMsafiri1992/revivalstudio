@@ -187,7 +187,12 @@ class ApiClient {
     total_cost?: number
     customer_name: string
     email: string
-    phone?: string
+    phone: string
+    house_number: string
+    address_line1: string
+    address_line2?: string
+    city: string
+    postcode: string
   }) {
     return this.request<{ success: boolean; data: any; message: string }>('/planner/submit', {
       method: 'POST',
@@ -776,6 +781,138 @@ class ApiClient {
     return this.request<{ success: boolean; message: string }>(
       `/admin/site-settings/${key}`,
       { method: 'DELETE' },
+      true
+    )
+  }
+
+  // Admin - Room plans management
+  async getAdminRoomPlans(params?: { status?: string; search?: string; page?: number }) {
+    const searchParams = new URLSearchParams()
+    if (params?.status) searchParams.set('status', params.status)
+    if (params?.search) searchParams.set('search', params.search)
+    if (params?.page) searchParams.set('page', params.page.toString())
+    const queryString = searchParams.toString()
+    return this.request<{ success: boolean; data: any }>(
+      `/admin/room-plans${queryString ? `?${queryString}` : ''}`,
+      {},
+      true
+    )
+  }
+
+  async getAdminRoomPlan(id: number) {
+    return this.request<{ success: boolean; data: any }>(
+      `/admin/room-plans/${id}`,
+      {},
+      true
+    )
+  }
+
+  async updateAdminRoomPlan(id: number, data: { status?: string; notes?: string }) {
+    return this.request<{ success: boolean; data: any; message: string }>(
+      `/admin/room-plans/${id}`,
+      { method: 'PUT', body: JSON.stringify(data) },
+      true
+    )
+  }
+
+  async deleteAdminRoomPlan(id: number) {
+    return this.request<{ success: boolean; message: string }>(
+      `/admin/room-plans/${id}`,
+      { method: 'DELETE' },
+      true
+    )
+  }
+
+  // Public - Payment methods and orders
+  async getPaymentMethods() {
+    return this.request<{ success: boolean; data: any[] }>('/payment-methods')
+  }
+
+  async createOrder(data: {
+    product_id: number
+    customer_name: string
+    email: string
+    phone: string
+    house_number: string
+    address_line1: string
+    address_line2?: string
+    city: string
+    postcode: string
+    payment_method: string
+    notes?: string
+  }) {
+    return this.request<{ success: boolean; data: { order_number: string; id: number }; message: string }>(
+      '/orders',
+      { method: 'POST', body: JSON.stringify(data) }
+    )
+  }
+
+  async getOrder(orderNumber: string) {
+    return this.request<{ success: boolean; data: any }>(`/orders/${orderNumber}`)
+  }
+
+  // Admin - Payment methods management
+  async getAdminPaymentMethods() {
+    return this.request<{ success: boolean; data: any[] }>('/admin/payment-methods', {}, true)
+  }
+
+  async createAdminPaymentMethod(data: {
+    name: string
+    code: string
+    description?: string
+    instructions?: string
+    is_active?: boolean
+    sort_order?: number
+  }) {
+    return this.request<{ success: boolean; data: any; message: string }>(
+      '/admin/payment-methods',
+      { method: 'POST', body: JSON.stringify(data) },
+      true
+    )
+  }
+
+  async updateAdminPaymentMethod(id: number, data: {
+    name?: string
+    code?: string
+    description?: string
+    instructions?: string
+    is_active?: boolean
+    sort_order?: number
+  }) {
+    return this.request<{ success: boolean; data: any; message: string }>(
+      `/admin/payment-methods/${id}`,
+      { method: 'PUT', body: JSON.stringify(data) },
+      true
+    )
+  }
+
+  async deleteAdminPaymentMethod(id: number) {
+    return this.request<{ success: boolean; message: string }>(
+      `/admin/payment-methods/${id}`,
+      { method: 'DELETE' },
+      true
+    )
+  }
+
+  // Admin - Orders management
+  async getAdminOrders(params?: { status?: string; payment_status?: string; search?: string; page?: number }) {
+    const searchParams = new URLSearchParams()
+    if (params?.status) searchParams.set('status', params.status)
+    if (params?.payment_status) searchParams.set('payment_status', params.payment_status)
+    if (params?.search) searchParams.set('search', params.search)
+    if (params?.page) searchParams.set('page', params.page.toString())
+    const queryString = searchParams.toString()
+    return this.request<{ success: boolean; data: any }>(
+      `/admin/orders${queryString ? `?${queryString}` : ''}`,
+      {},
+      true
+    )
+  }
+
+  async updateAdminOrder(id: number, data: { order_status?: string; payment_status?: string; notes?: string }) {
+    return this.request<{ success: boolean; data: any; message: string }>(
+      `/admin/orders/${id}`,
+      { method: 'PUT', body: JSON.stringify(data) },
       true
     )
   }

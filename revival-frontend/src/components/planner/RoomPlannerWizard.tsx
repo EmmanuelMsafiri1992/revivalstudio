@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, ChevronLeft, Sparkles, Check, Loader2, MessageCircle, Home, Maximize, Palette, PoundSterling } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Sparkles, Check, Loader2, MessageCircle, Home, Maximize, Palette, PoundSterling, User } from 'lucide-react'
 import { api } from '@/lib/api'
 import { formatCurrency } from '@/lib/utils'
 
@@ -34,23 +34,38 @@ const steps = [
   { num: 2, label: 'Size', icon: Maximize },
   { num: 3, label: 'Style', icon: Palette },
   { num: 4, label: 'Budget', icon: PoundSterling },
-  { num: 5, label: 'Plan', icon: Sparkles },
+  { num: 5, label: 'Details', icon: User },
+  { num: 6, label: 'Plan', icon: Sparkles },
 ]
 
 export function RoomPlannerWizard() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [selectedRoom, setSelectedRoom] = useState('')
   const [selectedSize, setSelectedSize] = useState('')
   const [selectedStyle, setSelectedStyle] = useState('')
   const [budget, setBudget] = useState(2000)
   const [result, setResult] = useState<any>(null)
+  const [submitted, setSubmitted] = useState(false)
 
-  async function generatePlan() {
+  // Customer details state
+  const [customerName, setCustomerName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [houseNumber, setHouseNumber] = useState('')
+  const [addressLine1, setAddressLine1] = useState('')
+  const [addressLine2, setAddressLine2] = useState('')
+  const [city, setCity] = useState('')
+  const [postcode, setPostcode] = useState('')
+
+  async function generateAndSubmitPlan() {
     if (!selectedRoom || !selectedSize || !selectedStyle) return
+    if (!customerName || !email || !phone || !houseNumber || !addressLine1 || !city || !postcode) return
 
     setLoading(true)
     try {
+      // First generate the plan
       const res = await api.generateRoomPlan({
         room_type: selectedRoom,
         room_size: selectedSize,
@@ -58,11 +73,33 @@ export function RoomPlannerWizard() {
         budget: budget,
       })
       setResult(res.data)
-      setStep(5)
+
+      // Then submit the room plan with customer details
+      setSubmitting(true)
+      await api.submitRoomPlan({
+        room_type: selectedRoom,
+        room_size: selectedSize,
+        style: selectedStyle,
+        budget: budget,
+        selected_items: res.data.items,
+        total_cost: res.data.total_cost,
+        customer_name: customerName,
+        email: email,
+        phone: phone,
+        house_number: houseNumber,
+        address_line1: addressLine1,
+        address_line2: addressLine2 || undefined,
+        city: city,
+        postcode: postcode,
+      })
+      setSubmitted(true)
+      setStep(6)
     } catch (error) {
-      console.error('Error generating plan:', error)
+      console.error('Error generating/submitting plan:', error)
+      alert('Failed to submit your plan. Please try again.')
     } finally {
       setLoading(false)
+      setSubmitting(false)
     }
   }
 
@@ -73,34 +110,45 @@ export function RoomPlannerWizard() {
     setSelectedStyle('')
     setBudget(2000)
     setResult(null)
+    setSubmitted(false)
+    setCustomerName('')
+    setEmail('')
+    setPhone('')
+    setHouseNumber('')
+    setAddressLine1('')
+    setAddressLine2('')
+    setCity('')
+    setPostcode('')
   }
 
   const selectedRoomLabel = roomOptions.find(r => r.key === selectedRoom)?.label || ''
+
+  const isCustomerFormValid = customerName && email && phone && houseNumber && addressLine1 && city && postcode
 
   return (
     <div className="max-w-4xl mx-auto">
       <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden">
         {/* Progress Steps */}
         <div className="bg-gradient-to-r from-[#3d4a3a] to-[#4a5a46] p-4 sm:p-6">
-          <div className="flex justify-between items-center max-w-xl mx-auto">
+          <div className="flex justify-between items-center max-w-2xl mx-auto">
             {steps.map((s, idx) => (
               <div key={s.num} className="flex items-center">
                 <div className="flex flex-col items-center">
-                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-semibold transition-all ${
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
                     s.num === step
                       ? 'bg-[#c9a962] text-[#3d4a3a] ring-4 ring-[#c9a962]/30'
                       : s.num < step
                         ? 'bg-[#7a9b76] text-white'
                         : 'bg-white/20 text-white/60'
                   }`}>
-                    {s.num < step ? <Check className="w-5 h-5" /> : <s.icon className="w-5 h-5" />}
+                    {s.num < step ? <Check className="w-4 h-4" /> : <s.icon className="w-4 h-4" />}
                   </div>
-                  <span className={`text-[10px] sm:text-xs mt-1 font-medium ${s.num <= step ? 'text-white' : 'text-white/50'}`}>
+                  <span className={`text-[8px] sm:text-[10px] mt-1 font-medium ${s.num <= step ? 'text-white' : 'text-white/50'}`}>
                     {s.label}
                   </span>
                 </div>
                 {idx < steps.length - 1 && (
-                  <div className={`w-6 sm:w-12 lg:w-16 h-0.5 mx-1 sm:mx-2 mb-5 ${s.num < step ? 'bg-[#7a9b76]' : 'bg-white/20'}`} />
+                  <div className={`w-4 sm:w-8 lg:w-12 h-0.5 mx-1 mb-4 ${s.num < step ? 'bg-[#7a9b76]' : 'bg-white/20'}`} />
                 )}
               </div>
             ))}
@@ -113,7 +161,7 @@ export function RoomPlannerWizard() {
               <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 <div className="text-center mb-6 sm:mb-8">
                   <span className="inline-block px-3 py-1 bg-[#7a9b76]/10 text-[#7a9b76] rounded-full text-sm font-medium mb-3">
-                    Step 1 of 4
+                    Step 1 of 5
                   </span>
                   <h3 className="text-xl sm:text-2xl font-bold text-[#3d4a3a]">What room are you furnishing?</h3>
                   <p className="text-sm text-[#666] mt-2">Select the room type to get tailored furniture recommendations</p>
@@ -151,7 +199,7 @@ export function RoomPlannerWizard() {
               <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 <div className="text-center mb-6 sm:mb-8">
                   <span className="inline-block px-3 py-1 bg-[#7a9b76]/10 text-[#7a9b76] rounded-full text-sm font-medium mb-3">
-                    Step 2 of 4
+                    Step 2 of 5
                   </span>
                   <h3 className="text-xl sm:text-2xl font-bold text-[#3d4a3a]">What size is your room?</h3>
                   <p className="text-sm text-[#666] mt-2">This helps us recommend the right number and size of furniture pieces</p>
@@ -195,7 +243,7 @@ export function RoomPlannerWizard() {
               <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 <div className="text-center mb-6 sm:mb-8">
                   <span className="inline-block px-3 py-1 bg-[#7a9b76]/10 text-[#7a9b76] rounded-full text-sm font-medium mb-3">
-                    Step 3 of 4
+                    Step 3 of 5
                   </span>
                   <h3 className="text-xl sm:text-2xl font-bold text-[#3d4a3a]">What style do you prefer?</h3>
                   <p className="text-sm text-[#666] mt-2">Choose your aesthetic to match furniture recommendations to your taste</p>
@@ -239,7 +287,7 @@ export function RoomPlannerWizard() {
               <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 <div className="text-center mb-6 sm:mb-8">
                   <span className="inline-block px-3 py-1 bg-[#7a9b76]/10 text-[#7a9b76] rounded-full text-sm font-medium mb-3">
-                    Step 4 of 4
+                    Step 4 of 5
                   </span>
                   <h3 className="text-xl sm:text-2xl font-bold text-[#3d4a3a]">What&apos;s your budget?</h3>
                   <p className="text-sm text-[#666] mt-2">Set your total budget and we&apos;ll find the best furniture within it</p>
@@ -294,14 +342,140 @@ export function RoomPlannerWizard() {
                     <ChevronLeft className="w-5 h-5" /> Back
                   </button>
                   <button
-                    onClick={generatePlan}
-                    disabled={loading}
-                    className="flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-[#c9a962] text-[#3d4a3a] rounded-full font-bold hover:bg-[#d4b46d] transition-all hover:-translate-y-0.5 shadow-lg hover:shadow-xl disabled:opacity-50"
+                    onClick={() => setStep(5)}
+                    className="flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-[#3d4a3a] text-white rounded-full font-semibold hover:bg-[#2d3a2a] transition-all hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
+                  >
+                    Continue <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {step === 5 && (
+              <motion.div key="step5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <div className="text-center mb-6 sm:mb-8">
+                  <span className="inline-block px-3 py-1 bg-[#7a9b76]/10 text-[#7a9b76] rounded-full text-sm font-medium mb-3">
+                    Step 5 of 5
+                  </span>
+                  <h3 className="text-xl sm:text-2xl font-bold text-[#3d4a3a]">Your Contact Details</h3>
+                  <p className="text-sm text-[#666] mt-2">Please provide your details so we can contact you about your furniture plan</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-[#faf8f5] to-[#f5f0e8] rounded-2xl p-6 sm:p-8 mb-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="sm:col-span-2">
+                      <label className="block text-sm font-medium text-[#3d4a3a] mb-2">Full Name *</label>
+                      <input
+                        type="text"
+                        value={customerName}
+                        onChange={e => setCustomerName(e.target.value)}
+                        placeholder="Enter your full name"
+                        className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none bg-white"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-[#3d4a3a] mb-2">Email *</label>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        placeholder="your@email.com"
+                        className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none bg-white"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-[#3d4a3a] mb-2">Phone Number *</label>
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={e => setPhone(e.target.value)}
+                        placeholder="+44 7XXX XXXXXX"
+                        className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none bg-white"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-[#3d4a3a] mb-2">House Number *</label>
+                      <input
+                        type="text"
+                        value={houseNumber}
+                        onChange={e => setHouseNumber(e.target.value)}
+                        placeholder="e.g. 42 or Flat 3B"
+                        className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none bg-white"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-[#3d4a3a] mb-2">Address Line 1 *</label>
+                      <input
+                        type="text"
+                        value={addressLine1}
+                        onChange={e => setAddressLine1(e.target.value)}
+                        placeholder="Street name"
+                        className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none bg-white"
+                        required
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-sm font-medium text-[#3d4a3a] mb-2">Address Line 2</label>
+                      <input
+                        type="text"
+                        value={addressLine2}
+                        onChange={e => setAddressLine2(e.target.value)}
+                        placeholder="Apartment, suite, building (optional)"
+                        className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none bg-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-[#3d4a3a] mb-2">City *</label>
+                      <input
+                        type="text"
+                        value={city}
+                        onChange={e => setCity(e.target.value)}
+                        placeholder="e.g. London"
+                        className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none bg-white"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-[#3d4a3a] mb-2">Postcode *</label>
+                      <input
+                        type="text"
+                        value={postcode}
+                        onChange={e => setPostcode(e.target.value)}
+                        placeholder="e.g. SW1A 1AA"
+                        className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none bg-white"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between mt-8">
+                  <button
+                    onClick={() => setStep(4)}
+                    className="flex items-center gap-2 px-5 sm:px-6 py-3 border-2 border-[#3d4a3a] text-[#3d4a3a] rounded-full font-semibold hover:bg-[#3d4a3a]/5 transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5" /> Back
+                  </button>
+                  <button
+                    onClick={generateAndSubmitPlan}
+                    disabled={loading || !isCustomerFormValid}
+                    className="flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-[#c9a962] text-[#3d4a3a] rounded-full font-bold hover:bg-[#d4b46d] transition-all hover:-translate-y-0.5 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        Generating...
+                        {submitting ? 'Submitting...' : 'Generating...'}
                       </>
                     ) : (
                       <>
@@ -314,8 +488,8 @@ export function RoomPlannerWizard() {
               </motion.div>
             )}
 
-            {step === 5 && result && (
-              <motion.div key="step5" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+            {step === 6 && result && (
+              <motion.div key="step6" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
                 {/* Thank You Message */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -325,7 +499,7 @@ export function RoomPlannerWizard() {
                   <div className="w-16 h-16 bg-[#c9a962]/20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Sparkles className="w-8 h-8 text-[#c9a962]" />
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-bold mb-4">Thank You!</h3>
+                  <h3 className="text-xl sm:text-2xl font-bold mb-4">Thank You, {customerName}!</h3>
                   <p className="text-white/90 leading-relaxed mb-4">
                     Thank you for providing the necessary details about your building and room.
                     Our technical team is going through it and we will revert back with personalized recommendations.
@@ -411,7 +585,7 @@ export function RoomPlannerWizard() {
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row justify-center gap-3 mt-8">
                   <a
-                    href={`https://wa.me/447570578520?text=Hi, I'd like to furnish my ${selectedRoomLabel} with the AI-generated plan (Budget: ${formatCurrency(budget)}). Can you help me source these items?`}
+                    href={`https://wa.me/447570578520?text=Hi, I'm ${customerName}. I'd like to furnish my ${selectedRoomLabel} with the AI-generated plan (Budget: ${formatCurrency(budget)}). Can you help me source these items?`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#25D366] text-white rounded-full font-semibold hover:bg-[#128C7E] transition-colors"

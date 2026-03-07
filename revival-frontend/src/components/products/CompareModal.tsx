@@ -19,6 +19,11 @@ interface Product {
     name: string
     icon?: string | null
   }
+  // Comparison fields
+  comparison_retailer?: string | null
+  comparison_product_name?: string | null
+  comparison_price?: number | null
+  comparison_url?: string | null
 }
 
 interface ComparisonData {

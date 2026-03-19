@@ -28,7 +28,7 @@ jobs:
         working-directory: revival-frontend
         run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || 'https://revivalstudio.co.uk/revival-api/api' }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
 
       - name: Deploy to server via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -42,7 +42,7 @@ jobs:
             cd /home/indegnnk/revivalRepo
             git pull origin main
 
-            DEPLOYPATH=/home/indegnnk/revivalstudio.uk
+            DEPLOYPATH=/home/indegnnk/revivalstudio.co.uk
 
             # ============================================
             # DEPLOY LARAVEL API
@@ -109,7 +109,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           source: "revival-frontend/.next"
-          target: "/home/indegnnk/revivalstudio.uk/revival-frontend"
+          target: "/home/indegnnk/revivalstudio.co.uk/revival-frontend"
           strip_components: 1
 
       - name: Install dependencies and restart frontend
@@ -120,7 +120,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           script: |
-            DEPLOYPATH=/home/indegnnk/revivalstudio.uk/revival-frontend
+            DEPLOYPATH=/home/indegnnk/revivalstudio.co.uk/revival-frontend
 
             cd $DEPLOYPATH
             chown -R indegnnk:indegnnk $DEPLOYPATH

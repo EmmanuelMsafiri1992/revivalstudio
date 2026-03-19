@@ -17,6 +17,19 @@ class ProductController extends Controller
         $query = Product::with(['outlet:id,name,city,postcode,latitude,longitude', 'furnitureType:id,name,icon'])
             ->available();
 
+        // Discounted products filter - products from discounted@revivalstudio.co.uk
+        if ($request->get('discounted') === 'true' || $request->get('discounted') === '1') {
+            // Only show discounted outlet products
+            $query->whereHas('outlet', function ($q) {
+                $q->where('email', 'discounted@revivalstudio.co.uk');
+            });
+        } else {
+            // Exclude discounted outlet products from regular marketplace
+            $query->whereDoesntHave('outlet', function ($q) {
+                $q->where('email', 'discounted@revivalstudio.co.uk');
+            });
+        }
+
         // Filter by furniture type
         if ($request->has('furniture_type_id')) {
             $query->where('furniture_type_id', $request->furniture_type_id);

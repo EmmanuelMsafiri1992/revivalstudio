@@ -921,6 +921,160 @@ class ApiClient {
   async healthCheck() {
     return this.request<{ success: boolean; message: string; version: string }>('/health')
   }
+
+  // Near Me
+  async searchNearMe(data: { postcode: string; distance: number; product_name?: string }) {
+    const params = new URLSearchParams()
+    params.append('postcode', data.postcode)
+    params.append('distance', data.distance.toString())
+    if (data.product_name) params.append('product_name', data.product_name)
+    return this.request<{ success: boolean; data: any[] }>(`/near-me/search?${params.toString()}`)
+  }
+
+  // Exchange Pro
+  async calculateExchangePro(data: {
+    furniture_type_id: number
+    age: string
+    condition: string
+    brand_category?: string
+    original_price?: number
+  }) {
+    return this.request<{ success: boolean; data: any }>('/exchange-pro/calculate', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async submitExchangePro(data: {
+    furniture_type_id: number
+    age: string
+    condition: string
+    brand_category?: string
+    original_price?: number
+    customer_name: string
+    email: string
+    phone?: string
+    address?: string
+    postcode?: string
+    description?: string
+  }) {
+    return this.request<{ success: boolean; data: any; message: string }>('/exchange-pro/submit', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  // Bidding Pro
+  async submitBiddingPro(data: {
+    furniture_type_id?: number
+    furniture_type?: string
+    brand?: string
+    condition?: string
+    damages?: string[]
+    delivery?: string
+    postcode?: string
+    floor?: string
+    description?: string
+    customer_name: string
+    email: string
+    phone?: string
+  }) {
+    return this.request<{ success: boolean; data: any; message: string }>('/bidding-pro/submit', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  // CO2 Emissions
+  async getCo2Emissions(product_name?: string) {
+    const params = product_name ? `?product_name=${encodeURIComponent(product_name)}` : ''
+    return this.request<{ success: boolean; data: any[] }>(`/co2-emissions${params}`)
+  }
+
+  // Admin - Near Me Requests
+  async getAdminNearMeRequests() {
+    return this.request<{ success: boolean; data: any[] }>('/admin/near-me-requests', {}, true)
+  }
+
+  async updateAdminNearMeRequest(id: number, data: { status?: string }) {
+    return this.request<{ success: boolean; data: any; message: string }>(`/admin/near-me-requests/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }, true)
+  }
+
+  // Admin - Exchange Pro Requests
+  async getAdminExchangeProRequests() {
+    return this.request<{ success: boolean; data: any[] }>('/admin/exchange-pro-requests', {}, true)
+  }
+
+  async updateAdminExchangeProRequest(id: number, data: { status?: string }) {
+    return this.request<{ success: boolean; data: any; message: string }>(`/admin/exchange-pro-requests/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }, true)
+  }
+
+  // Admin - Bidding Pro Requests
+  async getAdminBiddingProRequests() {
+    return this.request<{ success: boolean; data: any[] }>('/admin/bidding-pro-requests', {}, true)
+  }
+
+  async updateAdminBiddingProRequest(id: number, data: { status?: string }) {
+    return this.request<{ success: boolean; data: any; message: string }>(`/admin/bidding-pro-requests/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }, true)
+  }
+
+  // Admin - CO2 Emissions
+  async getAdminCo2Emissions() {
+    return this.request<{ success: boolean; data: any[] }>('/admin/co2-emissions', {}, true)
+  }
+
+  async createAdminCo2Emission(data: {
+    product_name: string
+    new_co2: number
+    refurbished_co2: number
+    transport_co2: number
+    net_co2_saved: number
+  }) {
+    return this.request<{ success: boolean; data: any; message: string }>('/admin/co2-emissions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, true)
+  }
+
+  async updateAdminCo2Emission(id: number, data: {
+    product_name?: string
+    new_co2?: number
+    refurbished_co2?: number
+    transport_co2?: number
+    net_co2_saved?: number
+  }) {
+    return this.request<{ success: boolean; data: any; message: string }>(`/admin/co2-emissions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }, true)
+  }
+
+  async deleteAdminCo2Emission(id: number) {
+    return this.request<{ success: boolean; message: string }>(`/admin/co2-emissions/${id}`, {
+      method: 'DELETE',
+    }, true)
+  }
+
+  // Partner - Bidding Pro
+  async getPartnerBiddingRequests() {
+    return this.request<{ success: boolean; data: any[] }>('/outlet/bidding-requests')
+  }
+
+  async submitBiddingOffer(biddingRequestId: number, data: { offered_price: number; message?: string }) {
+    return this.request<{ success: boolean; data: any; message: string }>(`/outlet/bidding-requests/${biddingRequestId}/offer`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL)

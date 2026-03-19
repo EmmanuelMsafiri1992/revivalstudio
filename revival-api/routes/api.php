@@ -12,6 +12,10 @@ use App\Http\Controllers\Api\RepairController;
 use App\Http\Controllers\Api\ResaleController;
 use App\Http\Controllers\Api\RoomPlannerController;
 use App\Http\Controllers\Api\SiteSettingController;
+use App\Http\Controllers\NearMeController;
+use App\Http\Controllers\ExchangeProController;
+use App\Http\Controllers\BiddingProController;
+use App\Http\Controllers\Co2EmissionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -61,6 +65,13 @@ Route::get('/payment-methods', [OrderController::class, 'paymentMethods']);
 Route::post('/orders', [OrderController::class, 'store']);
 Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
 
+// Public routes - Near Me, Exchange Pro, Bidding Pro, CO2
+Route::get('/near-me/search', [NearMeController::class, 'search']);
+Route::post('/exchange-pro/calculate', [ExchangeProController::class, 'calculate']);
+Route::post('/exchange-pro/submit', [ExchangeProController::class, 'submit']);
+Route::post('/bidding-pro/submit', [BiddingProController::class, 'submit']);
+Route::get('/co2-emissions', [Co2EmissionController::class, 'index']);
+
 // Outlet authentication
 Route::post('/outlet/login', [OutletAuthController::class, 'login']);
 
@@ -80,6 +91,10 @@ Route::middleware('auth:sanctum')->prefix('outlet')->group(function () {
     Route::put('/products/{id}', [ProductController::class, 'partnerUpdate']);
     Route::delete('/products/{id}', [ProductController::class, 'partnerDestroy']);
     Route::delete('/products/{id}/images/{imageIndex}', [ProductController::class, 'partnerDeleteImage']);
+
+    // Bidding Pro - Partner routes
+    Route::get('/bidding-requests', [BiddingProController::class, 'outletIndex']);
+    Route::post('/bidding-requests/{id}/offer', [BiddingProController::class, 'outletOffer']);
 });
 
 // Admin authentication
@@ -163,6 +178,19 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
     Route::get('/orders', [AdminController::class, 'orders']);
     Route::get('/orders/{id}', [AdminController::class, 'showOrder']);
     Route::put('/orders/{id}', [AdminController::class, 'updateOrder']);
+
+    // Near Me requests management
+    Route::get('/near-me-requests', [NearMeController::class, 'adminIndex']);
+
+    // Exchange Pro requests management
+    Route::get('/exchange-pro-requests', [ExchangeProController::class, 'adminIndex']);
+
+    // Bidding Pro requests management
+    Route::get('/bidding-pro-requests', [BiddingProController::class, 'adminIndex']);
+    Route::put('/bidding-pro-requests/{id}', [BiddingProController::class, 'adminUpdate']);
+
+    // CO2 Emissions management
+    Route::apiResource('/co2-emissions', Co2EmissionController::class)->except(['show']);
 });
 
 // Health check

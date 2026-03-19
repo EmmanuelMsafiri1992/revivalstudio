@@ -5,11 +5,12 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import {
   ShoppingBag, Search, Filter, MapPin, Grid, List,
-  ChevronDown, Loader2, X, SlidersHorizontal, Scale
+  ChevronDown, Loader2, X, SlidersHorizontal, Scale, Leaf
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { ProductDetailModal } from '@/components/products/ProductDetailModal'
 import { CompareModal } from '@/components/products/CompareModal'
+import { EmissionModal } from '@/components/products/EmissionModal'
 
 interface Product {
   id: number
@@ -74,6 +75,8 @@ export default function BuyPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [compareProduct, setCompareProduct] = useState<Product | null>(null)
   const [compareModalOpen, setCompareModalOpen] = useState(false)
+  const [emissionProduct, setEmissionProduct] = useState<Product | null>(null)
+  const [emissionModalOpen, setEmissionModalOpen] = useState(false)
 
   // Filters
   const [search, setSearch] = useState('')
@@ -184,6 +187,11 @@ export default function BuyPage() {
   const handleCompareClick = (product: Product) => {
     setCompareProduct(product)
     setCompareModalOpen(true)
+  }
+
+  const handleEmissionClick = (product: Product) => {
+    setEmissionProduct(product)
+    setEmissionModalOpen(true)
   }
 
   const getImageUrl = (product: Product) => {
@@ -526,16 +534,27 @@ export default function BuyPage() {
                         </div>
                       </div>
 
-                      <div className="mt-3 flex gap-2">
+                      <div className="mt-3 flex gap-1.5">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleEmissionClick(product)
+                          }}
+                          className="flex-1 py-2 bg-green-50 text-green-700 rounded-xl text-xs font-medium hover:bg-green-100 transition-colors flex items-center justify-center gap-1 border border-green-200"
+                          title="CO2 Emissions"
+                        >
+                          <Leaf className="w-3.5 h-3.5" />
+                          Emission
+                        </button>
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
                             handleCompareClick(product)
                           }}
-                          className="flex-1 py-2 bg-[#faf8f5] text-[#3d4a3a] rounded-xl text-sm font-medium hover:bg-[#3d4a3a]/10 transition-colors flex items-center justify-center gap-1 border border-[#3d4a3a]/20"
+                          className="flex-1 py-2 bg-[#faf8f5] text-[#3d4a3a] rounded-xl text-xs font-medium hover:bg-[#3d4a3a]/10 transition-colors flex items-center justify-center gap-1 border border-[#3d4a3a]/20"
                           title="Compare with IKEA prices"
                         >
-                          <Scale className="w-4 h-4" />
+                          <Scale className="w-3.5 h-3.5" />
                           Compare
                         </button>
                         <button
@@ -543,9 +562,9 @@ export default function BuyPage() {
                             e.stopPropagation()
                             handleProductClick(product)
                           }}
-                          className="flex-1 py-2 bg-[#3d4a3a] text-white rounded-xl text-sm font-medium hover:bg-[#2d3a2a] transition-colors flex items-center justify-center gap-2"
+                          className="flex-1 py-2 bg-[#3d4a3a] text-white rounded-xl text-xs font-medium hover:bg-[#2d3a2a] transition-colors flex items-center justify-center gap-1"
                         >
-                          <ShoppingBag className="w-4 h-4" />
+                          <ShoppingBag className="w-3.5 h-3.5" />
                           Buy
                         </button>
                       </div>
@@ -626,6 +645,13 @@ export default function BuyPage() {
           setCompareModalOpen(false)
           setCompareProduct(null)
         }}
+      />
+
+      {/* Emission Modal */}
+      <EmissionModal
+        product={emissionProduct}
+        isOpen={emissionModalOpen}
+        onClose={() => setEmissionModalOpen(false)}
       />
     </div>
   )

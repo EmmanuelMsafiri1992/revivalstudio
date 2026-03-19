@@ -7,7 +7,7 @@ import {
   Loader2, LogOut, Package, Wrench, DollarSign, CheckCircle, Clock,
   LayoutDashboard, BoxIcon, PlusCircle, BarChart3, Settings, ChevronLeft,
   ChevronRight, Bell, Search, User, TrendingUp, Calendar, MapPin,
-  ShoppingBag, Upload, X, Trash2, Edit2, Eye, Star
+  ShoppingBag, Upload, X, Trash2, Edit2, Eye, Star, Gavel
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { formatCurrency, formatPrice } from '@/lib/utils'
@@ -61,6 +61,19 @@ interface FurnitureType {
   icon: string | null
 }
 
+interface BiddingRequest {
+  id: number
+  customer_name: string
+  email: string
+  phone?: string
+  furniture_type?: string
+  condition?: string
+  description?: string
+  postcode?: string
+  status: string
+  created_at: string
+}
+
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   collected: 'bg-blue-100 text-blue-800',
@@ -77,6 +90,7 @@ const sidebarItems = [
   { id: 'products', label: 'Products', icon: ShoppingBag },
   { id: 'inventory', label: 'Inventory', icon: BoxIcon },
   { id: 'add-item', label: 'Add Item', icon: PlusCircle },
+  { id: 'bidding', label: 'Bidding Pro', icon: Gavel },
   { id: 'reports', label: 'Reports', icon: BarChart3 },
   { id: 'settings', label: 'Settings', icon: Settings },
 ]
@@ -93,6 +107,14 @@ export default function DashboardPage() {
   const [productTab, setProductTab] = useState('all')
   const [activeSection, setActiveSection] = useState('dashboard')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+  // Bidding state
+  const [biddingRequests, setBiddingRequests] = useState<any[]>([])
+  const [offerFormOpen, setOfferFormOpen] = useState<number | null>(null)
+  const [offerPrice, setOfferPrice] = useState('')
+  const [offerMessage, setOfferMessage] = useState('')
+  const [offerSubmitting, setOfferSubmitting] = useState(false)
+  const [offerSuccess, setOfferSuccess] = useState<number | null>(null)
 
   // Product form state
   const [showProductForm, setShowProductForm] = useState(false)
@@ -184,6 +206,19 @@ export default function DashboardPage() {
       loadProducts(productTab !== 'all' ? productTab : undefined)
     }
   }, [activeSection, productTab])
+
+  useEffect(() => {
+    if (activeSection === 'bidding') {
+      ;(async () => {
+        try {
+          const res = await api.getPartnerBiddingRequests()
+          setBiddingRequests(res.data || [])
+        } catch (err) {
+          setBiddingRequests([])
+        }
+      })()
+    }
+  }, [activeSection])
 
   async function handleLogout() {
     try {
@@ -325,6 +360,26 @@ export default function DashboardPage() {
       alert('Failed to save settings.')
     } finally {
       setSavingSettings(false)
+    }
+  }
+
+  async function handleBiddingOfferSubmit(requestId: number) {
+    if (!offerPrice) return
+    setOfferSubmitting(true)
+    try {
+      await api.submitBiddingOffer(requestId, {
+        offered_price: parseFloat(offerPrice),
+        message: offerMessage,
+      })
+      setOfferSuccess(requestId)
+      setOfferFormOpen(null)
+      setOfferPrice('')
+      setOfferMessage('')
+    } catch (err) {
+      console.error('Error submitting offer:', err)
+      alert('Failed to submit offer. Please try again.')
+    } finally {
+      setOfferSubmitting(false)
     }
   }
 
@@ -859,6 +914,161 @@ export default function DashboardPage() {
                     Add Item
                   </button>
                 </form>
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'bidding' && (
+            <div className="bg-white rounded-2xl shadow-sm">
+              <div className="p-6 border-b border-[#e5e5e5] flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#c9a962]/20 flex items-center justify-center">
+                  <Gavel className="w-5 h-5 text-[#c9a962]" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-lg text-[#3d4a3a]">Bidding Pro</h2>
+                  <p className="text-sm text-[#666]">Customer bidding requests — make your best offer</p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-[#faf8f5]">
+                      <th className="text-left p-4 font-semibold text-[#3d4a3a]">Customer Name</th>
+                      <th className="text-left p-4 font-semibold text-[#3d4a3a]">Email / Phone</th>
+                      <th className="text-left p-4 font-semibold text-[#3d4a3a]">Furniture Type</th>
+                      <th className="text-left p-4 font-semibold text-[#3d4a3a]">Condition</th>
+                      <th className="text-left p-4 font-semibold text-[#3d4a3a]">Description</th>
+                      <th className="text-left p-4 font-semibold text-[#3d4a3a]">Status</th>
+                      <th className="text-left p-4 font-semibold text-[#3d4a3a]">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {biddingRequests.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="p-10 text-center text-[#666]">
+                          <div className="flex flex-col items-center gap-3">
+                            <Gavel className="w-12 h-12 text-[#e5e5e5]" />
+                            <p className="text-base">No bidding requests yet</p>
+                            <p className="text-sm text-[#999]">Customer requests will appear here when submitted</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      biddingRequests.map((req: BiddingRequest) => (
+                        <>
+                          <tr key={req.id} className="border-t border-[#e5e5e5] hover:bg-[#faf8f5] transition-colors">
+                            <td className="p-4 font-medium text-[#3d4a3a]">{req.customer_name}</td>
+                            <td className="p-4 text-sm text-[#666]">
+                              <div>{req.email}</div>
+                              {req.phone && <div className="text-xs text-[#999] mt-0.5">{req.phone}</div>}
+                            </td>
+                            <td className="p-4 text-sm text-[#666]">{req.furniture_type || '—'}</td>
+                            <td className="p-4 text-sm text-[#666] capitalize">{req.condition || '—'}</td>
+                            <td className="p-4 text-sm text-[#666] max-w-xs">
+                              <p className="truncate">{req.description || '—'}</p>
+                            </td>
+                            <td className="p-4">
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                req.status === 'open'
+                                  ? 'bg-green-100 text-green-800'
+                                  : req.status === 'pending'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : req.status === 'accepted'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : req.status === 'closed'
+                                  ? 'bg-gray-100 text-gray-800'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {req.status}
+                              </span>
+                            </td>
+                            <td className="p-4">
+                              {offerSuccess === req.id ? (
+                                <span className="text-green-600 text-sm font-medium flex items-center gap-1">
+                                  <CheckCircle className="w-4 h-4" /> Offer sent
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    setOfferFormOpen(offerFormOpen === req.id ? null : req.id)
+                                    setOfferPrice('')
+                                    setOfferMessage('')
+                                  }}
+                                  className="flex items-center gap-2 px-3 py-1.5 bg-[#c9a962] text-[#3d4a3a] rounded-lg text-sm font-medium hover:bg-[#d4b46d] transition-colors"
+                                >
+                                  <Gavel className="w-4 h-4" />
+                                  Make Offer
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                          {offerFormOpen === req.id && (
+                            <tr key={`offer-${req.id}`} className="border-t border-[#e5e5e5] bg-[#faf8f5]">
+                              <td colSpan={7} className="p-4">
+                                <div className="max-w-lg bg-white border border-[#e5e5e5] rounded-xl p-5 shadow-sm">
+                                  <h4 className="font-semibold text-[#3d4a3a] mb-4 flex items-center gap-2">
+                                    <Gavel className="w-4 h-4 text-[#c9a962]" />
+                                    Submit Your Offer
+                                  </h4>
+                                  <div className="space-y-4">
+                                    <div>
+                                      <label className="block text-sm font-medium text-[#3d4a3a] mb-1">
+                                        Offer Price (£) <span className="text-red-500">*</span>
+                                      </label>
+                                      <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666] font-medium">£</span>
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          step="0.01"
+                                          value={offerPrice}
+                                          onChange={(e) => setOfferPrice(e.target.value)}
+                                          placeholder="0.00"
+                                          className="w-full pl-7 pr-4 py-2.5 border-2 border-[#e5e5e5] rounded-xl focus:border-[#c9a962] focus:outline-none"
+                                        />
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium text-[#3d4a3a] mb-1">
+                                        Message <span className="text-[#999] font-normal">(optional)</span>
+                                      </label>
+                                      <textarea
+                                        value={offerMessage}
+                                        onChange={(e) => setOfferMessage(e.target.value)}
+                                        placeholder="Add a note to the seller..."
+                                        rows={3}
+                                        className="w-full px-4 py-2.5 border-2 border-[#e5e5e5] rounded-xl focus:border-[#c9a962] focus:outline-none resize-none text-sm"
+                                      />
+                                    </div>
+                                    <div className="flex gap-3">
+                                      <button
+                                        type="button"
+                                        onClick={() => setOfferFormOpen(null)}
+                                        className="px-4 py-2 border-2 border-[#e5e5e5] text-[#666] rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
+                                      >
+                                        Cancel
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={offerSubmitting || !offerPrice}
+                                        onClick={() => handleBiddingOfferSubmit(req.id)}
+                                        className="flex items-center gap-2 px-5 py-2 bg-[#3d4a3a] text-white rounded-xl text-sm font-semibold hover:bg-[#2d3a2a] transition-colors disabled:opacity-50"
+                                      >
+                                        {offerSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                                        Submit Offer
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}

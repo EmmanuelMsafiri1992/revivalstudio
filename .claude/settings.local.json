@@ -25,7 +25,24 @@
       "Bash(node scripts/generate-favicon.js:*)",
       "Bash(node -e:*)",
       "Bash(grep:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(xargs wc:*)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill /PID 5832 /F)",
+      "Bash(taskkill /PID 16904 /F)",
+      "Bash(cmd /c \"taskkill /PID 5832 /F\")",
+      "Bash(cmd /c \"taskkill /PID 16904 /F\")",
+      "Bash(cmd /c \"taskkill /F /PID 5832 & taskkill /F /PID 16904\" 2>&1)",
+      "Bash(cmd /c \"FOR /F \"\"tokens=5\"\" %P IN \\(''netstat -ano ^| findstr :3000 ^| findstr LISTENING''\\) DO taskkill /F /PID %P\")",
+      "Bash(cmd /c \"FOR /F \"\"tokens=5\"\" %P IN \\(''netstat -ano ^| findstr :8000 ^| findstr LISTENING''\\) DO taskkill /F /PID %P\")",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(cmd /c \"tasklist /FI \"\"PID eq 5832\"\"\")",
+      "Bash(cmd /c \"tasklist /FI \"\"PID eq 16904\"\"\")",
+      "Bash(powershell -Command \"Get-Process -Id 5832 | Select-Object Name, Id, Path\")",
+      "Bash(powershell -Command \"Get-Process -Id 16904 | Select-Object Name, Id, Path\")",
+      "Bash(powershell -Command \"Stop-Process -Id 5832 -Force; Stop-Process -Id 16904 -Force; Write-Host 'Done'\" 2>&1)",
+      "Bash(powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host 'All node processes killed'\" 2>&1)",
+      "Bash(tasklist)"
     ]
   }
 }

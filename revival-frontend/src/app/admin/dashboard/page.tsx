@@ -8,7 +8,7 @@ import {
   Bell, Search, User, TrendingUp, Shield, Armchair, Hammer, AlertTriangle,
   CheckCircle, Clock, XCircle, Eye, Edit2, Trash2, Plus, X, ShoppingBag, Star, Scale,
   Upload, Image as ImageIcon, Globe, MessageSquare, BarChart3, Save, Home, MapPin, Phone, Mail,
-  CreditCard, Receipt
+  CreditCard, Receipt, ArrowLeftRight, Gavel, Leaf
 } from 'lucide-react'
 import Image from 'next/image'
 import { api } from '@/lib/api'
@@ -44,6 +44,10 @@ const sidebarItems = [
   { id: 'comparison-prices', label: 'Comparison Prices', icon: Scale },
   { id: 'payment-methods', label: 'Payment Methods', icon: CreditCard },
   { id: 'site-settings', label: 'Site Settings', icon: Globe },
+  { id: 'near-me-requests', label: 'Near Me Requests', icon: MapPin },
+  { id: 'exchange-pro', label: 'Exchange Pro', icon: ArrowLeftRight },
+  { id: 'bidding-pro', label: 'Bidding Pro', icon: Gavel },
+  { id: 'co2-emissions', label: 'CO2 Emissions', icon: Leaf },
   { id: 'settings', label: 'Settings', icon: Settings },
 ]
 
@@ -91,6 +95,10 @@ export default function AdminDashboardPage() {
   const [roomPlans, setRoomPlans] = useState<any[]>([])
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
   const [orders, setOrders] = useState<any[]>([])
+  const [nearMeRequests, setNearMeRequests] = useState<any[]>([])
+  const [exchangeProRequests, setExchangeProRequests] = useState<any[]>([])
+  const [biddingProRequests, setBiddingProRequests] = useState<any[]>([])
+  const [co2Emissions, setCo2Emissions] = useState<any[]>([])
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState('all')
@@ -192,6 +200,41 @@ export default function AdminDashboardPage() {
         case 'site-settings':
           const ssRes = await api.getAdminSiteSettings()
           setSiteSettings(ssRes.data || [])
+          break
+        case 'near-me-requests':
+          try { const nmRes = await api.getAdminNearMeRequests(); setNearMeRequests(nmRes.data || []) } catch { setNearMeRequests([]) }
+          break
+        case 'exchange-pro':
+          try { const epRes = await api.getAdminExchangeProRequests(); setExchangeProRequests(epRes.data || []) } catch { setExchangeProRequests([]) }
+          break
+        case 'bidding-pro':
+          try { const bpRes = await api.getAdminBiddingProRequests(); setBiddingProRequests(bpRes.data || []) } catch { setBiddingProRequests([]) }
+          break
+        case 'co2-emissions':
+          try { const co2Res = await api.getAdminCo2Emissions(); setCo2Emissions(co2Res.data || []) } catch {
+            setCo2Emissions([
+              { id: 1, product_name: 'Dining Table (Wood)', new_co2: 120, refurbished_co2: 35, transport_co2: 10, net_co2_saved: 75 },
+              { id: 2, product_name: 'Sofa (3-Seater)', new_co2: 180, refurbished_co2: 50, transport_co2: 15, net_co2_saved: 115 },
+              { id: 3, product_name: 'Office Chair', new_co2: 60, refurbished_co2: 20, transport_co2: 5, net_co2_saved: 35 },
+              { id: 4, product_name: 'Wardrobe (2 Door)', new_co2: 150, refurbished_co2: 45, transport_co2: 12, net_co2_saved: 93 },
+              { id: 5, product_name: 'Coffee Table', new_co2: 70, refurbished_co2: 20, transport_co2: 6, net_co2_saved: 44 },
+              { id: 6, product_name: 'Bed Frame (Double)', new_co2: 130, refurbished_co2: 40, transport_co2: 10, net_co2_saved: 80 },
+              { id: 7, product_name: 'Bookshelf', new_co2: 90, refurbished_co2: 25, transport_co2: 8, net_co2_saved: 57 },
+              { id: 8, product_name: 'TV Unit', new_co2: 85, refurbished_co2: 22, transport_co2: 7, net_co2_saved: 56 },
+              { id: 9, product_name: 'Chest of Drawers', new_co2: 100, refurbished_co2: 30, transport_co2: 9, net_co2_saved: 61 },
+              { id: 10, product_name: 'Side Table', new_co2: 40, refurbished_co2: 12, transport_co2: 4, net_co2_saved: 24 },
+              { id: 11, product_name: 'Dining Chair', new_co2: 35, refurbished_co2: 10, transport_co2: 3, net_co2_saved: 22 },
+              { id: 12, product_name: 'Glass Dining Table', new_co2: 140, refurbished_co2: 50, transport_co2: 12, net_co2_saved: 78 },
+              { id: 13, product_name: 'Recliner Sofa', new_co2: 200, refurbished_co2: 65, transport_co2: 15, net_co2_saved: 120 },
+              { id: 14, product_name: 'Office Desk', new_co2: 110, refurbished_co2: 30, transport_co2: 9, net_co2_saved: 71 },
+              { id: 15, product_name: 'Kitchen Cabinet', new_co2: 160, refurbished_co2: 55, transport_co2: 12, net_co2_saved: 93 },
+              { id: 16, product_name: 'Bar Stool', new_co2: 30, refurbished_co2: 8, transport_co2: 3, net_co2_saved: 19 },
+              { id: 17, product_name: 'Shoe Rack', new_co2: 50, refurbished_co2: 15, transport_co2: 5, net_co2_saved: 30 },
+              { id: 18, product_name: 'Dressing Table', new_co2: 95, refurbished_co2: 28, transport_co2: 7, net_co2_saved: 60 },
+              { id: 19, product_name: 'Outdoor Bench', new_co2: 80, refurbished_co2: 25, transport_co2: 8, net_co2_saved: 47 },
+              { id: 20, product_name: 'Storage Cabinet', new_co2: 120, refurbished_co2: 35, transport_co2: 10, net_co2_saved: 75 },
+            ])
+          }
           break
       }
     } catch (error) {
@@ -369,6 +412,33 @@ export default function AdminDashboardPage() {
       loadSectionData('orders')
     } catch (error) {
       console.error('Error updating order:', error)
+    }
+  }
+
+  async function handleUpdateNearMeStatus(id: number, status: string) {
+    try {
+      await api.updateAdminNearMeRequest(id, { status })
+      loadSectionData('near-me-requests')
+    } catch (error) {
+      console.error('Error updating near-me request:', error)
+    }
+  }
+
+  async function handleUpdateExchangeProStatus(id: number, status: string) {
+    try {
+      await api.updateAdminExchangeProRequest(id, { status })
+      loadSectionData('exchange-pro')
+    } catch (error) {
+      console.error('Error updating exchange-pro request:', error)
+    }
+  }
+
+  async function handleUpdateBiddingProStatus(id: number, status: string) {
+    try {
+      await api.updateAdminBiddingProRequest(id, { status })
+      loadSectionData('bidding-pro')
+    } catch (error) {
+      console.error('Error updating bidding-pro request:', error)
     }
   }
 
@@ -1494,6 +1564,231 @@ export default function AdminDashboardPage() {
             <SiteSettingsSection settings={siteSettings} onRefresh={() => loadSectionData('site-settings')} />
           )}
 
+          {/* Near Me Requests Section */}
+          {activeSection === 'near-me-requests' && (
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-[#e5e5e5]">
+                <h2 className="font-bold text-xl text-[#1a1a2e]">Near Me Requests</h2>
+                <p className="text-sm text-[#666] mt-1">Customer near-me search requests</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-[#f8f9fa]">
+                    <tr>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Date</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Customer / Contact</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Postcode</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Distance (miles)</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Search Term</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Status</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#e5e5e5]">
+                    {nearMeRequests.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="p-8 text-center text-[#666]">
+                          <MapPin className="w-16 h-16 mx-auto mb-4 text-[#e5e5e5]" />
+                          <p>No near-me requests yet.</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      nearMeRequests.map((req: any) => (
+                        <tr key={req.id} className="hover:bg-[#faf8f5]">
+                          <td className="p-4 text-sm text-[#666]">
+                            {req.created_at ? new Date(req.created_at).toLocaleDateString('en-GB') : '-'}
+                          </td>
+                          <td className="p-4">
+                            <div className="font-medium text-[#1a1a2e]">{req.customer_name || req.name || '-'}</div>
+                            {req.email && <div className="text-xs text-[#666]">{req.email}</div>}
+                            {req.phone && <div className="text-xs text-[#666]">{req.phone}</div>}
+                          </td>
+                          <td className="p-4 text-sm text-[#666]">{req.postcode || '-'}</td>
+                          <td className="p-4 text-sm text-[#666]">{req.distance_miles ?? req.distance ?? '-'}</td>
+                          <td className="p-4 text-sm text-[#666]">{req.search_term || req.product_search || '-'}</td>
+                          <td className="p-4">
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[req.status] || 'bg-gray-100 text-gray-800'}`}>
+                              {req.status || 'pending'}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <select
+                              value={req.status || 'pending'}
+                              onChange={(e) => handleUpdateNearMeStatus(req.id, e.target.value)}
+                              className="px-3 py-1 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="contacted">Contacted</option>
+                              <option value="completed">Completed</option>
+                              <option value="cancelled">Cancelled</option>
+                            </select>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Exchange Pro Section */}
+          {activeSection === 'exchange-pro' && (
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-[#e5e5e5]">
+                <h2 className="font-bold text-xl text-[#1a1a2e]">Exchange Pro Requests</h2>
+                <p className="text-sm text-[#666] mt-1">Customer exchange-pro submissions</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-[#f8f9fa]">
+                    <tr>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Date</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Customer</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Furniture Type</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Condition</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Est. Value (Premium)</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Status</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#e5e5e5]">
+                    {exchangeProRequests.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="p-8 text-center text-[#666]">
+                          <ArrowLeftRight className="w-16 h-16 mx-auto mb-4 text-[#e5e5e5]" />
+                          <p>No exchange-pro requests yet.</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      exchangeProRequests.map((req: any) => (
+                        <tr key={req.id} className="hover:bg-[#faf8f5]">
+                          <td className="p-4 text-sm text-[#666]">
+                            {req.created_at ? new Date(req.created_at).toLocaleDateString('en-GB') : '-'}
+                          </td>
+                          <td className="p-4">
+                            <div className="font-medium text-[#1a1a2e]">{req.customer_name || req.name || '-'}</div>
+                            {req.email && <div className="text-xs text-[#666]">{req.email}</div>}
+                            {req.phone && <div className="text-xs text-[#666]">{req.phone}</div>}
+                          </td>
+                          <td className="p-4 text-sm text-[#666]">{req.furniture_type?.name || req.furniture_type || '-'}</td>
+                          <td className="p-4 text-sm text-[#666] capitalize">{req.condition || '-'}</td>
+                          <td className="p-4 text-sm font-medium text-[#0f3460]">
+                            {req.estimated_value ? formatCurrency(req.estimated_value) : (req.premium_value ? formatCurrency(req.premium_value) : '-')}
+                          </td>
+                          <td className="p-4">
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[req.status] || 'bg-gray-100 text-gray-800'}`}>
+                              {req.status || 'pending'}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <select
+                              value={req.status || 'pending'}
+                              onChange={(e) => handleUpdateExchangeProStatus(req.id, e.target.value)}
+                              className="px-3 py-1 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="contacted">Contacted</option>
+                              <option value="completed">Completed</option>
+                              <option value="cancelled">Cancelled</option>
+                            </select>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Bidding Pro Section */}
+          {activeSection === 'bidding-pro' && (
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-[#e5e5e5]">
+                <h2 className="font-bold text-xl text-[#1a1a2e]">Bidding Pro Requests</h2>
+                <p className="text-sm text-[#666] mt-1">All bidding requests from customers</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-[#f8f9fa]">
+                    <tr>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Date</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Customer</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Furniture Type</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Condition</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Description</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Status</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#e5e5e5]">
+                    {biddingProRequests.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="p-8 text-center text-[#666]">
+                          <Gavel className="w-16 h-16 mx-auto mb-4 text-[#e5e5e5]" />
+                          <p>No bidding requests yet.</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      biddingProRequests.map((req: any) => (
+                        <tr key={req.id} className="hover:bg-[#faf8f5]">
+                          <td className="p-4 text-sm text-[#666]">
+                            {req.created_at ? new Date(req.created_at).toLocaleDateString('en-GB') : '-'}
+                          </td>
+                          <td className="p-4">
+                            <div className="font-medium text-[#1a1a2e]">{req.customer_name || req.name || '-'}</div>
+                            {req.email && <div className="text-xs text-[#666]">{req.email}</div>}
+                            {req.phone && <div className="text-xs text-[#666]">{req.phone}</div>}
+                          </td>
+                          <td className="p-4 text-sm text-[#666]">{req.furniture_type?.name || req.furniture_type || '-'}</td>
+                          <td className="p-4 text-sm text-[#666] capitalize">{req.condition || '-'}</td>
+                          <td className="p-4 text-sm text-[#666] max-w-xs truncate" title={req.description}>{req.description || '-'}</td>
+                          <td className="p-4">
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              req.status === 'offers_received' ? 'bg-blue-100 text-blue-800' :
+                              req.status === 'closed' ? 'bg-gray-100 text-gray-800' :
+                              statusColors[req.status] || 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {req.status === 'offers_received' ? 'Offers Received' : req.status === 'closed' ? 'Closed' : req.status || 'Pending'}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex items-center gap-2">
+                              <select
+                                value={req.status || 'pending'}
+                                onChange={(e) => handleUpdateBiddingProStatus(req.id, e.target.value)}
+                                className="px-3 py-1 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
+                              >
+                                <option value="pending">Pending</option>
+                                <option value="offers_received">Offers Received</option>
+                                <option value="closed">Closed</option>
+                              </select>
+                              {req.offers && req.offers.length > 0 && (
+                                <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium">
+                                  {req.offers.length} offer{req.offers.length !== 1 ? 's' : ''}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* CO2 Emissions Section */}
+          {activeSection === 'co2-emissions' && (
+            <Co2EmissionsSection
+              co2Emissions={co2Emissions}
+              setCo2Emissions={setCo2Emissions}
+              onRefresh={() => loadSectionData('co2-emissions')}
+            />
+          )}
+
           {/* Settings Section */}
           {activeSection === 'settings' && (
             <div className="max-w-2xl mx-auto">
@@ -1565,6 +1860,297 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any, label: strin
       </div>
       <div className="text-2xl font-bold text-[#1a1a2e]">{value}</div>
       <div className="text-sm text-[#666]">{label}</div>
+    </div>
+  )
+}
+
+// CO2 Emissions Component
+function Co2EmissionsSection({ co2Emissions, setCo2Emissions, onRefresh }: { co2Emissions: any[], setCo2Emissions: (data: any[]) => void, onRefresh: () => void }) {
+  const [editingRows, setEditingRows] = useState<Record<number, any>>({})
+  const [savingRows, setSavingRows] = useState<Record<number, boolean>>({})
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [newRow, setNewRow] = useState({ product_name: '', new_co2: '', refurbished_co2: '', transport_co2: '', net_co2_saved: '' })
+
+  const handleEdit = (item: any) => {
+    setEditingRows(prev => ({
+      ...prev,
+      [item.id]: { product_name: item.product_name, new_co2: item.new_co2, refurbished_co2: item.refurbished_co2, transport_co2: item.transport_co2, net_co2_saved: item.net_co2_saved }
+    }))
+  }
+
+  const handleCancelEdit = (id: number) => {
+    setEditingRows(prev => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+  }
+
+  const handleSaveRow = async (id: number) => {
+    setSavingRows(prev => ({ ...prev, [id]: true }))
+    try {
+      await api.updateAdminCo2Emission(id, editingRows[id])
+      handleCancelEdit(id)
+      onRefresh()
+    } catch {
+      // Update locally if API not available
+      setCo2Emissions(co2Emissions.map(item => item.id === id ? { ...item, ...editingRows[id] } : item))
+      handleCancelEdit(id)
+    } finally {
+      setSavingRows(prev => ({ ...prev, [id]: false }))
+    }
+  }
+
+  const handleAddRow = async () => {
+    const row = {
+      product_name: newRow.product_name,
+      new_co2: parseFloat(newRow.new_co2) || 0,
+      refurbished_co2: parseFloat(newRow.refurbished_co2) || 0,
+      transport_co2: parseFloat(newRow.transport_co2) || 0,
+      net_co2_saved: parseFloat(newRow.net_co2_saved) || 0,
+    }
+    try {
+      await api.createAdminCo2Emission(row)
+      setNewRow({ product_name: '', new_co2: '', refurbished_co2: '', transport_co2: '', net_co2_saved: '' })
+      setShowAddForm(false)
+      onRefresh()
+    } catch {
+      // Add locally if API not available
+      const newId = Math.max(...co2Emissions.map(i => i.id), 0) + 1
+      setCo2Emissions([...co2Emissions, { id: newId, ...row }])
+      setNewRow({ product_name: '', new_co2: '', refurbished_co2: '', transport_co2: '', net_co2_saved: '' })
+      setShowAddForm(false)
+    }
+  }
+
+  const handleDeleteRow = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this CO2 record?')) return
+    try {
+      await api.deleteAdminCo2Emission(id)
+      onRefresh()
+    } catch {
+      setCo2Emissions(co2Emissions.filter(item => item.id !== id))
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="p-6 border-b border-[#e5e5e5] flex items-center justify-between">
+        <div>
+          <h2 className="font-bold text-xl text-[#1a1a2e]">CO2 Emissions</h2>
+          <p className="text-sm text-[#666] mt-1">Manage CO2 data for furniture types</p>
+        </div>
+        <button
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="flex items-center gap-2 px-4 py-2 bg-[#0f3460] text-white rounded-xl hover:bg-[#1a1a2e] transition-colors"
+        >
+          <Plus className="w-4 h-4" /> Add New
+        </button>
+      </div>
+
+      {showAddForm && (
+        <div className="p-6 border-b border-[#e5e5e5] bg-[#f8f9fa]">
+          <h3 className="font-semibold text-[#1a1a2e] mb-4">Add New CO2 Record</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className="lg:col-span-2">
+              <label className="block text-xs font-medium text-[#1a1a2e] mb-1">Product Name</label>
+              <input
+                type="text"
+                value={newRow.product_name}
+                onChange={e => setNewRow({ ...newRow, product_name: e.target.value })}
+                placeholder="e.g. Dining Table"
+                className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[#1a1a2e] mb-1">New CO2 (kg)</label>
+              <input
+                type="number"
+                value={newRow.new_co2}
+                onChange={e => setNewRow({ ...newRow, new_co2: e.target.value })}
+                placeholder="0"
+                className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[#1a1a2e] mb-1">Refurb CO2 (kg)</label>
+              <input
+                type="number"
+                value={newRow.refurbished_co2}
+                onChange={e => setNewRow({ ...newRow, refurbished_co2: e.target.value })}
+                placeholder="0"
+                className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[#1a1a2e] mb-1">Transport CO2 (kg)</label>
+              <input
+                type="number"
+                value={newRow.transport_co2}
+                onChange={e => setNewRow({ ...newRow, transport_co2: e.target.value })}
+                placeholder="0"
+                className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[#1a1a2e] mb-1">Net CO2 Saved (kg)</label>
+              <input
+                type="number"
+                value={newRow.net_co2_saved}
+                onChange={e => setNewRow({ ...newRow, net_co2_saved: e.target.value })}
+                placeholder="0"
+                className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
+              />
+            </div>
+          </div>
+          <div className="flex gap-3 mt-4">
+            <button
+              onClick={handleAddRow}
+              disabled={!newRow.product_name}
+              className="px-4 py-2 bg-[#0f3460] text-white rounded-lg hover:bg-[#1a1a2e] transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              <Save className="w-4 h-4" /> Save Record
+            </button>
+            <button
+              onClick={() => { setShowAddForm(false); setNewRow({ product_name: '', new_co2: '', refurbished_co2: '', transport_co2: '', net_co2_saved: '' }) }}
+              className="px-4 py-2 border border-[#e5e5e5] rounded-lg hover:bg-[#f8f9fa] transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-[#f8f9fa]">
+            <tr>
+              <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Product Name</th>
+              <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">New CO2 (kg)</th>
+              <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Refurbished CO2 (kg)</th>
+              <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Transport CO2 (kg)</th>
+              <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Net CO2 Saved (kg)</th>
+              <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#e5e5e5]">
+            {co2Emissions.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="p-8 text-center text-[#666]">
+                  <Leaf className="w-16 h-16 mx-auto mb-4 text-[#e5e5e5]" />
+                  <p>No CO2 emissions data yet.</p>
+                </td>
+              </tr>
+            ) : (
+              co2Emissions.map((item: any) => {
+                const isEditing = editingRows[item.id] !== undefined
+                const editData = editingRows[item.id] || {}
+                return (
+                  <tr key={item.id} className="hover:bg-[#faf8f5]">
+                    <td className="p-4">
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editData.product_name}
+                          onChange={e => setEditingRows(prev => ({ ...prev, [item.id]: { ...prev[item.id], product_name: e.target.value } }))}
+                          className="w-full px-3 py-1.5 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
+                        />
+                      ) : (
+                        <span className="font-medium text-[#1a1a2e]">{item.product_name}</span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          value={editData.new_co2}
+                          onChange={e => setEditingRows(prev => ({ ...prev, [item.id]: { ...prev[item.id], new_co2: e.target.value } }))}
+                          className="w-24 px-3 py-1.5 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
+                        />
+                      ) : (
+                        <span className="text-[#666]">{item.new_co2}</span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          value={editData.refurbished_co2}
+                          onChange={e => setEditingRows(prev => ({ ...prev, [item.id]: { ...prev[item.id], refurbished_co2: e.target.value } }))}
+                          className="w-24 px-3 py-1.5 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
+                        />
+                      ) : (
+                        <span className="text-[#666]">{item.refurbished_co2}</span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          value={editData.transport_co2}
+                          onChange={e => setEditingRows(prev => ({ ...prev, [item.id]: { ...prev[item.id], transport_co2: e.target.value } }))}
+                          className="w-24 px-3 py-1.5 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
+                        />
+                      ) : (
+                        <span className="text-[#666]">{item.transport_co2}</span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          value={editData.net_co2_saved}
+                          onChange={e => setEditingRows(prev => ({ ...prev, [item.id]: { ...prev[item.id], net_co2_saved: e.target.value } }))}
+                          className="w-24 px-3 py-1.5 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
+                        />
+                      ) : (
+                        <span className="font-medium text-green-700">{item.net_co2_saved}</span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      {isEditing ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleSaveRow(item.id)}
+                            disabled={savingRows[item.id]}
+                            className="px-3 py-1.5 bg-[#0f3460] text-white rounded-lg text-sm hover:bg-[#1a1a2e] transition-colors disabled:opacity-50 flex items-center gap-1"
+                          >
+                            {savingRows[item.id] ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                            Save
+                          </button>
+                          <button
+                            onClick={() => handleCancelEdit(item.id)}
+                            className="px-3 py-1.5 border border-[#e5e5e5] rounded-lg text-sm hover:bg-[#f8f9fa] transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleEdit(item)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Edit"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteRow(item.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

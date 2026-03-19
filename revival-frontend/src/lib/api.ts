@@ -81,30 +81,35 @@ class ApiClient {
     return data
   }
 
+  private cachedRequest<T>(key: string, fn: () => Promise<T>): Promise<T> {
+    if (staticCache.has(key)) return staticCache.get(key) as Promise<T>
+    const promise = fn().catch((err) => {
+      staticCache.delete(key) // don't cache failures — allow retry on next call
+      return Promise.reject(err)
+    })
+    staticCache.set(key, promise)
+    return promise
+  }
+
   // Furniture data
   async getFurnitureTypes() {
-    if (!staticCache.has('/furniture-types')) staticCache.set('/furniture-types', this.request<{ success: boolean; data: any[] }>('/furniture-types'))
-    return staticCache.get('/furniture-types') as Promise<{ success: boolean; data: any[] }>
+    return this.cachedRequest('/furniture-types', () => this.request<{ success: boolean; data: any[] }>('/furniture-types'))
   }
 
   async getMaterials() {
-    if (!staticCache.has('/materials')) staticCache.set('/materials', this.request<{ success: boolean; data: any[] }>('/materials'))
-    return staticCache.get('/materials') as Promise<{ success: boolean; data: any[] }>
+    return this.cachedRequest('/materials', () => this.request<{ success: boolean; data: any[] }>('/materials'))
   }
 
   async getDamageTypes() {
-    if (!staticCache.has('/damage-types')) staticCache.set('/damage-types', this.request<{ success: boolean; data: any[] }>('/damage-types'))
-    return staticCache.get('/damage-types') as Promise<{ success: boolean; data: any[] }>
+    return this.cachedRequest('/damage-types', () => this.request<{ success: boolean; data: any[] }>('/damage-types'))
   }
 
   async getCatalog() {
-    if (!staticCache.has('/catalog')) staticCache.set('/catalog', this.request<{ success: boolean; data: any[] }>('/catalog'))
-    return staticCache.get('/catalog') as Promise<{ success: boolean; data: any[] }>
+    return this.cachedRequest('/catalog', () => this.request<{ success: boolean; data: any[] }>('/catalog'))
   }
 
   async getRoomTypes() {
-    if (!staticCache.has('/room-types')) staticCache.set('/room-types', this.request<{ success: boolean; data: any }>('/room-types'))
-    return staticCache.get('/room-types') as Promise<{ success: boolean; data: any }>
+    return this.cachedRequest('/room-types', () => this.request<{ success: boolean; data: any }>('/room-types'))
   }
 
   async getStyles() {

@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://revivalstudio.uk/api'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.revivalstudio.uk/api'
 
 // In-memory cache for static reference data (per session)
 const staticCache = new Map<string, Promise<unknown>>()

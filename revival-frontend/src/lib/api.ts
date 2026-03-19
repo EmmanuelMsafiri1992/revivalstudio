@@ -1,5 +1,8 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
 
+// In-memory cache for static reference data (per session)
+const staticCache = new Map<string, Promise<unknown>>()
+
 class ApiClient {
   private baseUrl: string
   private token: string | null = null
@@ -80,23 +83,28 @@ class ApiClient {
 
   // Furniture data
   async getFurnitureTypes() {
-    return this.request<{ success: boolean; data: any[] }>('/furniture-types')
+    if (!staticCache.has('/furniture-types')) staticCache.set('/furniture-types', this.request<{ success: boolean; data: any[] }>('/furniture-types'))
+    return staticCache.get('/furniture-types') as Promise<{ success: boolean; data: any[] }>
   }
 
   async getMaterials() {
-    return this.request<{ success: boolean; data: any[] }>('/materials')
+    if (!staticCache.has('/materials')) staticCache.set('/materials', this.request<{ success: boolean; data: any[] }>('/materials'))
+    return staticCache.get('/materials') as Promise<{ success: boolean; data: any[] }>
   }
 
   async getDamageTypes() {
-    return this.request<{ success: boolean; data: any[] }>('/damage-types')
+    if (!staticCache.has('/damage-types')) staticCache.set('/damage-types', this.request<{ success: boolean; data: any[] }>('/damage-types'))
+    return staticCache.get('/damage-types') as Promise<{ success: boolean; data: any[] }>
   }
 
   async getCatalog() {
-    return this.request<{ success: boolean; data: any[] }>('/catalog')
+    if (!staticCache.has('/catalog')) staticCache.set('/catalog', this.request<{ success: boolean; data: any[] }>('/catalog'))
+    return staticCache.get('/catalog') as Promise<{ success: boolean; data: any[] }>
   }
 
   async getRoomTypes() {
-    return this.request<{ success: boolean; data: any }>('/room-types')
+    if (!staticCache.has('/room-types')) staticCache.set('/room-types', this.request<{ success: boolean; data: any }>('/room-types'))
+    return staticCache.get('/room-types') as Promise<{ success: boolean; data: any }>
   }
 
   async getStyles() {

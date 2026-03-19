@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
@@ -97,19 +98,43 @@ const sidebarItems = [
 
 export default function DashboardPage() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [loading, setLoading] = useState(true)
   const [outlet, setOutlet] = useState<any>(null)
   const [stats, setStats] = useState<Stats | null>(null)
   const [inventory, setInventory] = useState<InventoryItem[]>([])
-  const [products, setProducts] = useState<Product[]>([])
   const [furnitureTypes, setFurnitureTypes] = useState<FurnitureType[]>([])
   const [activeTab, setActiveTab] = useState('all')
   const [productTab, setProductTab] = useState('all')
   const [activeSection, setActiveSection] = useState('dashboard')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
+  // React Query for cached section data
+  const { data: productsData } = useQuery({
+    queryKey: ['partner-products', productTab],
+    queryFn: async () => {
+      const params: any = {}
+      if (productTab !== 'all') params.status = productTab
+      const res = await api.getOutletProducts(params)
+      return res.data || []
+    },
+    enabled: activeSection === 'products' && !loading,
+    staleTime: 30_000,
+  })
+  const products: Product[] = productsData || []
+
+  const { data: biddingData } = useQuery({
+    queryKey: ['partner-bidding'],
+    queryFn: async () => {
+      const res = await api.getPartnerBiddingRequests()
+      return res.data || []
+    },
+    enabled: activeSection === 'bidding' && !loading,
+    staleTime: 30_000,
+  })
+
   // Bidding state
-  const [biddingRequests, setBiddingRequests] = useState<any[]>([])
+  const biddingRequests: any[] = biddingData || []
   const [offerFormOpen, setOfferFormOpen] = useState<number | null>(null)
   const [offerPrice, setOfferPrice] = useState('')
   const [offerMessage, setOfferMessage] = useState('')
@@ -190,35 +215,6 @@ export default function DashboardPage() {
     }
   }
 
-  async function loadProducts(status?: string) {
-    try {
-      const params: any = {}
-      if (status && status !== 'all') params.status = status
-      const res = await api.getOutletProducts(params)
-      setProducts(res.data || [])
-    } catch (error) {
-      console.error('Error loading products:', error)
-    }
-  }
-
-  useEffect(() => {
-    if (activeSection === 'products') {
-      loadProducts(productTab !== 'all' ? productTab : undefined)
-    }
-  }, [activeSection, productTab])
-
-  useEffect(() => {
-    if (activeSection === 'bidding') {
-      ;(async () => {
-        try {
-          const res = await api.getPartnerBiddingRequests()
-          setBiddingRequests(res.data || [])
-        } catch (err) {
-          setBiddingRequests([])
-        }
-      })()
-    }
-  }, [activeSection])
 
   async function handleLogout() {
     try {
@@ -311,7 +307,7 @@ export default function DashboardPage() {
       }
 
       setShowProductForm(false)
-      loadProducts(productTab !== 'all' ? productTab : undefined)
+      queryClient.invalidateQueries({ queryKey: ['partner-products'] })
     } catch (error: any) {
       console.error('Error saving product:', error)
       const errorMessage = error?.response?.data?.message || error?.message || 'Failed to save product. Please try again.'
@@ -326,7 +322,7 @@ export default function DashboardPage() {
 
     try {
       await api.deleteOutletProduct(id)
-      loadProducts(productTab !== 'all' ? productTab : undefined)
+      queryClient.invalidateQueries({ queryKey: ['partner-products'] })
     } catch (error) {
       console.error('Error deleting product:', error)
       alert('Failed to delete product.')

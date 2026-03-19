@@ -30,6 +30,7 @@ return [
         'https://www.revivalstudio.uk',
         'https://revivalstudio.co.uk',
         'https://www.revivalstudio.co.uk',
+        'https://api.revivalstudio.uk',
     ],
 
     'allowed_origins_patterns' => [],

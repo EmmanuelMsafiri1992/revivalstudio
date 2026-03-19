@@ -42,7 +42,7 @@ jobs:
             cd /home/indegnnk/revivalRepo
             git pull origin main
 
-            DEPLOYPATH=/home/indegnnk/revivalstudio.co.uk
+            DEPLOYPATH=/home/indegnnk/revivalstudio.uk
 
             # ============================================
             # DEPLOY LARAVEL API
@@ -109,7 +109,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           source: "revival-frontend/.next"
-          target: "/home/indegnnk/revivalstudio.co.uk/revival-frontend"
+          target: "/home/indegnnk/revivalstudio.uk/revival-frontend"
           strip_components: 1
 
       - name: Install dependencies and restart frontend
@@ -120,7 +120,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           script: |
-            DEPLOYPATH=/home/indegnnk/revivalstudio.co.uk/revival-frontend
+            DEPLOYPATH=/home/indegnnk/revivalstudio.uk/revival-frontend
 
             cd $DEPLOYPATH
             chown -R indegnnk:indegnnk $DEPLOYPATH

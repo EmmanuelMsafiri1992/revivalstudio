@@ -28,6 +28,8 @@ return [
         'http://127.0.0.1:3002',
         'https://revivalstudio.uk',
         'https://www.revivalstudio.uk',
+        'https://revivalstudio.co.uk',
+        'https://www.revivalstudio.co.uk',
     ],
 
     'allowed_origins_patterns' => [],

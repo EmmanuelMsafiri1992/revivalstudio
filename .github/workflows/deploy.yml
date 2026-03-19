@@ -28,7 +28,7 @@ jobs:
         working-directory: revival-frontend
         run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || 'https://api.revivalstudio.uk/api' }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || 'https://revivalstudio.co.uk/revival-api/api' }}
 
       - name: Deploy to server via SSH
         uses: appleboy/ssh-action@v1.0.3

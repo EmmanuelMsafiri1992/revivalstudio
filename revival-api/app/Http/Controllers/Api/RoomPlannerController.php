@@ -31,12 +31,26 @@ class RoomPlannerController extends Controller
             ], 422);
         }
 
-        $result = $this->planner->generatePlan(
-            $request->room_type,
-            $request->room_size,
-            $request->style,
-            $request->budget
-        );
+        try {
+            $result = $this->planner->generatePlan(
+                $request->room_type,
+                $request->room_size,
+                $request->style,
+                $request->budget
+            );
+        } catch (\Throwable $e) {
+            // Catalog may be empty — return a valid empty plan so submit still works
+            $result = [
+                'room'         => ['type' => $request->room_type, 'name' => $request->room_type],
+                'size'         => ['key' => $request->room_size, 'name' => $request->room_size],
+                'style'        => ['key' => $request->style, 'name' => $request->style],
+                'budget'       => $request->budget,
+                'items'        => [],
+                'total_cost'   => 0,
+                'within_budget' => true,
+                'currency'     => 'GBP',
+            ];
+        }
 
         return response()->json([
             'success' => true,

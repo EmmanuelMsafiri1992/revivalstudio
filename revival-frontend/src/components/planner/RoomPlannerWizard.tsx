@@ -89,30 +89,41 @@ export function RoomPlannerWizard() {
   const [city, setCity] = useState('')
   const [postcode, setPostcode] = useState('')
 
+  const [submitError, setSubmitError] = useState('')
+
   async function generateAndSubmitPlan() {
     if (!selectedRoom || !selectedSize || !selectedStyle) return
     if (!customerName || !email || !phone || !houseNumber || !addressLine1 || !city || !postcode) return
 
     setLoading(true)
+    setSubmitError('')
+
+    // Step 1: Generate plan (non-fatal — submit still proceeds even if this fails)
+    let planData = { items: [] as any[], total_cost: 0 }
     try {
-      // First generate the plan
       const res = await api.generateRoomPlan({
         room_type: selectedRoom,
         room_size: selectedSize,
         style: selectedStyle,
         budget: budget,
       })
+      planData = res.data
       setResult(res.data)
+    } catch {
+      // Generate failed — set a minimal result so we still show step 6
+      setResult({ items: [], total_cost: 0, room: { name: selectedRoom }, style: { name: selectedStyle } })
+    }
 
-      // Then submit the room plan with customer details
-      setSubmitting(true)
+    // Step 2: Submit the enquiry (this must succeed)
+    setSubmitting(true)
+    try {
       await api.submitRoomPlan({
         room_type: selectedRoom,
         room_size: selectedSize,
         style: selectedStyle,
         budget: budget,
-        selected_items: res.data.items,
-        total_cost: res.data.total_cost,
+        selected_items: planData.items,
+        total_cost: planData.total_cost,
         customer_name: customerName,
         email: email,
         phone: phone,
@@ -124,9 +135,11 @@ export function RoomPlannerWizard() {
       })
       setSubmitted(true)
       setStep(6)
-    } catch (error) {
-      console.error('Error generating/submitting plan:', error)
-      alert('Failed to submit your plan. Please try again.')
+    } catch (error: any) {
+      const msg = error?.data?.errors
+        ? Object.values(error.data.errors as Record<string, string[]>).flat()[0]
+        : 'Failed to submit your plan. Please try again.'
+      setSubmitError(msg as string)
     } finally {
       setLoading(false)
       setSubmitting(false)
@@ -149,6 +162,7 @@ export function RoomPlannerWizard() {
     setAddressLine2('')
     setCity('')
     setPostcode('')
+    setSubmitError('')
   }
 
   const selectedRoomLabel = roomOptions.find(r => r.key === selectedRoom)?.label || ''
@@ -490,7 +504,13 @@ export function RoomPlannerWizard() {
                   </div>
                 </div>
 
-                <div className="flex justify-between mt-8">
+                {submitError && (
+                  <div className="mt-6 bg-red-50 border border-red-200 text-red-600 p-3 rounded-xl text-sm text-center">
+                    {submitError}
+                  </div>
+                )}
+
+                <div className="flex justify-between mt-4">
                   <button
                     onClick={() => setStep(4)}
                     className="flex items-center gap-2 px-5 sm:px-6 py-3 border-2 border-[#3d4a3a] text-[#3d4a3a] rounded-full font-semibold hover:bg-[#3d4a3a]/5 transition-colors"

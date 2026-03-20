@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, ChevronLeft, Sparkles, Check, Loader2, MessageCircle, Home, Maximize, Palette, PoundSterling, User } from 'lucide-react'
 import { api } from '@/lib/api'
@@ -38,6 +38,13 @@ const steps = [
   { num: 6, label: 'Plan', icon: Sparkles },
 ]
 
+const DEFAULT_PLANNER_SETTINGS = {
+  planner_budget_min: 500,
+  planner_budget_max: 10000,
+  planner_budget_default: 2000,
+  planner_budget_presets: [1000, 2000, 3000, 5000],
+}
+
 export function RoomPlannerWizard() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
@@ -45,9 +52,30 @@ export function RoomPlannerWizard() {
   const [selectedRoom, setSelectedRoom] = useState('')
   const [selectedSize, setSelectedSize] = useState('')
   const [selectedStyle, setSelectedStyle] = useState('')
-  const [budget, setBudget] = useState(2000)
+  const [plannerSettings, setPlannerSettings] = useState(DEFAULT_PLANNER_SETTINGS)
+  const [budget, setBudget] = useState(DEFAULT_PLANNER_SETTINGS.planner_budget_default)
   const [result, setResult] = useState<any>(null)
   const [submitted, setSubmitted] = useState(false)
+
+  useEffect(() => {
+    api.getSiteSettingsByGroup('planner').then(res => {
+      if (res?.data) {
+        const s = res.data
+        const merged = {
+          planner_budget_min: s.planner_budget_min ?? DEFAULT_PLANNER_SETTINGS.planner_budget_min,
+          planner_budget_max: s.planner_budget_max ?? DEFAULT_PLANNER_SETTINGS.planner_budget_max,
+          planner_budget_default: s.planner_budget_default ?? DEFAULT_PLANNER_SETTINGS.planner_budget_default,
+          planner_budget_presets: Array.isArray(s.planner_budget_presets) && s.planner_budget_presets.length > 0
+            ? s.planner_budget_presets
+            : DEFAULT_PLANNER_SETTINGS.planner_budget_presets,
+        }
+        setPlannerSettings(merged)
+        setBudget(merged.planner_budget_default)
+      }
+    }).catch(() => {
+      // Keep defaults on error
+    })
+  }, [])
 
   // Customer details state
   const [customerName, setCustomerName] = useState('')
@@ -108,7 +136,7 @@ export function RoomPlannerWizard() {
     setSelectedRoom('')
     setSelectedSize('')
     setSelectedStyle('')
-    setBudget(2000)
+    setBudget(plannerSettings.planner_budget_default)
     setResult(null)
     setSubmitted(false)
     setCustomerName('')
@@ -302,23 +330,23 @@ export function RoomPlannerWizard() {
                   <div className="relative">
                     <input
                       type="range"
-                      min="500"
-                      max="10000"
+                      min={plannerSettings.planner_budget_min}
+                      max={plannerSettings.planner_budget_max}
                       step="100"
                       value={budget}
                       onChange={e => setBudget(parseInt(e.target.value))}
                       className="w-full h-3 bg-[#e5e5e5] rounded-full appearance-none cursor-pointer accent-[#3d4a3a]"
                     />
                     <div className="flex justify-between text-sm text-[#666] mt-3">
-                      <span>£500</span>
+                      <span>{formatCurrency(plannerSettings.planner_budget_min)}</span>
                       <span className="text-[#7a9b76] font-medium">Budget-Friendly</span>
-                      <span>£10,000</span>
+                      <span>{formatCurrency(plannerSettings.planner_budget_max)}</span>
                     </div>
                   </div>
 
                   {/* Quick Budget Options */}
                   <div className="flex flex-wrap justify-center gap-2 mt-6">
-                    {[1000, 2000, 3000, 5000].map(amount => (
+                    {plannerSettings.planner_budget_presets.map(amount => (
                       <button
                         key={amount}
                         onClick={() => setBudget(amount)}

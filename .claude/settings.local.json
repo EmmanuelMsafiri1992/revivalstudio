@@ -42,7 +42,9 @@
       "Bash(powershell -Command \"Get-Process -Id 16904 | Select-Object Name, Id, Path\")",
       "Bash(powershell -Command \"Stop-Process -Id 5832 -Force; Stop-Process -Id 16904 -Force; Write-Host 'Done'\" 2>&1)",
       "Bash(powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host 'All node processes killed'\" 2>&1)",
-      "Bash(tasklist)"
+      "Bash(tasklist)",
+      "Bash(wait bdy7vuzgr:*)",
+      "Read(//tmp/**)"
     ]
   }
 }

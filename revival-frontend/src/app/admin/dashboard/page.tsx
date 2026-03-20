@@ -8,7 +8,7 @@ import {
   Bell, Search, User, TrendingUp, Shield, Armchair, Hammer, AlertTriangle,
   CheckCircle, Clock, XCircle, Eye, Edit2, Trash2, Plus, X, ShoppingBag, Star, Scale,
   Upload, Image as ImageIcon, Globe, MessageSquare, BarChart3, Save, Home, MapPin, Phone, Mail,
-  CreditCard, Receipt, ArrowLeftRight, Gavel, Leaf
+  CreditCard, Receipt, ArrowLeftRight, Gavel, Leaf, SlidersHorizontal
 } from 'lucide-react'
 import Image from 'next/image'
 import { api } from '@/lib/api'
@@ -37,6 +37,7 @@ const sidebarItems = [
   { id: 'repair-requests', label: 'Repair Requests', icon: Wrench },
   { id: 'sell-requests', label: 'Sell Requests', icon: DollarSign },
   { id: 'room-plans', label: 'Room Plans', icon: Home },
+  { id: 'planner-settings', label: 'Planner Settings', icon: SlidersHorizontal },
   { id: 'inventory', label: 'Inventory', icon: BoxIcon },
   { id: 'furniture-types', label: 'Furniture Types', icon: Armchair },
   { id: 'materials', label: 'Materials', icon: Hammer },
@@ -92,6 +93,7 @@ export default function AdminDashboardPage() {
   const [damageTypes, setDamageTypes] = useState<any[]>([])
   const [comparisonPrices, setComparisonPrices] = useState<any[]>([])
   const [siteSettings, setSiteSettings] = useState<any[]>([])
+  const [plannerSettingsData, setPlannerSettingsData] = useState<any>({})
   const [roomPlans, setRoomPlans] = useState<any[]>([])
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
   const [orders, setOrders] = useState<any[]>([])
@@ -188,6 +190,10 @@ export default function AdminDashboardPage() {
         case 'room-plans':
           const rpRes = await api.getAdminRoomPlans({ status: statusFilter !== 'all' ? statusFilter : undefined })
           setRoomPlans(rpRes.data?.data || [])
+          break
+        case 'planner-settings':
+          const psRes = await api.getSiteSettingsByGroup('planner')
+          setPlannerSettingsData(psRes.data || {})
           break
         case 'payment-methods':
           const pmRes = await api.getAdminPaymentMethods()
@@ -1559,6 +1565,11 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
+          {/* Planner Settings Section */}
+          {activeSection === 'planner-settings' && (
+            <PlannerSettingsSection settings={plannerSettingsData} onRefresh={() => loadSectionData('planner-settings')} />
+          )}
+
           {/* Site Settings Section */}
           {activeSection === 'site-settings' && (
             <SiteSettingsSection settings={siteSettings} onRefresh={() => loadSectionData('site-settings')} />
@@ -2150,6 +2161,142 @@ function Co2EmissionsSection({ co2Emissions, setCo2Emissions, onRefresh }: { co2
             )}
           </tbody>
         </table>
+      </div>
+    </div>
+  )
+}
+
+// Planner Settings Component
+function PlannerSettingsSection({ settings, onRefresh }: { settings: any, onRefresh: () => void }) {
+  const [form, setForm] = useState({
+    planner_budget_min: '',
+    planner_budget_max: '',
+    planner_budget_default: '',
+    planner_budget_presets: '',
+  })
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    if (settings && Object.keys(settings).length > 0) {
+      setForm({
+        planner_budget_min: String(settings.planner_budget_min ?? 500),
+        planner_budget_max: String(settings.planner_budget_max ?? 10000),
+        planner_budget_default: String(settings.planner_budget_default ?? 2000),
+        planner_budget_presets: Array.isArray(settings.planner_budget_presets)
+          ? settings.planner_budget_presets.join(', ')
+          : '1000, 2000, 3000, 5000',
+      })
+    }
+  }, [settings])
+
+  async function handleSave() {
+    setSaving(true)
+    setSaved(false)
+    try {
+      const presets = form.planner_budget_presets
+        .split(',')
+        .map(v => parseInt(v.trim(), 10))
+        .filter(v => !isNaN(v))
+
+      await api.bulkUpdateAdminSiteSettings({
+        planner_budget_min: parseInt(form.planner_budget_min, 10),
+        planner_budget_max: parseInt(form.planner_budget_max, 10),
+        planner_budget_default: parseInt(form.planner_budget_default, 10),
+        planner_budget_presets: presets,
+      })
+      setSaved(true)
+      onRefresh()
+      setTimeout(() => setSaved(false), 3000)
+    } catch (error) {
+      console.error('Error saving planner settings:', error)
+      alert('Failed to save settings. Please try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="p-6 border-b border-[#e5e5e5]">
+        <h2 className="font-bold text-xl text-[#1a1a2e]">Planner Settings</h2>
+        <p className="text-sm text-[#666] mt-1">Configure the budget options shown in the Room Planner tool</p>
+      </div>
+
+      <div className="p-6 max-w-xl">
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
+                Budget Minimum (£)
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={form.planner_budget_min}
+                onChange={e => setForm(f => ({ ...f, planner_budget_min: e.target.value }))}
+                className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+              />
+              <p className="text-xs text-[#666] mt-1">Lowest value on the slider</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
+                Budget Maximum (£)
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={form.planner_budget_max}
+                onChange={e => setForm(f => ({ ...f, planner_budget_max: e.target.value }))}
+                className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+              />
+              <p className="text-xs text-[#666] mt-1">Highest value on the slider</p>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
+              Default Budget (£)
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={form.planner_budget_default}
+              onChange={e => setForm(f => ({ ...f, planner_budget_default: e.target.value }))}
+              className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+            />
+            <p className="text-xs text-[#666] mt-1">The budget value pre-selected when the planner loads</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
+              Quick-Select Preset Buttons (£)
+            </label>
+            <input
+              type="text"
+              value={form.planner_budget_presets}
+              onChange={e => setForm(f => ({ ...f, planner_budget_presets: e.target.value }))}
+              placeholder="e.g. 1000, 2000, 3000, 5000"
+              className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+            />
+            <p className="text-xs text-[#666] mt-1">Comma-separated values for the quick-select buttons below the slider</p>
+          </div>
+
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 px-6 py-3 bg-[#0f3460] text-white rounded-xl font-semibold hover:bg-[#1a1a2e] transition-colors disabled:opacity-50"
+          >
+            {saving ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
+            ) : saved ? (
+              <><CheckCircle className="w-4 h-4" /> Saved!</>
+            ) : (
+              <><Save className="w-4 h-4" /> Save Changes</>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   )

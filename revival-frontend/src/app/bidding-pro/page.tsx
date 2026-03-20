@@ -160,7 +160,7 @@ export default function BiddingProPage() {
           brand: selectedBrand,
           condition: selectedCondition,
           damages: selectedDamages,
-          delivery_method: selectedDelivery,
+          delivery: selectedDelivery,
           postcode,
           floor: selectedFloor,
           description,

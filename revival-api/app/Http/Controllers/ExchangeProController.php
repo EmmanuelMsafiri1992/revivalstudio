@@ -73,4 +73,11 @@ class ExchangeProController extends Controller
         $requests = ExchangeProRequest::with('furnitureType')->latest()->get();
         return response()->json(['success' => true, 'data' => $requests]);
     }
+
+    public function adminUpdate(Request $request, $id)
+    {
+        $exchange = ExchangeProRequest::findOrFail($id);
+        $exchange->update($request->only(['status']));
+        return response()->json(['success' => true, 'data' => $exchange]);
+    }
 }

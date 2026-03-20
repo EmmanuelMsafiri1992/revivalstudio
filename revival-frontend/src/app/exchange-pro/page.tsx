@@ -9,7 +9,7 @@ import {
   Clock, Shield, TrendingUp, CheckCircle, MessageCircle, Sparkles,
   Tag, Calendar, Star, Package, Camera, Upload, X,
   BadgeCheck, PoundSterling, Truck, Zap,
-  MapPin, Building, AlertTriangle, Crown, RefreshCw
+  MapPin, Building, AlertTriangle, Crown, RefreshCw, User
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { formatCurrency } from '@/lib/utils'
@@ -75,6 +75,7 @@ const steps = [
   { num: 6, label: 'Location', icon: MapPin },
   { num: 7, label: 'Photos', icon: Camera },
   { num: 8, label: 'Value', icon: PoundSterling },
+  { num: 9, label: 'Contact', icon: User },
 ]
 
 // Premium multiplier: 20% above standard
@@ -100,6 +101,9 @@ export default function ExchangeProPage() {
   const [selectedFloor, setSelectedFloor] = useState('')
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([])
   const [description, setDescription] = useState('')
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [result, setResult] = useState<any>(null)
   const [animateResult, setAnimateResult] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -185,11 +189,13 @@ export default function ExchangeProPage() {
           brand: selectedBrand,
           condition: selectedCondition,
           damages: selectedDamages,
-          delivery_method: selectedDelivery,
+          delivery: selectedDelivery,
           postcode,
           floor: selectedFloor,
           description,
-          premium_multiplier: PREMIUM_MULTIPLIER,
+          customer_name: name,
+          email,
+          phone,
         }),
       })
       setSubmitted(true)
@@ -222,7 +228,8 @@ export default function ExchangeProPage() {
   function resetWizard() {
     setStep(1); setSelectedFurnitureType(''); setSelectedBrand(''); setSelectedCondition('')
     setSelectedDamages([]); setSelectedDelivery(''); setPostcode(''); setSelectedFloor('')
-    setUploadedPhotos([]); setDescription(''); setResult(null); setAnimateResult(false); setSubmitted(false)
+    setUploadedPhotos([]); setDescription(''); setName(''); setEmail(''); setPhone('')
+    setResult(null); setAnimateResult(false); setSubmitted(false)
   }
 
   const getConfidenceScore = () => {
@@ -320,7 +327,7 @@ export default function ExchangeProPage() {
                 {step === 1 && (
                   <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                     <div className="text-center mb-6 sm:mb-8">
-                      <span className="inline-block px-3 py-1 bg-[#c9a962]/10 text-[#c9a962] rounded-full text-sm font-medium mb-3">Step 1 of 7</span>
+                      <span className="inline-block px-3 py-1 bg-[#c9a962]/10 text-[#c9a962] rounded-full text-sm font-medium mb-3">Step 1 of 9</span>
                       <h3 className="text-xl sm:text-2xl font-bold text-[#3d4a3a]">What type of furniture is this?</h3>
                       <p className="text-sm text-[#666] mt-2">Select the category that best matches your item</p>
                     </div>
@@ -346,7 +353,7 @@ export default function ExchangeProPage() {
                 {step === 2 && (
                   <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                     <div className="text-center mb-6 sm:mb-8">
-                      <span className="inline-block px-3 py-1 bg-[#c9a962]/10 text-[#c9a962] rounded-full text-sm font-medium mb-3">Step 2 of 7</span>
+                      <span className="inline-block px-3 py-1 bg-[#c9a962]/10 text-[#c9a962] rounded-full text-sm font-medium mb-3">Step 2 of 9</span>
                       <h3 className="text-xl sm:text-2xl font-bold text-[#3d4a3a]">Brand / Manufacturer</h3>
                       <p className="text-sm text-[#666] mt-2">Select the brand of your furniture</p>
                     </div>
@@ -370,7 +377,7 @@ export default function ExchangeProPage() {
                 {step === 3 && (
                   <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                     <div className="text-center mb-6 sm:mb-8">
-                      <span className="inline-block px-3 py-1 bg-[#c9a962]/10 text-[#c9a962] rounded-full text-sm font-medium mb-3">Step 3 of 7</span>
+                      <span className="inline-block px-3 py-1 bg-[#c9a962]/10 text-[#c9a962] rounded-full text-sm font-medium mb-3">Step 3 of 9</span>
                       <h3 className="text-xl sm:text-2xl font-bold text-[#3d4a3a]">Current Physical Condition</h3>
                       <p className="text-sm text-[#666] mt-2">Be honest — it helps us give you an accurate premium valuation</p>
                     </div>
@@ -401,7 +408,7 @@ export default function ExchangeProPage() {
                 {step === 4 && (
                   <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                     <div className="text-center mb-6 sm:mb-8">
-                      <span className="inline-block px-3 py-1 bg-[#c9a962]/10 text-[#c9a962] rounded-full text-sm font-medium mb-3">Step 4 of 7</span>
+                      <span className="inline-block px-3 py-1 bg-[#c9a962]/10 text-[#c9a962] rounded-full text-sm font-medium mb-3">Step 4 of 9</span>
                       <h3 className="text-xl sm:text-2xl font-bold text-[#3d4a3a]">Any visible damage?</h3>
                       <p className="text-sm text-[#666] mt-2">Select all that apply</p>
                     </div>
@@ -430,7 +437,7 @@ export default function ExchangeProPage() {
                 {step === 5 && (
                   <motion.div key="step5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                     <div className="text-center mb-6 sm:mb-8">
-                      <span className="inline-block px-3 py-1 bg-[#c9a962]/10 text-[#c9a962] rounded-full text-sm font-medium mb-3">Step 5 of 7</span>
+                      <span className="inline-block px-3 py-1 bg-[#c9a962]/10 text-[#c9a962] rounded-full text-sm font-medium mb-3">Step 5 of 9</span>
                       <h3 className="text-xl sm:text-2xl font-bold text-[#3d4a3a]">Is delivery available?</h3>
                       <p className="text-sm text-[#666] mt-2">How will the furniture be transported?</p>
                     </div>
@@ -455,7 +462,7 @@ export default function ExchangeProPage() {
                 {step === 6 && (
                   <motion.div key="step6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                     <div className="text-center mb-6 sm:mb-8">
-                      <span className="inline-block px-3 py-1 bg-[#c9a962]/10 text-[#c9a962] rounded-full text-sm font-medium mb-3">Step 6 of 7</span>
+                      <span className="inline-block px-3 py-1 bg-[#c9a962]/10 text-[#c9a962] rounded-full text-sm font-medium mb-3">Step 6 of 9</span>
                       <h3 className="text-xl sm:text-2xl font-bold text-[#3d4a3a]">Location &amp; Pick up Condition</h3>
                       <p className="text-sm text-[#666] mt-2">Where should we collect the furniture from?</p>
                     </div>
@@ -492,7 +499,7 @@ export default function ExchangeProPage() {
                 {step === 7 && (
                   <motion.div key="step7" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                     <div className="text-center mb-6 sm:mb-8">
-                      <span className="inline-block px-3 py-1 bg-[#c9a962]/10 text-[#c9a962] rounded-full text-sm font-medium mb-3">Step 7 of 7</span>
+                      <span className="inline-block px-3 py-1 bg-[#c9a962]/10 text-[#c9a962] rounded-full text-sm font-medium mb-3">Step 7 of 9</span>
                       <h3 className="text-xl sm:text-2xl font-bold text-[#3d4a3a]">Upload photos of your furniture</h3>
                       <p className="text-sm text-[#666] mt-2">Photos from different angles improve your premium valuation</p>
                     </div>
@@ -594,9 +601,9 @@ export default function ExchangeProPage() {
                     {/* CTA */}
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={animateResult ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.5 }}
                       className="flex flex-col sm:flex-row justify-center gap-3">
-                      <button onClick={handleSubmit} disabled={submitting}
-                        className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-[#c9a962] to-[#d4b46d] text-[#3d4a3a] rounded-full font-bold hover:from-[#d4b46d] hover:to-[#c9a962] transition-all shadow-lg disabled:opacity-50">
-                        {submitting ? <><Loader2 className="w-5 h-5 animate-spin" /> Submitting...</> : <><Crown className="w-5 h-5" /> Submit Exchange Pro Request</>}
+                      <button onClick={() => setStep(9)}
+                        className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-[#c9a962] to-[#d4b46d] text-[#3d4a3a] rounded-full font-bold hover:from-[#d4b46d] hover:to-[#c9a962] transition-all shadow-lg">
+                        <Crown className="w-5 h-5" /> Submit Exchange Pro Request
                       </button>
                       <a href={`https://wa.me/${contact.whatsapp_number}?text=Hi, I want to exchange my ${selectedFurnitureName}. Premium offer: ${formatCurrency(premiumMin)} - ${formatCurrency(premiumMax)}`}
                         target="_blank" rel="noopener noreferrer"
@@ -610,8 +617,46 @@ export default function ExchangeProPage() {
                   </motion.div>
                 )}
 
+                {/* Step 9: Contact Details */}
+                {step === 9 && !submitted && (
+                  <motion.div key="step9" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                    <div className="text-center mb-6 sm:mb-8">
+                      <span className="inline-block px-3 py-1 bg-[#c9a962]/10 text-[#c9a962] rounded-full text-sm font-medium mb-3">Step 9 of 9</span>
+                      <h3 className="text-xl sm:text-2xl font-bold text-[#3d4a3a]">Your Contact Details</h3>
+                      <p className="text-sm text-[#666] mt-2">We'll use this to send you your premium offer</p>
+                    </div>
+                    <div className="space-y-4 max-w-md mx-auto">
+                      <div>
+                        <label className="block text-sm font-medium text-[#3d4a3a] mb-2">Full Name *</label>
+                        <input type="text" value={name} onChange={e => setName(e.target.value)}
+                          placeholder="e.g. John Smith"
+                          className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#c9a962] focus:outline-none" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-[#3d4a3a] mb-2">Email Address *</label>
+                        <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                          placeholder="e.g. john@example.com"
+                          className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#c9a962] focus:outline-none" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-[#3d4a3a] mb-2">Phone Number (optional)</label>
+                        <input type="tel" value={phone} onChange={e => setPhone(e.target.value)}
+                          placeholder="e.g. 07700 900000"
+                          className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#c9a962] focus:outline-none" />
+                      </div>
+                    </div>
+                    <div className="flex justify-between mt-8">
+                      <button onClick={() => setStep(8)} className="flex items-center gap-2 px-5 sm:px-6 py-3 border-2 border-[#3d4a3a] text-[#3d4a3a] rounded-full font-semibold hover:bg-[#3d4a3a]/5 transition-colors"><ChevronLeft className="w-5 h-5" /> Back</button>
+                      <button onClick={handleSubmit} disabled={!name || !email || submitting}
+                        className="flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#c9a962] to-[#d4b46d] text-[#3d4a3a] rounded-full font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:from-[#d4b46d] hover:to-[#c9a962] transition-all shadow-lg">
+                        {submitting ? <><Loader2 className="w-5 h-5 animate-spin" /> Submitting...</> : <><Crown className="w-5 h-5" /> Confirm &amp; Submit</>}
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+
                 {/* Submitted Success */}
-                {step === 8 && submitted && (
+                {step === 9 && submitted && (
                   <motion.div key="submitted" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
                     className="text-center py-8">
                     <div className="w-20 h-20 mx-auto mb-6 bg-[#c9a962]/20 rounded-full flex items-center justify-center">

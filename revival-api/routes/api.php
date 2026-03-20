@@ -181,9 +181,11 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
 
     // Near Me requests management
     Route::get('/near-me-requests', [NearMeController::class, 'adminIndex']);
+    Route::put('/near-me-requests/{id}', [NearMeController::class, 'adminUpdate']);
 
     // Exchange Pro requests management
     Route::get('/exchange-pro-requests', [ExchangeProController::class, 'adminIndex']);
+    Route::put('/exchange-pro-requests/{id}', [ExchangeProController::class, 'adminUpdate']);
 
     // Bidding Pro requests management
     Route::get('/bidding-pro-requests', [BiddingProController::class, 'adminIndex']);

@@ -82,7 +82,7 @@ export default function NearMePage() {
       const params = new URLSearchParams({
         postcode: postcode.trim().toUpperCase(),
         distance: distance.toString(),
-        ...(productType.trim() && { product_type: productType.trim() }),
+        ...(productType.trim() && { product_name: productType.trim() }),
       })
       const res = await fetch(`${API_BASE}/near-me/search?${params}`, {
         headers: { 'Accept': 'application/json' },

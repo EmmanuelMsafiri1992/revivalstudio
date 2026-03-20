@@ -59,4 +59,11 @@ class NearMeController extends Controller
         $requests = \App\Models\NearMeRequest::latest()->get();
         return response()->json(['success' => true, 'data' => $requests]);
     }
+
+    public function adminUpdate(Request $request, $id)
+    {
+        $nearMe = \App\Models\NearMeRequest::findOrFail($id);
+        $nearMe->update($request->only(['status']));
+        return response()->json(['success' => true, 'data' => $nearMe]);
+    }
 }

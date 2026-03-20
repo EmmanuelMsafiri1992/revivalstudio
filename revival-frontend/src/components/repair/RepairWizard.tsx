@@ -83,6 +83,7 @@ export function RepairWizard() {
   const [customerPhone, setCustomerPhone] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   useEffect(() => {
     loadData()
@@ -153,6 +154,7 @@ export function RepairWizard() {
   async function handleSubmitRequest() {
     if (!selectedFurniture || !selectedMaterial || !customerName || !customerEmail) return
     setSubmitting(true)
+    setSubmitError('')
     try {
       await api.submitRepairRequest({
         furniture_type_id: selectedFurniture,
@@ -163,8 +165,8 @@ export function RepairWizard() {
         phone: customerPhone || undefined,
       })
       setSubmitted(true)
-    } catch (error) {
-      console.error('Error submitting repair request:', error)
+    } catch {
+      setSubmitError('Something went wrong. Please try again or contact us via WhatsApp.')
     } finally {
       setSubmitting(false)
     }
@@ -185,6 +187,7 @@ export function RepairWizard() {
     setCustomerPhone('')
     setSubmitting(false)
     setSubmitted(false)
+    setSubmitError('')
   }
 
   const selectedFurnitureName = furnitureTypes.find(f => f.id === selectedFurniture)?.name || ''
@@ -584,7 +587,7 @@ export function RepairWizard() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
               >
-                {/* Thank You Message */}
+                {/* Submit CTA — top so it's the first thing users see */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -593,15 +596,16 @@ export function RepairWizard() {
                   <div className="w-16 h-16 bg-[#c9a962]/20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Sparkles className="w-8 h-8 text-[#c9a962]" />
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-bold mb-4">Thank You!</h3>
-                  <p className="text-white/90 leading-relaxed mb-4">
-                    Thank you for providing the necessary details about your damaged furniture.
-                    Our technical team is going through it thoroughly.
+                  <h3 className="text-xl sm:text-2xl font-bold mb-2">Your Estimate is Ready!</h3>
+                  <p className="text-white/80 text-sm mb-6">
+                    Submit your details and our team will confirm the final cost and contact you within minutes.
                   </p>
-                  <p className="text-[#c9a962] font-semibold">
-                    We will revert back with repair cost details within just a few minutes.
-                  </p>
-                  <p className="text-white/80 mt-2 text-sm">Thank you for your patience.</p>
+                  <button
+                    onClick={() => setStep(6)}
+                    className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-[#c9a962] text-[#3d4a3a] rounded-full font-bold text-lg hover:bg-[#d4b46d] transition-all shadow-lg hover:scale-105"
+                  >
+                    <CheckCircle className="w-6 h-6" /> Submit Repair Request →
+                  </button>
                 </motion.div>
 
                 {/* Preliminary Estimate Card */}
@@ -813,7 +817,12 @@ export function RepairWizard() {
                   </div>
                 </div>
 
-                <div className="flex justify-between mt-8 max-w-md mx-auto">
+                {submitError && (
+                  <div className="mt-4 bg-red-50 border border-red-200 text-red-600 p-3 rounded-xl text-sm text-center max-w-md mx-auto">
+                    {submitError}
+                  </div>
+                )}
+                <div className="flex justify-between mt-4 max-w-md mx-auto">
                   <button
                     onClick={() => setStep(5)}
                     className="flex items-center gap-2 px-5 sm:px-6 py-3 border-2 border-[#3d4a3a] text-[#3d4a3a] rounded-full font-semibold hover:bg-[#3d4a3a]/5 transition-colors"

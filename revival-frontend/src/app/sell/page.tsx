@@ -107,6 +107,7 @@ export default function SellPage() {
   const [customerPhone, setCustomerPhone] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   // Result
   const [result, setResult] = useState<any>(null)
@@ -200,6 +201,7 @@ export default function SellPage() {
   async function handleSubmitRequest() {
     if (!customerName || !customerEmail) return
     setSubmitting(true)
+    setSubmitError('')
     try {
       const matchingType = furnitureTypes.find(ft =>
         ft.name.toLowerCase().includes(selectedFurnitureType.replace('_', ' '))
@@ -219,7 +221,7 @@ export default function SellPage() {
       })
       setSubmitted(true)
     } catch {
-      setSubmitted(true) // still show success — API errors shouldn't block the user
+      setSubmitError('Something went wrong. Please try again or contact us via WhatsApp.')
     } finally {
       setSubmitting(false)
     }
@@ -243,6 +245,7 @@ export default function SellPage() {
     setCustomerPhone('')
     setSubmitting(false)
     setSubmitted(false)
+    setSubmitError('')
   }
 
   // Get confidence score
@@ -631,7 +634,7 @@ export default function SellPage() {
                 {/* Step 8: Results */}
                 {step === 8 && result && (
                   <motion.div key="step8" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-                    {/* Thank You Message */}
+                    {/* Submit CTA — top so it's the first thing users see */}
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -640,18 +643,16 @@ export default function SellPage() {
                       <div className="w-16 h-16 bg-[#c9a962]/20 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Sparkles className="w-8 h-8 text-[#c9a962]" />
                       </div>
-                      <h3 className="text-xl sm:text-2xl font-bold mb-4">Thank You!</h3>
-                      <p className="text-white/90 leading-relaxed mb-4">
-                        Thank you for providing the necessary details about your furniture for sale.
-                        Our technical team is reviewing the information and will revert back with a price range for you soon.
+                      <h3 className="text-xl sm:text-2xl font-bold mb-2">Your Valuation is Ready!</h3>
+                      <p className="text-white/80 text-sm mb-6">
+                        Submit your details below and our team will contact you to arrange a visit and finalise the offer.
                       </p>
-                      <p className="text-[#c9a962] font-semibold mb-2">
-                        The final price will be offered only after physical observation.
-                      </p>
-                      <p className="text-white/80 text-sm">
-                        Our team member will contact you for a visit and make a buy agreement.
-                      </p>
-                      <p className="text-white/80 mt-4 text-sm">Thank you for your trust.</p>
+                      <button
+                        onClick={() => setStep(9)}
+                        className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-[#c9a962] text-[#3d4a3a] rounded-full font-bold text-lg hover:bg-[#d4b46d] transition-all shadow-lg hover:scale-105"
+                      >
+                        <CheckCircle className="w-6 h-6" /> Submit Sell Request →
+                      </button>
                     </motion.div>
 
                     {/* Preliminary Estimate Card */}
@@ -710,7 +711,7 @@ export default function SellPage() {
                       </div>
                     </motion.div>
 
-                    {/* CTA */}
+                    {/* Bottom CTA */}
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={animateResult ? { opacity: 1, y: 0 } : {}}
@@ -773,7 +774,12 @@ export default function SellPage() {
                           className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none" />
                       </div>
                     </div>
-                    <div className="flex justify-between mt-8">
+                    {submitError && (
+                      <div className="mt-4 bg-red-50 border border-red-200 text-red-600 p-3 rounded-xl text-sm text-center max-w-md mx-auto">
+                        {submitError}
+                      </div>
+                    )}
+                    <div className="flex justify-between mt-4">
                       <button onClick={() => setStep(8)} className="flex items-center gap-2 px-5 sm:px-6 py-3 border-2 border-[#3d4a3a] text-[#3d4a3a] rounded-full font-semibold hover:bg-[#3d4a3a]/5 transition-colors">
                         <ChevronLeft className="w-5 h-5" /> Back
                       </button>

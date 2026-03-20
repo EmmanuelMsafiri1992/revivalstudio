@@ -217,6 +217,19 @@ export function Footer() {
               {s.footer_tagline}
             </p>
           </div>
+          <div className="text-center mt-4">
+            <p className="text-white/30 text-xs">
+              Developed by{' '}
+              <a
+                href="https://emphxs.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/50 hover:text-[#c9a962] transition-colors"
+              >
+                Emphx Innovative Solutions
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </footer>

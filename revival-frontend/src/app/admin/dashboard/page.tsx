@@ -111,9 +111,25 @@ export default function AdminDashboardPage() {
   const [modalType, setModalType] = useState<string>('')
   const [editItem, setEditItem] = useState<any>(null)
 
+  // Notifications state
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [notificationItems, setNotificationItems] = useState<any[]>([])
+  const [notificationsLoading, setNotificationsLoading] = useState(false)
+  const notifRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     checkAuthAndLoadData()
   }, [])
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotifications(false)
+      }
+    }
+    if (showNotifications) document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showNotifications])
 
   async function checkAuthAndLoadData() {
     const token = api.getAdminToken()
@@ -135,6 +151,53 @@ export default function AdminDashboardPage() {
       router.push('/admin/login')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function loadNotifications() {
+    setNotificationsLoading(true)
+    try {
+      const [repairRes, sellRes, exchangeRes, biddingRes] = await Promise.allSettled([
+        api.getAdminRepairRequests({ status: 'pending' }),
+        api.getAdminSellRequests({ status: 'pending' }),
+        api.getAdminExchangeProRequests(),
+        api.getAdminBiddingProRequests(),
+      ])
+
+      const items: any[] = []
+
+      if (repairRes.status === 'fulfilled') {
+        const rows = repairRes.value.data?.data || []
+        rows.filter((r: any) => r.status === 'pending').forEach((r: any) => {
+          items.push({ type: 'repair', label: 'New Repair Request', name: r.customer_name, id: r.id, section: 'repair-requests', time: r.created_at })
+        })
+      }
+      if (sellRes.status === 'fulfilled') {
+        const rows = sellRes.value.data?.data || []
+        rows.filter((r: any) => r.status === 'pending').forEach((r: any) => {
+          items.push({ type: 'sell', label: 'New Sell Request', name: r.customer_name, id: r.id, section: 'sell-requests', time: r.created_at })
+        })
+      }
+      if (exchangeRes.status === 'fulfilled') {
+        const rows = exchangeRes.value.data || []
+        rows.filter((r: any) => r.status === 'pending').forEach((r: any) => {
+          items.push({ type: 'exchange', label: 'Exchange Pro Request', name: r.customer_name, id: r.id, section: 'exchange-pro', time: r.created_at })
+        })
+      }
+      if (biddingRes.status === 'fulfilled') {
+        const rows = biddingRes.value.data || []
+        rows.filter((r: any) => r.status === 'pending').forEach((r: any) => {
+          items.push({ type: 'bidding', label: 'Bidding Pro Request', name: r.customer_name, id: r.id, section: 'bidding-pro', time: r.created_at })
+        })
+      }
+
+      // Sort newest first
+      items.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+      setNotificationItems(items)
+    } catch {
+      // silently fail
+    } finally {
+      setNotificationsLoading(false)
     }
   }
 
@@ -573,10 +636,73 @@ export default function AdminDashboardPage() {
                   />
                 </div>
               )}
-              <button className="relative p-2 hover:bg-[#f8f9fa] rounded-xl transition-colors">
-                <Bell className="w-6 h-6 text-[#1a1a2e]" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
+              <div className="relative" ref={notifRef}>
+                <button
+                  onClick={() => {
+                    if (!showNotifications) loadNotifications()
+                    setShowNotifications(v => !v)
+                  }}
+                  className="relative p-2 hover:bg-[#f8f9fa] rounded-xl transition-colors"
+                >
+                  <Bell className="w-6 h-6 text-[#1a1a2e]" />
+                  {(stats?.pending_repair_requests || 0) + (stats?.pending_sell_requests || 0) > 0 && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                  )}
+                </button>
+
+                {showNotifications && (
+                  <div className="absolute right-0 top-12 w-80 bg-white rounded-2xl shadow-2xl border border-[#e5e5e5] z-50 overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-[#e5e5e5] bg-[#f8f9fa]">
+                      <h3 className="font-semibold text-[#1a1a2e]">Pending Requests</h3>
+                      <button onClick={() => setShowNotifications(false)} className="p-1 hover:bg-[#e5e5e5] rounded-lg transition-colors">
+                        <X className="w-4 h-4 text-[#666]" />
+                      </button>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {notificationsLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="w-5 h-5 animate-spin text-[#0f3460]" />
+                        </div>
+                      ) : notificationItems.length === 0 ? (
+                        <div className="text-center py-8 text-[#666]">
+                          <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />
+                          <p className="text-sm">No pending requests</p>
+                        </div>
+                      ) : (
+                        notificationItems.map((item, idx) => {
+                          const iconMap: Record<string, string> = { repair: '🔧', sell: '💰', exchange: '🔄', bidding: '🏷️' }
+                          const colorMap: Record<string, string> = { repair: 'bg-purple-100', sell: 'bg-blue-100', exchange: 'bg-yellow-100', bidding: 'bg-green-100' }
+                          return (
+                            <button
+                              key={idx}
+                              onClick={() => {
+                                setActiveSection(item.section)
+                                setShowNotifications(false)
+                                loadSectionData(item.section)
+                              }}
+                              className="w-full flex items-start gap-3 px-4 py-3 hover:bg-[#f8f9fa] border-b border-[#f0f0f0] text-left transition-colors"
+                            >
+                              <span className={`w-9 h-9 flex-shrink-0 rounded-full ${colorMap[item.type]} flex items-center justify-center text-base`}>
+                                {iconMap[item.type]}
+                              </span>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-[#1a1a2e]">{item.label}</p>
+                                <p className="text-xs text-[#666] truncate">{item.name}</p>
+                                <p className="text-xs text-[#999] mt-0.5">{new Date(item.time).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+                              </div>
+                            </button>
+                          )
+                        })
+                      )}
+                    </div>
+                    {notificationItems.length > 0 && (
+                      <div className="px-4 py-2 border-t border-[#e5e5e5] text-center">
+                        <p className="text-xs text-[#666]">{notificationItems.length} pending request{notificationItems.length !== 1 ? 's' : ''}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </header>

@@ -508,6 +508,40 @@ class ApiClient {
     return this.request<{ success: boolean; data: any }>(`/admin/inventory${query}`, {}, true)
   }
 
+  async createAdminInventoryItem(data: {
+    outlet_id: number
+    furniture_type_id?: number | null
+    item_name: string
+    description?: string
+    customer_name?: string
+    status: string
+    repair_cost?: number | null
+    sale_price?: number | null
+    notes?: string
+  }) {
+    return this.request<{ success: boolean; data: any; message: string }>(
+      '/admin/inventory',
+      { method: 'POST', body: JSON.stringify(data) },
+      true
+    )
+  }
+
+  async updateAdminInventoryItem(id: number, data: Record<string, any>) {
+    return this.request<{ success: boolean; data: any; message: string }>(
+      `/admin/inventory/${id}`,
+      { method: 'PUT', body: JSON.stringify(data) },
+      true
+    )
+  }
+
+  async deleteAdminInventoryItem(id: number) {
+    return this.request<{ success: boolean; message: string }>(
+      `/admin/inventory/${id}`,
+      { method: 'DELETE' },
+      true
+    )
+  }
+
   // Admin - Furniture types management
   async getAdminFurnitureTypes() {
     return this.request<{ success: boolean; data: any[] }>('/admin/furniture-types', {}, true)

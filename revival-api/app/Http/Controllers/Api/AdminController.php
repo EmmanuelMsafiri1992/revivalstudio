@@ -263,6 +263,61 @@ class AdminController extends Controller
         ]);
     }
 
+    public function createInventoryItem(Request $request)
+    {
+        $validated = $request->validate([
+            'outlet_id'         => 'required|exists:outlets,id',
+            'furniture_type_id' => 'nullable|exists:furniture_types,id',
+            'item_name'         => 'required|string|max:255',
+            'description'       => 'nullable|string',
+            'customer_name'     => 'nullable|string|max:255',
+            'status'            => 'required|in:pending,collected,repair,sale,sold',
+            'repair_cost'       => 'nullable|numeric|min:0',
+            'sale_price'        => 'nullable|numeric|min:0',
+            'notes'             => 'nullable|string',
+        ]);
+
+        $item = InventoryItem::create($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Inventory item created successfully',
+            'data'    => $item->load(['furnitureType:id,name,icon', 'outlet:id,name']),
+        ], 201);
+    }
+
+    public function updateInventoryItem(Request $request, $id)
+    {
+        $item = InventoryItem::findOrFail($id);
+
+        $validated = $request->validate([
+            'outlet_id'         => 'sometimes|exists:outlets,id',
+            'furniture_type_id' => 'sometimes|nullable|exists:furniture_types,id',
+            'item_name'         => 'sometimes|string|max:255',
+            'description'       => 'sometimes|nullable|string',
+            'customer_name'     => 'sometimes|nullable|string|max:255',
+            'status'            => 'sometimes|in:pending,collected,repair,sale,sold',
+            'repair_cost'       => 'sometimes|nullable|numeric|min:0',
+            'sale_price'        => 'sometimes|nullable|numeric|min:0',
+            'notes'             => 'sometimes|nullable|string',
+        ]);
+
+        $item->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Inventory item updated successfully',
+            'data'    => $item->fresh(['furnitureType:id,name,icon', 'outlet:id,name']),
+        ]);
+    }
+
+    public function deleteInventoryItem($id)
+    {
+        $item = InventoryItem::findOrFail($id);
+        $item->delete();
+        return response()->json(['success' => true, 'message' => 'Inventory item deleted successfully']);
+    }
+
     // Furniture Types Management
     public function furnitureTypes(Request $request)
     {

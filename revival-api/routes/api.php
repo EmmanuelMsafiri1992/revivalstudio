@@ -123,6 +123,9 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
 
     // Inventory management
     Route::get('/inventory', [AdminController::class, 'inventoryItems']);
+    Route::post('/inventory', [AdminController::class, 'createInventoryItem']);
+    Route::put('/inventory/{id}', [AdminController::class, 'updateInventoryItem']);
+    Route::delete('/inventory/{id}', [AdminController::class, 'deleteInventoryItem']);
 
     // Furniture types management
     Route::get('/furniture-types', [AdminController::class, 'furnitureTypes']);

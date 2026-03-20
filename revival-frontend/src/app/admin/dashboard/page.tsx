@@ -231,6 +231,10 @@ export default function AdminDashboardPage() {
         case 'inventory':
           const invRes = await api.getAdminInventory({ status: statusFilter !== 'all' ? statusFilter : undefined })
           setInventory(invRes.data.data || [])
+          const ftForInv = await api.getAdminFurnitureTypes()
+          setFurnitureTypes(ftForInv.data || [])
+          const outletsForInv = await api.getAdminOutlets()
+          setOutlets(outletsForInv.data.data || [])
           break
         case 'furniture-types':
           const ftRes = await api.getAdminFurnitureTypes()
@@ -1092,7 +1096,15 @@ export default function AdminDashboardPage() {
           {activeSection === 'inventory' && (
             <div className="bg-white rounded-2xl shadow-sm">
               <div className="p-6 border-b border-[#e5e5e5]">
-                <h2 className="font-bold text-lg text-[#1a1a2e] mb-4">All Inventory</h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="font-bold text-lg text-[#1a1a2e]">All Inventory</h2>
+                  <button
+                    onClick={() => { setModalType('inventory'); setEditItem(null); setShowModal(true); }}
+                    className="flex items-center gap-2 px-4 py-2 bg-[#0f3460] text-white rounded-xl hover:bg-[#1a1a2e] transition-colors"
+                  >
+                    <Plus className="w-4 h-4" /> Add Item
+                  </button>
+                </div>
                 <div className="flex gap-2 flex-wrap">
                   {['all', 'pending', 'collected', 'repair', 'sale', 'sold'].map(status => (
                     <button
@@ -1114,6 +1126,7 @@ export default function AdminDashboardPage() {
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Customer</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Status</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Sale Price</th>
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1136,6 +1149,28 @@ export default function AdminDashboardPage() {
                           </span>
                         </td>
                         <td className="p-4 text-[#666]">{item.sale_price ? formatCurrency(item.sale_price) : '-'}</td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => { setModalType('inventory'); setEditItem(item); setShowModal(true); }}
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Edit item"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (!confirm('Delete this inventory item?')) return
+                                await api.deleteAdminInventoryItem(item.id)
+                                loadSectionData('inventory')
+                              }}
+                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Delete item"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -2807,6 +2842,23 @@ function Modal({
             is_active: formData.is_active !== false,
           })
         }
+      } else if (type === 'inventory') {
+        const payload = {
+          outlet_id: parseInt(formData.outlet_id),
+          furniture_type_id: formData.furniture_type_id ? parseInt(formData.furniture_type_id) : null,
+          item_name: formData.item_name,
+          description: formData.description || null,
+          customer_name: formData.customer_name || null,
+          status: formData.status || 'pending',
+          repair_cost: formData.repair_cost ? parseFloat(formData.repair_cost) : null,
+          sale_price: formData.sale_price ? parseFloat(formData.sale_price) : null,
+          notes: formData.notes || null,
+        }
+        if (item) {
+          await api.updateAdminInventoryItem(item.id, payload)
+        } else {
+          await api.createAdminInventoryItem(payload)
+        }
       } else if (type === 'payment-method') {
         if (item) {
           await api.updateAdminPaymentMethod(item.id, {
@@ -3136,6 +3188,117 @@ function Modal({
                   <Upload className="w-5 h-5" />
                   <span>Click to upload images</span>
                 </button>
+              </div>
+            </>
+          )}
+
+          {/* Inventory Form */}
+          {type === 'inventory' && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Item Name *</label>
+                  <input
+                    type="text"
+                    value={formData.item_name || ''}
+                    onChange={e => setFormData({ ...formData, item_name: e.target.value })}
+                    className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-[#0f3460]"
+                    placeholder="e.g. Blue Fabric Sofa"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Outlet *</label>
+                  <select
+                    value={formData.outlet_id || ''}
+                    onChange={e => setFormData({ ...formData, outlet_id: e.target.value })}
+                    className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-[#0f3460]"
+                    required
+                  >
+                    <option value="">Select outlet</option>
+                    {outlets.map((o: any) => <option key={o.id} value={o.id}>{o.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Furniture Type</label>
+                  <select
+                    value={formData.furniture_type_id || ''}
+                    onChange={e => setFormData({ ...formData, furniture_type_id: e.target.value })}
+                    className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-[#0f3460]"
+                  >
+                    <option value="">Select type</option>
+                    {furnitureTypes.map((ft: any) => <option key={ft.id} value={ft.id}>{ft.icon} {ft.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Status *</label>
+                  <select
+                    value={formData.status || 'pending'}
+                    onChange={e => setFormData({ ...formData, status: e.target.value })}
+                    className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-[#0f3460]"
+                    required
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="collected">Collected</option>
+                    <option value="repair">Repair</option>
+                    <option value="sale">For Sale</option>
+                    <option value="sold">Sold</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Customer Name</label>
+                  <input
+                    type="text"
+                    value={formData.customer_name || ''}
+                    onChange={e => setFormData({ ...formData, customer_name: e.target.value })}
+                    className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-[#0f3460]"
+                    placeholder="Who brought this item?"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Repair Cost (£)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.repair_cost || ''}
+                    onChange={e => setFormData({ ...formData, repair_cost: e.target.value })}
+                    className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-[#0f3460]"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Sale Price (£)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.sale_price || ''}
+                    onChange={e => setFormData({ ...formData, sale_price: e.target.value })}
+                    className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-[#0f3460]"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Description</label>
+                  <textarea
+                    value={formData.description || ''}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                    rows={2}
+                    className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-[#0f3460] resize-none"
+                    placeholder="Brief description of the item..."
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Internal Notes</label>
+                  <textarea
+                    value={formData.notes || ''}
+                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                    rows={2}
+                    className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-[#0f3460] resize-none"
+                    placeholder="Admin notes (not visible to customers)..."
+                  />
+                </div>
               </div>
             </>
           )}

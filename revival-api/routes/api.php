@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminAuthController;
+use App\Http\Controllers\Api\PremiumAuthController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\ComparisonPriceController;
 use App\Http\Controllers\Api\FurnitureController;
@@ -35,8 +36,12 @@ Route::get('/room-sizes', [FurnitureController::class, 'roomSizes']);
 Route::get('/styles', [FurnitureController::class, 'styles']);
 Route::get('/resale-options', [FurnitureController::class, 'resaleOptions']);
 
-// Public routes - Premium code verification
+// Public routes - Premium code verification (legacy)
 Route::post('/premium-codes/verify', [PremiumCodeController::class, 'verify']);
+
+// Premium user auth
+Route::post('/premium/register', [PremiumAuthController::class, 'register']);
+Route::post('/premium/login', [PremiumAuthController::class, 'login']);
 
 // Public routes - Repair estimator
 Route::post('/repair/calculate', [RepairController::class, 'calculate']);

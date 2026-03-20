@@ -1129,7 +1129,28 @@ class ApiClient {
     }, true)
   }
 
-  // Premium codes
+  // Premium user auth
+  async premiumRegister(data: {
+    name: string
+    email: string
+    password: string
+    password_confirmation: string
+    plan: 'monthly' | 'yearly'
+  }) {
+    return this.request<{ success: boolean; token: string; user: { name: string; email: string; plan: string }; message: string }>('/premium/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async premiumLogin(data: { email: string; password: string }) {
+    return this.request<{ success: boolean; token: string; user: { name: string; email: string; plan: string } }>('/premium/login', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  // Premium codes (legacy)
   async verifyPremiumCode(code: string) {
     return this.request<{ success: boolean; message: string }>('/premium-codes/verify', {
       method: 'POST',

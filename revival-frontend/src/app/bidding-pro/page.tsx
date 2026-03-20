@@ -162,12 +162,13 @@ export default function BiddingProPage() {
         postcode,
         floor: selectedFloor,
         description,
+        photos: uploadedPhotos.length > 0 ? uploadedPhotos : undefined,
         customer_name: name,
         email,
         phone,
         whatsapp,
         desired_price: desiredPrice ? parseFloat(desiredPrice) : undefined,
-      } as any)
+      })
       setSubmitted(true)
     } catch {
       setSubmitted(true)

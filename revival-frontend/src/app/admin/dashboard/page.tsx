@@ -103,6 +103,8 @@ export default function AdminDashboardPage() {
   const [biddingProRequests, setBiddingProRequests] = useState<any[]>([])
   const [co2Emissions, setCo2Emissions] = useState<any[]>([])
   const [premiumCodes, setPremiumCodes] = useState<any[]>([])
+  const [selectedExchangeReq, setSelectedExchangeReq] = useState<any>(null)
+  const [selectedBiddingReq, setSelectedBiddingReq] = useState<any>(null)
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState('all')
@@ -1858,7 +1860,7 @@ export default function AdminDashboardPage() {
                       <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Customer</th>
                       <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Furniture Type</th>
                       <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Condition</th>
-                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Est. Value (Premium)</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Est. Value</th>
                       <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Status</th>
                       <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Actions</th>
                     </tr>
@@ -1893,22 +1895,90 @@ export default function AdminDashboardPage() {
                             </span>
                           </td>
                           <td className="p-4">
-                            <select
-                              value={req.status || 'pending'}
-                              onChange={(e) => handleUpdateExchangeProStatus(req.id, e.target.value)}
-                              className="px-3 py-1 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
-                            >
-                              <option value="pending">Pending</option>
-                              <option value="contacted">Contacted</option>
-                              <option value="completed">Completed</option>
-                              <option value="cancelled">Cancelled</option>
-                            </select>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => setSelectedExchangeReq(req)}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#0f3460] text-white rounded-lg text-xs font-medium hover:bg-[#0a2540] transition-colors"
+                              >
+                                <Eye className="w-3 h-3" />
+                                Details
+                              </button>
+                              <select
+                                value={req.status || 'pending'}
+                                onChange={(e) => handleUpdateExchangeProStatus(req.id, e.target.value)}
+                                className="px-3 py-1 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
+                              >
+                                <option value="pending">Pending</option>
+                                <option value="contacted">Contacted</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                              </select>
+                            </div>
                           </td>
                         </tr>
                       ))
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* Exchange Pro Detail Modal */}
+          {selectedExchangeReq && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setSelectedExchangeReq(null)}>
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between p-6 border-b border-[#e5e5e5]">
+                  <h3 className="font-bold text-lg text-[#1a1a2e]">Exchange Pro Request Details</h3>
+                  <button onClick={() => setSelectedExchangeReq(null)} className="p-2 hover:bg-[#f8f9fa] rounded-lg transition-colors">
+                    <X className="w-5 h-5 text-[#666]" />
+                  </button>
+                </div>
+                <div className="p-6 space-y-6">
+                  {/* Customer Info */}
+                  <div>
+                    <h4 className="font-semibold text-[#1a1a2e] mb-3 flex items-center gap-2"><User className="w-4 h-4" /> Customer Details</h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div><span className="text-[#999]">Name:</span> <span className="font-medium text-[#1a1a2e]">{selectedExchangeReq.customer_name || '-'}</span></div>
+                      <div><span className="text-[#999]">Email:</span> <span className="font-medium text-[#1a1a2e]">{selectedExchangeReq.email || '-'}</span></div>
+                      <div><span className="text-[#999]">Phone:</span> <span className="font-medium text-[#1a1a2e]">{selectedExchangeReq.phone || '-'}</span></div>
+                      <div><span className="text-[#999]">Postcode:</span> <span className="font-medium text-[#1a1a2e]">{selectedExchangeReq.postcode || '-'}</span></div>
+                      <div><span className="text-[#999]">Submitted:</span> <span className="font-medium text-[#1a1a2e]">{selectedExchangeReq.created_at ? new Date(selectedExchangeReq.created_at).toLocaleString('en-GB') : '-'}</span></div>
+                      <div><span className="text-[#999]">Status:</span> <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[selectedExchangeReq.status] || 'bg-gray-100 text-gray-800'}`}>{selectedExchangeReq.status || 'pending'}</span></div>
+                    </div>
+                  </div>
+                  {/* Furniture Info */}
+                  <div>
+                    <h4 className="font-semibold text-[#1a1a2e] mb-3 flex items-center gap-2"><Armchair className="w-4 h-4" /> Furniture Details</h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div><span className="text-[#999]">Type:</span> <span className="font-medium text-[#1a1a2e]">{selectedExchangeReq.furniture_type?.name || selectedExchangeReq.furniture_type || '-'}</span></div>
+                      <div><span className="text-[#999]">Brand:</span> <span className="font-medium text-[#1a1a2e]">{selectedExchangeReq.brand || '-'}</span></div>
+                      <div><span className="text-[#999]">Condition:</span> <span className="font-medium text-[#1a1a2e] capitalize">{selectedExchangeReq.condition || '-'}</span></div>
+                      <div><span className="text-[#999]">Est. Value:</span> <span className="font-medium text-[#0f3460]">{selectedExchangeReq.estimated_value ? formatCurrency(selectedExchangeReq.estimated_value) : '-'}</span></div>
+                      <div><span className="text-[#999]">Delivery:</span> <span className="font-medium text-[#1a1a2e] capitalize">{selectedExchangeReq.delivery || '-'}</span></div>
+                      <div><span className="text-[#999]">Floor:</span> <span className="font-medium text-[#1a1a2e]">{selectedExchangeReq.floor || '-'}</span></div>
+                    </div>
+                    {selectedExchangeReq.description && (
+                      <div className="mt-3">
+                        <span className="text-[#999] text-sm">Description:</span>
+                        <p className="mt-1 text-sm text-[#1a1a2e] bg-[#f8f9fa] rounded-lg p-3">{selectedExchangeReq.description}</p>
+                      </div>
+                    )}
+                  </div>
+                  {/* Photos */}
+                  {selectedExchangeReq.photos && selectedExchangeReq.photos.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-[#1a1a2e] mb-3 flex items-center gap-2"><ImageIcon className="w-4 h-4" /> Photos ({selectedExchangeReq.photos.length})</h4>
+                      <div className="grid grid-cols-3 gap-3">
+                        {selectedExchangeReq.photos.map((photo: string, idx: number) => (
+                          <a key={idx} href={photo} target="_blank" rel="noopener noreferrer" className="block aspect-square rounded-lg overflow-hidden border border-[#e5e5e5] hover:opacity-90 transition-opacity">
+                            <img src={photo} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -1984,6 +2054,13 @@ export default function AdminDashboardPage() {
                           </td>
                           <td className="p-4">
                             <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => setSelectedBiddingReq(req)}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#0f3460] text-white rounded-lg text-xs font-medium hover:bg-[#0a2540] transition-colors"
+                              >
+                                <Eye className="w-3 h-3" />
+                                Details
+                              </button>
                               <select
                                 value={req.status || 'pending'}
                                 onChange={(e) => handleUpdateBiddingProStatus(req.id, e.target.value)}
@@ -2005,6 +2082,94 @@ export default function AdminDashboardPage() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* Bidding Pro Detail Modal */}
+          {selectedBiddingReq && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setSelectedBiddingReq(null)}>
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between p-6 border-b border-[#e5e5e5]">
+                  <h3 className="font-bold text-lg text-[#1a1a2e]">Bidding Pro Request Details</h3>
+                  <button onClick={() => setSelectedBiddingReq(null)} className="p-2 hover:bg-[#f8f9fa] rounded-lg transition-colors">
+                    <X className="w-5 h-5 text-[#666]" />
+                  </button>
+                </div>
+                <div className="p-6 space-y-6">
+                  {/* Customer Info */}
+                  <div>
+                    <h4 className="font-semibold text-[#1a1a2e] mb-3 flex items-center gap-2"><User className="w-4 h-4" /> Customer Details</h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div><span className="text-[#999]">Name:</span> <span className="font-medium text-[#1a1a2e]">{selectedBiddingReq.customer_name || '-'}</span></div>
+                      <div><span className="text-[#999]">Email:</span> <span className="font-medium text-[#1a1a2e]">{selectedBiddingReq.email || '-'}</span></div>
+                      <div><span className="text-[#999]">Phone:</span> <span className="font-medium text-[#1a1a2e]">{selectedBiddingReq.phone || '-'}</span></div>
+                      <div><span className="text-[#999]">Postcode:</span> <span className="font-medium text-[#1a1a2e]">{selectedBiddingReq.postcode || '-'}</span></div>
+                      <div><span className="text-[#999]">Submitted:</span> <span className="font-medium text-[#1a1a2e]">{selectedBiddingReq.created_at ? new Date(selectedBiddingReq.created_at).toLocaleString('en-GB') : '-'}</span></div>
+                      <div><span className="text-[#999]">WhatsApp:</span>{' '}
+                        {selectedBiddingReq.whatsapp ? (
+                          <a href={`https://wa.me/${selectedBiddingReq.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="font-medium text-[#25D366] hover:underline">{selectedBiddingReq.whatsapp}</a>
+                        ) : <span className="font-medium text-[#1a1a2e]">-</span>}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Furniture Info */}
+                  <div>
+                    <h4 className="font-semibold text-[#1a1a2e] mb-3 flex items-center gap-2"><Gavel className="w-4 h-4" /> Item Details</h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div><span className="text-[#999]">Type:</span> <span className="font-medium text-[#1a1a2e]">{selectedBiddingReq.furniture_type?.name || selectedBiddingReq.furniture_type || '-'}</span></div>
+                      <div><span className="text-[#999]">Brand:</span> <span className="font-medium text-[#1a1a2e]">{selectedBiddingReq.brand || '-'}</span></div>
+                      <div><span className="text-[#999]">Condition:</span> <span className="font-medium text-[#1a1a2e] capitalize">{selectedBiddingReq.condition || '-'}</span></div>
+                      <div><span className="text-[#999]">Desired Price:</span> <span className="font-semibold text-[#3d4a3a]">{selectedBiddingReq.desired_price ? `£${parseFloat(selectedBiddingReq.desired_price).toFixed(2)}` : '-'}</span></div>
+                      <div><span className="text-[#999]">Delivery:</span> <span className="font-medium text-[#1a1a2e] capitalize">{selectedBiddingReq.delivery || '-'}</span></div>
+                      <div><span className="text-[#999]">Floor:</span> <span className="font-medium text-[#1a1a2e]">{selectedBiddingReq.floor || '-'}</span></div>
+                    </div>
+                    {selectedBiddingReq.damages && selectedBiddingReq.damages.length > 0 && (
+                      <div className="mt-3">
+                        <span className="text-[#999] text-sm">Damages:</span>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {selectedBiddingReq.damages.map((d: string, i: number) => (
+                            <span key={i} className="px-2 py-1 bg-red-50 text-red-700 rounded-md text-xs">{d}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {selectedBiddingReq.description && (
+                      <div className="mt-3">
+                        <span className="text-[#999] text-sm">Description:</span>
+                        <p className="mt-1 text-sm text-[#1a1a2e] bg-[#f8f9fa] rounded-lg p-3">{selectedBiddingReq.description}</p>
+                      </div>
+                    )}
+                  </div>
+                  {/* Offers */}
+                  {selectedBiddingReq.offers && selectedBiddingReq.offers.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-[#1a1a2e] mb-3">Outlet Offers ({selectedBiddingReq.offers.length})</h4>
+                      <div className="space-y-2">
+                        {selectedBiddingReq.offers.map((offer: any, idx: number) => (
+                          <div key={idx} className="flex items-center justify-between bg-[#f8f9fa] rounded-lg p-3 text-sm">
+                            <span className="text-[#666]">Outlet #{offer.outlet_id}</span>
+                            <span className="font-semibold text-[#3d4a3a]">£{parseFloat(offer.offered_price).toFixed(2)}</span>
+                            {offer.message && <span className="text-[#666] text-xs max-w-[200px] truncate">{offer.message}</span>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Photos */}
+                  {selectedBiddingReq.photos && selectedBiddingReq.photos.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-[#1a1a2e] mb-3 flex items-center gap-2"><ImageIcon className="w-4 h-4" /> Photos ({selectedBiddingReq.photos.length})</h4>
+                      <div className="grid grid-cols-3 gap-3">
+                        {selectedBiddingReq.photos.map((photo: string, idx: number) => (
+                          <a key={idx} href={photo} target="_blank" rel="noopener noreferrer" className="block aspect-square rounded-lg overflow-hidden border border-[#e5e5e5] hover:opacity-90 transition-opacity">
+                            <img src={photo} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}

@@ -1011,8 +1011,9 @@ class ApiClient {
   }
 
   async submitExchangePro(data: {
-    furniture_type_id: number
-    age: string
+    furniture_type_id?: number
+    furniture_type?: string
+    age?: string
     condition: string
     brand_category?: string
     original_price?: number
@@ -1022,6 +1023,8 @@ class ApiClient {
     address?: string
     postcode?: string
     description?: string
+    photos?: string[]
+    estimated_value?: number
   }) {
     return this.request<{ success: boolean; data: any; message: string }>('/exchange-pro/submit', {
       method: 'POST',
@@ -1040,9 +1043,12 @@ class ApiClient {
     postcode?: string
     floor?: string
     description?: string
+    photos?: string[]
     customer_name: string
     email: string
     phone?: string
+    whatsapp?: string
+    desired_price?: number
   }) {
     return this.request<{ success: boolean; data: any; message: string }>('/bidding-pro/submit', {
       method: 'POST',

@@ -24,6 +24,7 @@ class BiddingProController extends Controller
             'postcode' => $request->postcode,
             'floor' => $request->floor,
             'description' => $request->description,
+            'photos' => $request->photos ?? [],
             'customer_name' => $request->customer_name,
             'email' => $request->email,
             'phone' => $request->phone,

@@ -185,8 +185,9 @@ export default function ExchangeProPage() {
         email,
         phone,
         address: postcode,
+        photos: uploadedPhotos.length > 0 ? uploadedPhotos : undefined,
         estimated_value: result ? Math.round(result.estimated_min * PREMIUM_MULTIPLIER) : undefined,
-      } as any)
+      })
       setSubmitted(true)
     } catch {
       setSubmitted(true)

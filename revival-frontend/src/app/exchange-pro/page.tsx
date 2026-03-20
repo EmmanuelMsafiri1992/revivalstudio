@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useContactSettings } from '@/lib/useContactSettings'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -81,6 +82,7 @@ const PREMIUM_MULTIPLIER = 1.2
 
 export default function ExchangeProPage() {
   const router = useRouter()
+  const contact = useContactSettings()
   const [hasPremium, setHasPremium] = useState(false)
   const [checkingAuth, setCheckingAuth] = useState(true)
 
@@ -596,7 +598,7 @@ export default function ExchangeProPage() {
                         className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-[#c9a962] to-[#d4b46d] text-[#3d4a3a] rounded-full font-bold hover:from-[#d4b46d] hover:to-[#c9a962] transition-all shadow-lg disabled:opacity-50">
                         {submitting ? <><Loader2 className="w-5 h-5 animate-spin" /> Submitting...</> : <><Crown className="w-5 h-5" /> Submit Exchange Pro Request</>}
                       </button>
-                      <a href={`https://wa.me/447570578520?text=Hi, I want to exchange my ${selectedFurnitureName}. Premium offer: ${formatCurrency(premiumMin)} - ${formatCurrency(premiumMax)}`}
+                      <a href={`https://wa.me/${contact.whatsapp_number}?text=Hi, I want to exchange my ${selectedFurnitureName}. Premium offer: ${formatCurrency(premiumMin)} - ${formatCurrency(premiumMax)}`}
                         target="_blank" rel="noopener noreferrer"
                         className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#25D366] text-white rounded-full font-semibold hover:bg-[#128C7E] transition-colors">
                         <MessageCircle className="w-5 h-5" /> Contact via WhatsApp

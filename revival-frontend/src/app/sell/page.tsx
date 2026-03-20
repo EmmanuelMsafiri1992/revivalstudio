@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useContactSettings } from '@/lib/useContactSettings'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronRight, ChevronLeft, Calculator, Check, Loader2,
@@ -82,6 +83,7 @@ const steps = [
 ]
 
 export default function SellPage() {
+  const contact = useContactSettings()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [calculating, setCalculating] = useState(false)
@@ -675,7 +677,7 @@ export default function SellPage() {
                       className="flex flex-col sm:flex-row justify-center gap-3"
                     >
                       <a
-                        href={`https://wa.me/447570578520?text=Hi, I want to sell my ${selectedFurnitureName}. Condition: ${conditionOptions.find(c => c.key === selectedCondition)?.label}. Location: ${postcode}. Estimated Value: ${formatCurrency(result.estimated_min)} - ${formatCurrency(result.estimated_max)}`}
+                        href={`https://wa.me/${contact.whatsapp_number}?text=Hi, I want to sell my ${selectedFurnitureName}. Condition: ${conditionOptions.find(c => c.key === selectedCondition)?.label}. Location: ${postcode}. Estimated Value: ${formatCurrency(result.estimated_min)} - ${formatCurrency(result.estimated_max)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center gap-2 px-6 py-3 sm:py-4 bg-[#25D366] text-white rounded-full font-semibold hover:bg-[#128C7E] transition-colors"

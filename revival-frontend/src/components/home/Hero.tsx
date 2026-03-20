@@ -1,11 +1,38 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { ArrowRight, Wrench, Banknote, Recycle, MessageCircle } from 'lucide-react'
+import { api } from '@/lib/api'
+
+const DEFAULTS = {
+  whatsapp_number: '447570578520',
+  contact_phone: '+44 7570 578520',
+  stat_pieces_restored: '500+',
+  stat_partner_outlets: '50+',
+  stat_satisfaction_rate: '98%',
+}
 
 export function Hero() {
+  const [s, setS] = useState(DEFAULTS)
+
+  useEffect(() => {
+    Promise.all([
+      api.getSiteSettingsByGroup('contact'),
+      api.getSiteSettingsByGroup('stats'),
+    ]).then(([contact, stats]) => {
+      setS({
+        whatsapp_number: contact.data?.whatsapp_number ?? DEFAULTS.whatsapp_number,
+        contact_phone: contact.data?.contact_phone ?? DEFAULTS.contact_phone,
+        stat_pieces_restored: stats.data?.stat_pieces_restored ?? DEFAULTS.stat_pieces_restored,
+        stat_partner_outlets: stats.data?.stat_partner_outlets ?? DEFAULTS.stat_partner_outlets,
+        stat_satisfaction_rate: stats.data?.stat_satisfaction_rate ?? DEFAULTS.stat_satisfaction_rate,
+      })
+    }).catch(() => {})
+  }, [])
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-[#3d4a3a] via-[#4a5a46] to-[#7a9b76] text-white">
       {/* Background Image Overlay */}
@@ -87,13 +114,13 @@ export function Hero() {
             className="mt-6 flex justify-center lg:justify-start"
           >
             <a
-              href="https://wa.me/447570578520"
+              href={`https://wa.me/${s.whatsapp_number}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#25D366] text-white rounded-full font-medium hover:bg-[#128C7E] transition-colors text-sm"
             >
               <MessageCircle className="w-4 h-4" />
-              WhatsApp: +44 7570 578520
+              WhatsApp: {s.contact_phone}
             </a>
           </motion.div>
         </div>
@@ -154,9 +181,9 @@ export function Hero() {
           className="grid grid-cols-3 gap-6 sm:gap-8 mt-12 pt-8 border-t border-white/10"
         >
           {[
-            { value: '500+', label: 'Furniture Pieces Revived' },
-            { value: '50+', label: 'Partner Outlets UK-wide' },
-            { value: '98%', label: 'Customer Satisfaction' },
+            { value: s.stat_pieces_restored, label: 'Furniture Pieces Revived' },
+            { value: s.stat_partner_outlets, label: 'Partner Outlets UK-wide' },
+            { value: s.stat_satisfaction_rate, label: 'Customer Satisfaction' },
           ].map((stat, index) => (
             <div key={index} className="text-center">
               <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#c9a962]">{stat.value}</div>

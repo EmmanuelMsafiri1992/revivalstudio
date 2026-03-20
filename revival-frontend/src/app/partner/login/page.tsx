@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -13,6 +13,15 @@ export default function PartnerLoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [partnersEmail, setPartnersEmail] = useState('partners@revivalstudio.co.uk')
+
+  useEffect(() => {
+    api.getSiteSettingsByGroup('contact').then(res => {
+      if (res?.data?.contact_email_partners) {
+        setPartnersEmail(res.data.contact_email_partners)
+      }
+    }).catch(() => {})
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -97,7 +106,7 @@ export default function PartnerLoginPage() {
         <div className="mt-6 pt-6 border-t border-[#e5e5e5] text-center">
           <p className="text-sm text-[#666]">
             Not a partner yet?{' '}
-            <Link href="mailto:partners@revivalstudio.co.uk" className="text-[#3d4a3a] font-medium hover:underline">
+            <Link href={`mailto:${partnersEmail}`} className="text-[#3d4a3a] font-medium hover:underline">
               Contact us
             </Link>
           </p>

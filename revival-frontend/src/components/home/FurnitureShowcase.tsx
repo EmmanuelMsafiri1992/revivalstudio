@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { MessageCircle, ShoppingBag, Loader2, Scale } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
+import { useContactSettings } from '@/lib/useContactSettings'
 import { ProductDetailModal } from '@/components/products/ProductDetailModal'
 import { CompareModal } from '@/components/products/CompareModal'
 
@@ -192,6 +193,7 @@ const conditionLabels: Record<string, { label: string; color: string }> = {
 }
 
 export function FurnitureShowcase() {
+  const contact = useContactSettings()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
@@ -400,7 +402,7 @@ export function FurnitureShowcase() {
         >
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
             <a
-              href="https://wa.me/447570578520"
+              href={`https://wa.me/${contact.whatsapp_number}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-[#25D366] text-white rounded-full font-semibold hover:bg-[#128C7E] transition-colors text-sm sm:text-base"

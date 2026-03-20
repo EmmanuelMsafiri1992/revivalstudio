@@ -1,5 +1,6 @@
 import { RepairWizard } from '@/components/repair/RepairWizard'
-import { Wrench, Clock, Shield, Sparkles, CheckCircle, MessageCircle } from 'lucide-react'
+import { WhatsAppCTA } from '@/components/ui/WhatsAppCTA'
+import { Wrench, Clock, Shield, Sparkles, CheckCircle } from 'lucide-react'
 
 export const metadata = {
   title: 'AI Repair Cost Estimator | Revival Studio',
@@ -95,15 +96,10 @@ export default function RepairPage() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold mb-4">Need Help or Have Questions?</h2>
           <p className="text-white/80 mb-6">Our team is ready to assist you with any furniture repair enquiries.</p>
-          <a
-            href="https://wa.me/447570578520?text=Hi, I need help with furniture repair"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-[#25D366] text-white rounded-full font-semibold hover:bg-[#128C7E] transition-colors"
-          >
-            <MessageCircle className="w-5 h-5" />
-            Chat on WhatsApp
-          </a>
+          <WhatsAppCTA
+            prefillMessage="Hi, I need help with furniture repair"
+            label="Chat on WhatsApp"
+          />
         </div>
       </section>
     </>

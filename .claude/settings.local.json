@@ -44,7 +44,9 @@
       "Bash(powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host 'All node processes killed'\" 2>&1)",
       "Bash(tasklist)",
       "Bash(wait bdy7vuzgr:*)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(find /c/laragon/www/NewUkClient -type f \\\\\\(-name *.tsx -o -name *.ts -o -name *.php \\\\\\) ! -path */node_modules/* ! -path */.next/* ! -path */vendor/* ! -path */*migration* -o -path *migrations*)",
+      "Bash(find /c/laragon/www/NewUkClient -type f \\\\\\(-name *.tsx -o -name *.ts \\\\\\) ! -path */node_modules/* ! -path */.next/*)"
     ]
   }
 }

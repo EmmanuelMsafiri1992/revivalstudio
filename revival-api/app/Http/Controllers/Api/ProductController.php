@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -17,16 +18,17 @@ class ProductController extends Controller
         $query = Product::with(['outlet:id,name,city,postcode,latitude,longitude', 'furnitureType:id,name,icon'])
             ->available();
 
-        // Discounted products filter - products from discounted@revivalstudio.co.uk
+        // Discounted products filter - products from the configured discounted outlet email
+        $discountedEmail = SiteSetting::getValue('contact_email_discounted', 'discounted@revivalstudio.co.uk');
         if ($request->get('discounted') === 'true' || $request->get('discounted') === '1') {
             // Only show discounted outlet products
-            $query->whereHas('outlet', function ($q) {
-                $q->where('email', 'discounted@revivalstudio.co.uk');
+            $query->whereHas('outlet', function ($q) use ($discountedEmail) {
+                $q->where('email', $discountedEmail);
             });
         } else {
             // Exclude discounted outlet products from regular marketplace
-            $query->whereDoesntHave('outlet', function ($q) {
-                $q->where('email', 'discounted@revivalstudio.co.uk');
+            $query->whereDoesntHave('outlet', function ($q) use ($discountedEmail) {
+                $q->where('email', $discountedEmail);
             });
         }
 

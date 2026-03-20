@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useContactSettings } from '@/lib/useContactSettings'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronRight, ChevronLeft, Calculator, Check, Loader2,
@@ -52,6 +53,7 @@ const steps = [
 ]
 
 export function RepairWizard() {
+  const contact = useContactSettings()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(true)
   const [calculating, setCalculating] = useState(false)
@@ -677,7 +679,7 @@ export function RepairWizard() {
                   className="flex flex-col sm:flex-row justify-center gap-3"
                 >
                   <a
-                    href={`https://wa.me/447570578520?text=Hi, I need a repair for my ${selectedFurnitureName} (${selectedMaterialName}). AI Estimate: ${formatCurrency(getAdjustedEstimate().min)} - ${formatCurrency(getAdjustedEstimate().max)}. Damages: ${result.damages.map(d => d.name).join(', ') || 'General wear'}`}
+                    href={`https://wa.me/${contact.whatsapp_number}?text=Hi, I need a repair for my ${selectedFurnitureName} (${selectedMaterialName}). AI Estimate: ${formatCurrency(getAdjustedEstimate().min)} - ${formatCurrency(getAdjustedEstimate().max)}. Damages: ${result.damages.map(d => d.name).join(', ') || 'General wear'}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center gap-2 px-6 py-3 sm:py-4 bg-[#25D366] text-white rounded-full font-semibold hover:bg-[#128C7E] transition-colors"

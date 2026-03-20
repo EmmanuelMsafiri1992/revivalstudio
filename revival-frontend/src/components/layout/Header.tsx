@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
+import { useContactSettings } from '@/lib/useContactSettings'
 import {
   Menu,
   X,
@@ -467,6 +468,7 @@ function MobileLinkRow({
 
 export function Header() {
   const pathname = usePathname()
+  const contact = useContactSettings()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
@@ -620,20 +622,20 @@ export function Header() {
           <div className="p-4 bg-[#faf8f5] rounded-2xl">
             <p className="text-sm font-semibold text-[#3d4a3a] mb-3">Need Help?</p>
             <a
-              href="https://wa.me/447570578520"
+              href={`https://wa.me/${contact.whatsapp_number}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-sm text-[#25D366] font-medium mb-2"
             >
               <MessageCircle className="w-4 h-4" />
-              WhatsApp: +44 7570 578520
+              WhatsApp: {contact.contact_phone}
             </a>
             <a
-              href="tel:+447511775529"
+              href={`tel:${contact.contact_phone.replace(/\s/g, '')}`}
               className="flex items-center gap-2 text-sm text-[#666] hover:text-[#3d4a3a]"
             >
               <Phone className="w-4 h-4" />
-              +44 7511 775529
+              {contact.contact_phone}
             </a>
           </div>
         </div>

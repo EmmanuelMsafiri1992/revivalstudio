@@ -1,7 +1,16 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Star, Quote } from 'lucide-react'
+import { api } from '@/lib/api'
+
+const STAT_DEFAULTS = {
+  stat_average_rating: '4.9/5',
+  stat_happy_customers: '2,500+',
+  stat_satisfaction_rate: '98%',
+  stat_partner_outlets: '50+',
+}
 
 const testimonials = [
   {
@@ -31,6 +40,21 @@ const testimonials = [
 ]
 
 export function Testimonials() {
+  const [stats, setStats] = useState(STAT_DEFAULTS)
+
+  useEffect(() => {
+    api.getSiteSettingsByGroup('stats').then(res => {
+      if (res?.data) {
+        setStats({
+          stat_average_rating: res.data.stat_average_rating ?? STAT_DEFAULTS.stat_average_rating,
+          stat_happy_customers: res.data.stat_happy_customers ?? STAT_DEFAULTS.stat_happy_customers,
+          stat_satisfaction_rate: res.data.stat_satisfaction_rate ?? STAT_DEFAULTS.stat_satisfaction_rate,
+          stat_partner_outlets: res.data.stat_partner_outlets ?? STAT_DEFAULTS.stat_partner_outlets,
+        })
+      }
+    }).catch(() => {})
+  }, [])
+
   return (
     <section className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -99,19 +123,19 @@ export function Testimonials() {
           className="flex flex-wrap justify-center gap-8 mt-16 pt-12 border-t border-[#e5e5e5]"
         >
           <div className="text-center">
-            <div className="text-3xl font-bold text-[#3d4a3a]">4.9/5</div>
+            <div className="text-3xl font-bold text-[#3d4a3a]">{stats.stat_average_rating}</div>
             <div className="text-sm text-[#666]">Average Rating</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-[#3d4a3a]">2,500+</div>
+            <div className="text-3xl font-bold text-[#3d4a3a]">{stats.stat_happy_customers}</div>
             <div className="text-sm text-[#666]">Happy Customers</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-[#3d4a3a]">98%</div>
+            <div className="text-3xl font-bold text-[#3d4a3a]">{stats.stat_satisfaction_rate}</div>
             <div className="text-sm text-[#666]">Satisfaction Rate</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-[#3d4a3a]">50+</div>
+            <div className="text-3xl font-bold text-[#3d4a3a]">{stats.stat_partner_outlets}</div>
             <div className="text-sm text-[#666]">UK Partner Outlets</div>
           </div>
         </motion.div>

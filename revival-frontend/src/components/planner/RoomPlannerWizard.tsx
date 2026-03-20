@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useContactSettings } from '@/lib/useContactSettings'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, ChevronLeft, Sparkles, Check, Loader2, MessageCircle, Home, Maximize, Palette, PoundSterling, User } from 'lucide-react'
 import { api } from '@/lib/api'
@@ -46,6 +47,7 @@ const DEFAULT_PLANNER_SETTINGS = {
 }
 
 export function RoomPlannerWizard() {
+  const contact = useContactSettings()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -613,7 +615,7 @@ export function RoomPlannerWizard() {
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row justify-center gap-3 mt-8">
                   <a
-                    href={`https://wa.me/447570578520?text=Hi, I'm ${customerName}. I'd like to furnish my ${selectedRoomLabel} with the AI-generated plan (Budget: ${formatCurrency(budget)}). Can you help me source these items?`}
+                    href={`https://wa.me/${contact.whatsapp_number}?text=Hi, I'm ${customerName}. I'd like to furnish my ${selectedRoomLabel} with the AI-generated plan (Budget: ${formatCurrency(budget)}). Can you help me source these items?`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#25D366] text-white rounded-full font-semibold hover:bg-[#128C7E] transition-colors"

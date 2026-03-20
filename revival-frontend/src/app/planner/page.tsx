@@ -1,5 +1,6 @@
 import { RoomPlannerWizard } from '@/components/planner/RoomPlannerWizard'
-import { Sparkles, Clock, Target, Palette, CheckCircle, MessageCircle, Home, PoundSterling } from 'lucide-react'
+import { WhatsAppCTA } from '@/components/ui/WhatsAppCTA'
+import { Sparkles, Clock, Target, Palette, CheckCircle, Home, PoundSterling } from 'lucide-react'
 
 export const metadata = {
   title: 'AI Room Planner | Revival Studio',
@@ -146,15 +147,10 @@ export default function PlannerPage() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold mb-4">Need Personalised Advice?</h2>
           <p className="text-white/80 mb-6">Our furniture experts are ready to help you create your dream room.</p>
-          <a
-            href="https://wa.me/447570578520?text=Hi, I need help with room furniture planning"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-[#25D366] text-white rounded-full font-semibold hover:bg-[#128C7E] transition-colors"
-          >
-            <MessageCircle className="w-5 h-5" />
-            Chat with an Expert
-          </a>
+          <WhatsAppCTA
+            prefillMessage="Hi, I need help with room furniture planning"
+            label="Chat with an Expert"
+          />
         </div>
       </section>
     </>

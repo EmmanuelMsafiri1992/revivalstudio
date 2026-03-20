@@ -114,10 +114,12 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
     // Repair requests management
     Route::get('/repair-requests', [AdminController::class, 'repairRequests']);
     Route::put('/repair-requests/{id}', [AdminController::class, 'updateRepairRequest']);
+    Route::delete('/repair-requests/{id}', [AdminController::class, 'deleteRepairRequest']);
 
     // Sell requests management
     Route::get('/sell-requests', [AdminController::class, 'sellRequests']);
     Route::put('/sell-requests/{id}', [AdminController::class, 'updateSellRequest']);
+    Route::delete('/sell-requests/{id}', [AdminController::class, 'deleteSellRequest']);
 
     // Inventory management
     Route::get('/inventory', [AdminController::class, 'inventoryItems']);

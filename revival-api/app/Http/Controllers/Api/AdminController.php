@@ -220,6 +220,20 @@ class AdminController extends Controller
         ]);
     }
 
+    public function deleteRepairRequest($id)
+    {
+        $repairRequest = RepairRequest::findOrFail($id);
+        $repairRequest->delete();
+        return response()->json(['success' => true, 'message' => 'Repair request deleted successfully']);
+    }
+
+    public function deleteSellRequest($id)
+    {
+        $sellRequest = SellRequest::findOrFail($id);
+        $sellRequest->delete();
+        return response()->json(['success' => true, 'message' => 'Sell request deleted successfully']);
+    }
+
     // Inventory Management
     public function inventoryItems(Request $request)
     {

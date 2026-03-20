@@ -297,6 +297,21 @@ export default function AdminDashboardPage() {
     }
   }
 
+  async function deleteRequest(type: 'repair' | 'sell', id: number) {
+    if (!confirm(`Are you sure you want to delete this ${type} request? This cannot be undone.`)) return
+    try {
+      if (type === 'repair') {
+        await api.deleteAdminRepairRequest(id)
+        loadSectionData('repair-requests')
+      } else {
+        await api.deleteAdminSellRequest(id)
+        loadSectionData('sell-requests')
+      }
+    } catch (error) {
+      console.error('Error deleting request:', error)
+    }
+  }
+
   async function toggleProductFeatured(product: any) {
     try {
       await api.updateAdminProduct(product.id, { featured: !product.featured })
@@ -832,17 +847,26 @@ export default function AdminDashboardPage() {
                           </span>
                         </td>
                         <td className="p-4">
-                          <select
-                            value={req.status}
-                            onChange={(e) => updateRequestStatus('repair', req.id, e.target.value)}
-                            className="px-3 py-1 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
-                          >
-                            <option value="pending">Pending</option>
-                            <option value="contacted">Contacted</option>
-                            <option value="scheduled">Scheduled</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
-                          </select>
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={req.status}
+                              onChange={(e) => updateRequestStatus('repair', req.id, e.target.value)}
+                              className="px-3 py-1 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="contacted">Contacted</option>
+                              <option value="scheduled">Scheduled</option>
+                              <option value="completed">Completed</option>
+                              <option value="cancelled">Cancelled</option>
+                            </select>
+                            <button
+                              onClick={() => deleteRequest('repair', req.id)}
+                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Delete request"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -909,17 +933,26 @@ export default function AdminDashboardPage() {
                           </span>
                         </td>
                         <td className="p-4">
-                          <select
-                            value={req.status}
-                            onChange={(e) => updateRequestStatus('sell', req.id, e.target.value)}
-                            className="px-3 py-1 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
-                          >
-                            <option value="pending">Pending</option>
-                            <option value="contacted">Contacted</option>
-                            <option value="collected">Collected</option>
-                            <option value="sold">Sold</option>
-                            <option value="cancelled">Cancelled</option>
-                          </select>
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={req.status}
+                              onChange={(e) => updateRequestStatus('sell', req.id, e.target.value)}
+                              className="px-3 py-1 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="contacted">Contacted</option>
+                              <option value="collected">Collected</option>
+                              <option value="sold">Sold</option>
+                              <option value="cancelled">Cancelled</option>
+                            </select>
+                            <button
+                              onClick={() => deleteRequest('sell', req.id)}
+                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Delete request"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

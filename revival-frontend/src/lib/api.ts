@@ -459,6 +459,14 @@ class ApiClient {
     )
   }
 
+  async deleteAdminRepairRequest(id: number) {
+    return this.request<{ success: boolean; message: string }>(
+      `/admin/repair-requests/${id}`,
+      { method: 'DELETE' },
+      true
+    )
+  }
+
   // Admin - Sell requests management
   async getAdminSellRequests(params?: { status?: string; search?: string; page?: number }) {
     const searchParams = new URLSearchParams()
@@ -477,6 +485,14 @@ class ApiClient {
     return this.request<{ success: boolean; data: any; message: string }>(
       `/admin/sell-requests/${id}`,
       { method: 'PUT', body: JSON.stringify(data) },
+      true
+    )
+  }
+
+  async deleteAdminSellRequest(id: number) {
+    return this.request<{ success: boolean; message: string }>(
+      `/admin/sell-requests/${id}`,
+      { method: 'DELETE' },
       true
     )
   }

@@ -47,7 +47,10 @@
       "Read(//tmp/**)",
       "Bash(find /c/laragon/www/NewUkClient -type f \\\\\\(-name *.tsx -o -name *.ts -o -name *.php \\\\\\) ! -path */node_modules/* ! -path */.next/* ! -path */vendor/* ! -path */*migration* -o -path *migrations*)",
       "Bash(find /c/laragon/www/NewUkClient -type f \\\\\\(-name *.tsx -o -name *.ts \\\\\\) ! -path */node_modules/* ! -path */.next/*)",
-      "Bash(python3 -c \"import sys,json; routes=[r for r in json.load\\(sys.stdin\\) if not r[''''uri''''].startswith\\(''''_''''\\)]; print\\(f''''Total routes: {len\\(routes\\)}''''\\); [print\\(f  {r[''''methods''''][0]:6} /api/{r[''''uri'''']}\\) for r in routes if ''''/api/'''' not in r[''''uri''''] or True]\")"
+      "Bash(python3 -c \"import sys,json; routes=[r for r in json.load\\(sys.stdin\\) if not r[''''uri''''].startswith\\(''''_''''\\)]; print\\(f''''Total routes: {len\\(routes\\)}''''\\); [print\\(f  {r[''''methods''''][0]:6} /api/{r[''''uri'''']}\\) for r in routes if ''''/api/'''' not in r[''''uri''''] or True]\")",
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(findstr /v \"^$\")",
+      "Bash(npx next:*)"
     ]
   }
 }

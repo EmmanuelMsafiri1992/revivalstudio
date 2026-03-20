@@ -29,12 +29,18 @@ class Product extends Model
         'comparison_product_name',
         'comparison_price',
         'comparison_url',
+        'co2_new',
+        'co2_refurbished',
+        'co2_saved',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'original_price' => 'decimal:2',
         'comparison_price' => 'decimal:2',
+        'co2_new' => 'decimal:2',
+        'co2_refurbished' => 'decimal:2',
+        'co2_saved' => 'decimal:2',
         'images' => 'array',
         'featured' => 'boolean',
     ];

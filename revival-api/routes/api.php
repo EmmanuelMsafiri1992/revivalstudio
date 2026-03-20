@@ -16,6 +16,7 @@ use App\Http\Controllers\NearMeController;
 use App\Http\Controllers\ExchangeProController;
 use App\Http\Controllers\BiddingProController;
 use App\Http\Controllers\Co2EmissionController;
+use App\Http\Controllers\PremiumCodeController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -33,6 +34,9 @@ Route::get('/room-types', [FurnitureController::class, 'roomTypes']);
 Route::get('/room-sizes', [FurnitureController::class, 'roomSizes']);
 Route::get('/styles', [FurnitureController::class, 'styles']);
 Route::get('/resale-options', [FurnitureController::class, 'resaleOptions']);
+
+// Public routes - Premium code verification
+Route::post('/premium-codes/verify', [PremiumCodeController::class, 'verify']);
 
 // Public routes - Repair estimator
 Route::post('/repair/calculate', [RepairController::class, 'calculate']);
@@ -198,6 +202,12 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
 
     // CO2 Emissions management
     Route::apiResource('/co2-emissions', Co2EmissionController::class)->except(['show']);
+
+    // Premium codes management
+    Route::get('/premium-codes', [PremiumCodeController::class, 'adminIndex']);
+    Route::post('/premium-codes', [PremiumCodeController::class, 'adminStore']);
+    Route::put('/premium-codes/{id}', [PremiumCodeController::class, 'adminUpdate']);
+    Route::delete('/premium-codes/{id}', [PremiumCodeController::class, 'adminDestroy']);
 });
 
 // Health check

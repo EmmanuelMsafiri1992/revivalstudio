@@ -8,7 +8,7 @@ import {
   Bell, Search, User, TrendingUp, Shield, Armchair, Hammer, AlertTriangle,
   CheckCircle, Clock, XCircle, Eye, Edit2, Trash2, Plus, X, ShoppingBag, Star, Scale,
   Upload, Image as ImageIcon, Globe, MessageSquare, BarChart3, Save, Home, MapPin, Phone, Mail,
-  CreditCard, Receipt, ArrowLeftRight, Gavel, Leaf, SlidersHorizontal
+  CreditCard, Receipt, ArrowLeftRight, Gavel, Leaf, SlidersHorizontal, KeyRound, RefreshCw, Copy
 } from 'lucide-react'
 import Image from 'next/image'
 import { api } from '@/lib/api'
@@ -49,6 +49,7 @@ const sidebarItems = [
   { id: 'exchange-pro', label: 'Exchange Pro', icon: ArrowLeftRight },
   { id: 'bidding-pro', label: 'Bidding Pro', icon: Gavel },
   { id: 'co2-emissions', label: 'CO2 Emissions', icon: Leaf },
+  { id: 'premium-codes', label: 'Premium Codes', icon: KeyRound },
   { id: 'settings', label: 'Settings', icon: Settings },
 ]
 
@@ -101,6 +102,7 @@ export default function AdminDashboardPage() {
   const [exchangeProRequests, setExchangeProRequests] = useState<any[]>([])
   const [biddingProRequests, setBiddingProRequests] = useState<any[]>([])
   const [co2Emissions, setCo2Emissions] = useState<any[]>([])
+  const [premiumCodes, setPremiumCodes] = useState<any[]>([])
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState('all')
@@ -308,6 +310,10 @@ export default function AdminDashboardPage() {
               { id: 20, product_name: 'Storage Cabinet', new_co2: 120, refurbished_co2: 35, transport_co2: 10, net_co2_saved: 75 },
             ])
           }
+          break
+        case 'premium-codes':
+          const pcRes = await api.getAdminPremiumCodes()
+          setPremiumCodes(pcRes.data || [])
           break
       }
     } catch (error) {
@@ -1994,6 +2000,14 @@ export default function AdminDashboardPage() {
             />
           )}
 
+          {/* Premium Codes Section */}
+          {activeSection === 'premium-codes' && (
+            <PremiumCodesSection
+              codes={premiumCodes}
+              onRefresh={() => loadSectionData('premium-codes')}
+            />
+          )}
+
           {/* Settings Section */}
           {activeSection === 'settings' && (
             <div className="max-w-2xl mx-auto">
@@ -2040,6 +2054,200 @@ export default function AdminDashboardPage() {
           onSave={() => { setShowModal(false); loadSectionData(activeSection); }}
         />
       )}
+    </div>
+  )
+}
+
+function PremiumCodesSection({ codes, onRefresh }: { codes: any[]; onRefresh: () => void }) {
+  const [showForm, setShowForm] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [copiedId, setCopiedId] = useState<number | null>(null)
+  const [form, setForm] = useState({ code: '', description: '', max_uses: '', expires_at: '' })
+
+  function generateCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    const random = Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+    setForm(f => ({ ...f, code: `REVIVAL${random.slice(0, 6)}` }))
+  }
+
+  async function handleCreate() {
+    if (!form.code.trim()) return
+    setSaving(true)
+    try {
+      await api.createAdminPremiumCode({
+        code: form.code.trim().toUpperCase(),
+        description: form.description || undefined,
+        max_uses: form.max_uses ? parseInt(form.max_uses) : null,
+        expires_at: form.expires_at || null,
+        is_active: true,
+      })
+      setForm({ code: '', description: '', max_uses: '', expires_at: '' })
+      setShowForm(false)
+      onRefresh()
+    } catch (e: any) {
+      alert(e?.message || 'Failed to create code')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function toggleActive(code: any) {
+    await api.updateAdminPremiumCode(code.id, { is_active: !code.is_active })
+    onRefresh()
+  }
+
+  async function handleDelete(id: number) {
+    if (!confirm('Delete this premium code? Users with this code will lose access.')) return
+    await api.deleteAdminPremiumCode(id)
+    onRefresh()
+  }
+
+  function copyToClipboard(code: any) {
+    navigator.clipboard.writeText(code.code)
+    setCopiedId(code.id)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm">
+      <div className="p-6 border-b border-[#e5e5e5] flex justify-between items-center">
+        <div>
+          <h2 className="font-bold text-lg text-[#1a1a2e]">Premium Access Codes</h2>
+          <p className="text-sm text-[#666] mt-1">Create and manage codes that give users access to premium features</p>
+        </div>
+        <button
+          onClick={() => { setShowForm(v => !v); if (!showForm) generateCode() }}
+          className="flex items-center gap-2 px-4 py-2 bg-[#0f3460] text-white rounded-xl hover:bg-[#1a1a2e] transition-colors"
+        >
+          <Plus className="w-4 h-4" /> Generate Code
+        </button>
+      </div>
+
+      {/* Create form */}
+      {showForm && (
+        <div className="p-6 bg-[#faf8f5] border-b border-[#e5e5e5]">
+          <h3 className="font-semibold text-[#1a1a2e] mb-4">New Premium Code</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Code *</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={form.code}
+                  onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
+                  className="flex-1 px-3 py-2 border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-[#0f3460] font-mono"
+                  placeholder="REVIVAL..."
+                />
+                <button type="button" onClick={generateCode} className="px-3 py-2 border border-[#e5e5e5] rounded-lg hover:bg-white transition-colors" title="Regenerate">
+                  <RefreshCw className="w-4 h-4 text-[#666]" />
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Description</label>
+              <input
+                type="text"
+                value={form.description}
+                onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-[#0f3460]"
+                placeholder="e.g. VIP client — John Smith"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Max Uses <span className="text-[#999]">(blank = unlimited)</span></label>
+              <input
+                type="number"
+                min="1"
+                value={form.max_uses}
+                onChange={e => setForm(f => ({ ...f, max_uses: e.target.value }))}
+                className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-[#0f3460]"
+                placeholder="Unlimited"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Expires <span className="text-[#999]">(blank = never)</span></label>
+              <input
+                type="date"
+                value={form.expires_at}
+                onChange={e => setForm(f => ({ ...f, expires_at: e.target.value }))}
+                className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-[#0f3460]"
+              />
+            </div>
+          </div>
+          <div className="flex gap-3 mt-4">
+            <button
+              onClick={handleCreate}
+              disabled={saving || !form.code.trim()}
+              className="flex items-center gap-2 px-5 py-2 bg-[#0f3460] text-white rounded-xl hover:bg-[#1a1a2e] disabled:opacity-50 transition-colors"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+              {saving ? 'Creating...' : 'Create Code'}
+            </button>
+            <button onClick={() => setShowForm(false)} className="px-5 py-2 border border-[#e5e5e5] rounded-xl hover:bg-white transition-colors text-[#666]">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Codes table */}
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-[#f8f9fa]">
+              <th className="text-left p-4 font-semibold text-[#1a1a2e]">Code</th>
+              <th className="text-left p-4 font-semibold text-[#1a1a2e]">Description</th>
+              <th className="text-left p-4 font-semibold text-[#1a1a2e]">Uses</th>
+              <th className="text-left p-4 font-semibold text-[#1a1a2e]">Expires</th>
+              <th className="text-left p-4 font-semibold text-[#1a1a2e]">Status</th>
+              <th className="text-left p-4 font-semibold text-[#1a1a2e]">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {codes.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="p-8 text-center text-[#999]">No premium codes yet. Generate one above.</td>
+              </tr>
+            ) : codes.map(code => (
+              <tr key={code.id} className="border-t border-[#e5e5e5] hover:bg-[#f8f9fa]">
+                <td className="p-4">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-[#0f3460] tracking-widest">{code.code}</span>
+                    <button
+                      onClick={() => copyToClipboard(code)}
+                      className="p-1 text-[#999] hover:text-[#0f3460] transition-colors"
+                      title="Copy code"
+                    >
+                      {copiedId === code.id ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </td>
+                <td className="p-4 text-[#666] text-sm">{code.description || '—'}</td>
+                <td className="p-4 text-[#666] text-sm">
+                  {code.used_count}{code.max_uses ? ` / ${code.max_uses}` : ' / ∞'}
+                </td>
+                <td className="p-4 text-[#666] text-sm">
+                  {code.expires_at ? new Date(code.expires_at).toLocaleDateString('en-GB') : 'Never'}
+                </td>
+                <td className="p-4">
+                  <button onClick={() => toggleActive(code)} className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${code.is_active ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                    {code.is_active ? 'Active' : 'Inactive'}
+                  </button>
+                </td>
+                <td className="p-4">
+                  <button
+                    onClick={() => handleDelete(code.id)}
+                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Delete code"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
@@ -2767,6 +2975,11 @@ function Modal({
         if (formData.comparison_price) formDataToSend.append('comparison_price', formData.comparison_price.toString())
         if (formData.comparison_url) formDataToSend.append('comparison_url', formData.comparison_url)
 
+        // Add CO2 emissions fields
+        if (formData.co2_new) formDataToSend.append('co2_new', formData.co2_new.toString())
+        if (formData.co2_refurbished) formDataToSend.append('co2_refurbished', formData.co2_refurbished.toString())
+        if (formData.co2_saved) formDataToSend.append('co2_saved', formData.co2_saved.toString())
+
         // Add new images
         selectedImages.forEach(img => {
           formDataToSend.append('images[]', img)
@@ -3112,6 +3325,52 @@ function Modal({
                       onChange={e => setFormData({ ...formData, comparison_url: e.target.value })}
                       placeholder="https://www.ikea.com/..."
                       className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* CO2 Emissions Section */}
+              <div className="border border-green-200 rounded-xl p-4 bg-green-50">
+                <h4 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
+                  <Leaf className="w-4 h-4" /> CO2 Emissions (optional)
+                </h4>
+                <p className="text-xs text-green-700 mb-3">Enter kg of CO2 to show buyers the environmental impact of choosing refurbished.</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-[#1a1a2e] mb-1">If Bought New (kg)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.co2_new || ''}
+                      onChange={e => setFormData({ ...formData, co2_new: e.target.value })}
+                      placeholder="e.g. 120"
+                      className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-green-500 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-[#1a1a2e] mb-1">Refurbished (kg)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.co2_refurbished || ''}
+                      onChange={e => setFormData({ ...formData, co2_refurbished: e.target.value })}
+                      placeholder="e.g. 35"
+                      className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-green-500 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-[#1a1a2e] mb-1">CO2 Saved (kg)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.co2_saved || ''}
+                      onChange={e => setFormData({ ...formData, co2_saved: e.target.value })}
+                      placeholder="e.g. 85"
+                      className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-green-500 text-sm"
                     />
                   </div>
                 </div>

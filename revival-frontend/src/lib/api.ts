@@ -1127,6 +1127,38 @@ class ApiClient {
     }, true)
   }
 
+  // Premium codes
+  async verifyPremiumCode(code: string) {
+    return this.request<{ success: boolean; message: string }>('/premium-codes/verify', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    })
+  }
+
+  async getAdminPremiumCodes() {
+    return this.request<{ success: boolean; data: any[] }>('/admin/premium-codes', {}, true)
+  }
+
+  async createAdminPremiumCode(data: { code?: string; description?: string; is_active?: boolean; max_uses?: number | null; expires_at?: string | null }) {
+    return this.request<{ success: boolean; data: any }>('/admin/premium-codes', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, true)
+  }
+
+  async updateAdminPremiumCode(id: number, data: { description?: string; is_active?: boolean; max_uses?: number | null; expires_at?: string | null }) {
+    return this.request<{ success: boolean; data: any }>(`/admin/premium-codes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }, true)
+  }
+
+  async deleteAdminPremiumCode(id: number) {
+    return this.request<{ success: boolean; message: string }>(`/admin/premium-codes/${id}`, {
+      method: 'DELETE',
+    }, true)
+  }
+
   // Partner - Bidding Pro
   async getPartnerBiddingRequests() {
     return this.request<{ success: boolean; data: any[] }>('/outlet/bidding-requests')

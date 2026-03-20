@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
-import { X, MapPin, Phone, Mail, Clock, ChevronLeft, ChevronRight, Star, Shield, Truck, ShoppingCart } from 'lucide-react'
+import { X, MapPin, Phone, Mail, Clock, ChevronLeft, ChevronRight, Star, Shield, Truck, ShoppingCart, Leaf } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
@@ -21,6 +21,9 @@ interface Product {
   images: string[] | null
   status: string
   featured: boolean
+  co2_new?: number | null
+  co2_refurbished?: number | null
+  co2_saved?: number | null
   furniture_type?: {
     id: number
     name: string
@@ -323,6 +326,27 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                       <span>Delivery Available</span>
                     </div>
                   </div>
+
+                  {/* CO2 Savings Badge */}
+                  {product.co2_saved && (
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Leaf className="w-4 h-4 text-green-600" />
+                        <span className="font-semibold text-green-800 text-sm">Environmental Impact</span>
+                      </div>
+                      <div className="flex items-center gap-1 mb-2">
+                        <span className="text-2xl font-bold text-green-700">{Number(product.co2_saved).toFixed(1)} kg</span>
+                        <span className="text-green-600 text-sm font-medium">CO₂ saved</span>
+                      </div>
+                      <p className="text-xs text-green-600">By choosing this refurbished item instead of buying new.</p>
+                      {product.co2_new && product.co2_refurbished && (
+                        <div className="mt-2 flex gap-4 text-xs text-green-700">
+                          <span>New: {Number(product.co2_new).toFixed(1)} kg</span>
+                          <span>Refurbished: {Number(product.co2_refurbished).toFixed(1)} kg</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Partner/Outlet Location */}
                   {product.outlet && (

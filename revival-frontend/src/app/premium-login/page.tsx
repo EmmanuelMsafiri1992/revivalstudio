@@ -4,8 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { Loader2, Lock, Crown, Star, Zap, MapPin, RefreshCw, Gavel, Tag } from 'lucide-react'
-
-const PREMIUM_PASSWORD = 'REVIVALPREMIUM2024'
+import { api } from '@/lib/api'
 
 const premiumFeatures = [
   {
@@ -57,14 +56,14 @@ function PremiumLoginContent() {
     }
   }, [router, searchParams])
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-    // Small delay for UX
-    setTimeout(() => {
-      if (code.trim().toUpperCase() === PREMIUM_PASSWORD) {
+    try {
+      const res = await api.verifyPremiumCode(code.trim())
+      if (res.success) {
         if (typeof window !== 'undefined') {
           localStorage.setItem('premium_token', 'authenticated')
         }
@@ -75,9 +74,12 @@ function PremiumLoginContent() {
         }, 1200)
       } else {
         setError('Invalid access code. Please check your premium code and try again.')
-        setLoading(false)
       }
-    }, 600)
+    } catch {
+      setError('Invalid access code. Please check your premium code and try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

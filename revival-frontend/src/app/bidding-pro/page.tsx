@@ -96,6 +96,8 @@ export default function BiddingProPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [whatsapp, setWhatsapp] = useState('')
+  const [desiredPrice, setDesiredPrice] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
@@ -167,6 +169,8 @@ export default function BiddingProPage() {
           customer_name: name,
           email,
           phone,
+          whatsapp,
+          desired_price: desiredPrice ? parseFloat(desiredPrice) : undefined,
         }),
       })
       setSubmitted(true)
@@ -180,7 +184,8 @@ export default function BiddingProPage() {
   function resetWizard() {
     setStep(1); setSelectedFurnitureType(''); setSelectedBrand(''); setSelectedCondition('')
     setSelectedDamages([]); setSelectedDelivery(''); setPostcode(''); setSelectedFloor('')
-    setUploadedPhotos([]); setDescription(''); setName(''); setEmail(''); setPhone(''); setSubmitted(false)
+    setUploadedPhotos([]); setDescription(''); setName(''); setEmail(''); setPhone('')
+    setWhatsapp(''); setDesiredPrice(''); setSubmitted(false)
   }
 
   if (checkingAuth) {
@@ -529,10 +534,32 @@ export default function BiddingProPage() {
                           placeholder="+44 7000 000000"
                           className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none" />
                       </div>
+                      <div>
+                        <label className="block text-sm font-medium text-[#3d4a3a] mb-2">
+                          💬 WhatsApp Number *
+                        </label>
+                        <input type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} required
+                          placeholder="+44 7000 000000"
+                          className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none" />
+                        <p className="text-xs text-[#999] mt-1">Partners will contact you directly on WhatsApp</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-[#3d4a3a] mb-2">
+                          <span className="inline-flex items-center gap-1"><span>£</span> Desired Selling Price *</span>
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#666] font-medium">£</span>
+                          <input type="number" value={desiredPrice} onChange={(e) => setDesiredPrice(e.target.value)} required
+                            min="1" step="0.01"
+                            placeholder="e.g. 150.00"
+                            className="w-full pl-8 pr-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#c9a962] focus:outline-none" />
+                        </div>
+                        <p className="text-xs text-[#999] mt-1">Partners will see your asking price and contact you to negotiate</p>
+                      </div>
 
                       <div className="flex justify-between mt-8 pt-4">
                         <button type="button" onClick={() => setStep(7)} className="flex items-center gap-2 px-5 sm:px-6 py-3 border-2 border-[#3d4a3a] text-[#3d4a3a] rounded-full font-semibold hover:bg-[#3d4a3a]/5 transition-colors"><ChevronLeft className="w-5 h-5" /> Back</button>
-                        <button type="submit" disabled={submitting || !name || !email || !phone}
+                        <button type="submit" disabled={submitting || !name || !email || !phone || !whatsapp || !desiredPrice}
                           className="flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#c9a962] to-[#d4b46d] text-[#3d4a3a] rounded-full font-bold hover:from-[#d4b46d] hover:to-[#c9a962] transition-all shadow-lg disabled:opacity-50">
                           {submitting ? <><Loader2 className="w-5 h-5 animate-spin" /> Submitting...</> : <><Gavel className="w-5 h-5" /> Submit for Bidding</>}
                         </button>
@@ -554,8 +581,9 @@ export default function BiddingProPage() {
                     </p>
                     <div className="bg-[#faf8f5] rounded-xl p-4 sm:p-6 max-w-sm mx-auto mb-6 text-left text-sm">
                       <p className="flex items-center gap-2 text-[#3d4a3a] mb-2"><CheckCircle className="w-4 h-4 text-[#7a9b76]" /> Details submitted to partner network</p>
-                      <p className="flex items-center gap-2 text-[#3d4a3a] mb-2"><CheckCircle className="w-4 h-4 text-[#7a9b76]" /> Partners will review your listing</p>
-                      <p className="flex items-center gap-2 text-[#3d4a3a]"><CheckCircle className="w-4 h-4 text-[#7a9b76]" /> Best offer will be sent to {email}</p>
+                      <p className="flex items-center gap-2 text-[#3d4a3a] mb-2"><CheckCircle className="w-4 h-4 text-[#7a9b76]" /> Asking price: <strong>£{parseFloat(desiredPrice || '0').toFixed(2)}</strong></p>
+                      <p className="flex items-center gap-2 text-[#3d4a3a] mb-2"><CheckCircle className="w-4 h-4 text-[#7a9b76]" /> Partners will contact you on WhatsApp</p>
+                      <p className="flex items-center gap-2 text-[#3d4a3a]"><CheckCircle className="w-4 h-4 text-[#7a9b76]" /> Confirmation sent to {email}</p>
                     </div>
                     <button onClick={resetWizard}
                       className="px-6 py-3 bg-[#3d4a3a] text-white rounded-full font-semibold hover:bg-[#2d3a2a] transition-colors">

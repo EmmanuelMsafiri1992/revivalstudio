@@ -8,7 +8,7 @@ import {
   Bell, Search, User, TrendingUp, Shield, Armchair, Hammer, AlertTriangle,
   CheckCircle, Clock, XCircle, Eye, Edit2, Trash2, Plus, X, ShoppingBag, Star, Scale,
   Upload, Image as ImageIcon, Globe, MessageSquare, BarChart3, Save, Home, MapPin, Phone, Mail,
-  CreditCard, Receipt, ArrowLeftRight, Gavel, Leaf, SlidersHorizontal, KeyRound, RefreshCw, Copy
+  CreditCard, Receipt, ArrowLeftRight, Gavel, Leaf, SlidersHorizontal, KeyRound, RefreshCw, Copy, MessageCircle
 } from 'lucide-react'
 import Image from 'next/image'
 import { api } from '@/lib/api'
@@ -1928,7 +1928,8 @@ export default function AdminDashboardPage() {
                       <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Customer</th>
                       <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Furniture Type</th>
                       <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Condition</th>
-                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Description</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Asking Price</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">WhatsApp</th>
                       <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Status</th>
                       <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Actions</th>
                     </tr>
@@ -1936,7 +1937,7 @@ export default function AdminDashboardPage() {
                   <tbody className="divide-y divide-[#e5e5e5]">
                     {biddingProRequests.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="p-8 text-center text-[#666]">
+                        <td colSpan={9} className="p-8 text-center text-[#666]">
                           <Gavel className="w-16 h-16 mx-auto mb-4 text-[#e5e5e5]" />
                           <p>No bidding requests yet.</p>
                         </td>
@@ -1954,7 +1955,24 @@ export default function AdminDashboardPage() {
                           </td>
                           <td className="p-4 text-sm text-[#666]">{req.furniture_type?.name || req.furniture_type || '-'}</td>
                           <td className="p-4 text-sm text-[#666] capitalize">{req.condition || '-'}</td>
-                          <td className="p-4 text-sm text-[#666] max-w-xs truncate" title={req.description}>{req.description || '-'}</td>
+                          <td className="p-4 text-sm font-semibold text-[#3d4a3a]">
+                            {req.desired_price ? `£${parseFloat(req.desired_price).toFixed(2)}` : '-'}
+                          </td>
+                          <td className="p-4">
+                            {req.whatsapp ? (
+                              <a
+                                href={`https://wa.me/${req.whatsapp.replace(/[^0-9]/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#25D366] text-white rounded-lg text-xs font-medium hover:bg-[#128C7E] transition-colors"
+                              >
+                                <MessageCircle className="w-3 h-3" />
+                                {req.whatsapp}
+                              </a>
+                            ) : (
+                              <span className="text-[#999] text-sm">-</span>
+                            )}
+                          </td>
                           <td className="p-4">
                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                               req.status === 'offers_received' ? 'bg-blue-100 text-blue-800' :
@@ -3331,14 +3349,14 @@ function Modal({
               </div>
 
               {/* CO2 Emissions Section */}
-              <div className="border border-green-200 rounded-xl p-4 bg-green-50">
-                <h4 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
-                  <Leaf className="w-4 h-4" /> CO2 Emissions (optional)
+              <div className="border-t pt-4">
+                <h4 className="font-medium text-[#1a1a2e] mb-3 flex items-center gap-2">
+                  <Leaf className="w-4 h-4 text-green-600" /> CO2 Emissions (Optional)
                 </h4>
-                <p className="text-xs text-green-700 mb-3">Enter kg of CO2 to show buyers the environmental impact of choosing refurbished.</p>
-                <div className="grid grid-cols-3 gap-3">
+                <p className="text-xs text-[#666] mb-4">Enter kg of CO2 to show buyers the environmental impact of choosing refurbished.</p>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-[#1a1a2e] mb-1">If Bought New (kg)</label>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-1">If Bought New (kg CO2)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -3346,11 +3364,11 @@ function Modal({
                       value={formData.co2_new || ''}
                       onChange={e => setFormData({ ...formData, co2_new: e.target.value })}
                       placeholder="e.g. 120"
-                      className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-green-500 text-sm"
+                      className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-[#1a1a2e] mb-1">Refurbished (kg)</label>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Refurbished (kg CO2)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -3358,11 +3376,11 @@ function Modal({
                       value={formData.co2_refurbished || ''}
                       onChange={e => setFormData({ ...formData, co2_refurbished: e.target.value })}
                       placeholder="e.g. 35"
-                      className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-green-500 text-sm"
+                      className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-[#1a1a2e] mb-1">CO2 Saved (kg)</label>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-1">CO2 Saved (kg)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -3370,7 +3388,7 @@ function Modal({
                       value={formData.co2_saved || ''}
                       onChange={e => setFormData({ ...formData, co2_saved: e.target.value })}
                       placeholder="e.g. 85"
-                      className="w-full px-3 py-2 border border-[#e5e5e5] rounded-lg focus:outline-none focus:border-green-500 text-sm"
+                      className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
                     />
                   </div>
                 </div>

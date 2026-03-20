@@ -67,6 +67,8 @@ interface BiddingRequest {
   customer_name: string
   email: string
   phone?: string
+  whatsapp?: string
+  desired_price?: number | string | null
   furniture_type?: string
   condition?: string
   description?: string
@@ -930,11 +932,11 @@ export default function DashboardPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="bg-[#faf8f5]">
-                      <th className="text-left p-4 font-semibold text-[#3d4a3a]">Customer Name</th>
-                      <th className="text-left p-4 font-semibold text-[#3d4a3a]">Email / Phone</th>
-                      <th className="text-left p-4 font-semibold text-[#3d4a3a]">Furniture Type</th>
+                      <th className="text-left p-4 font-semibold text-[#3d4a3a]">Customer</th>
+                      <th className="text-left p-4 font-semibold text-[#3d4a3a]">Furniture</th>
                       <th className="text-left p-4 font-semibold text-[#3d4a3a]">Condition</th>
-                      <th className="text-left p-4 font-semibold text-[#3d4a3a]">Description</th>
+                      <th className="text-left p-4 font-semibold text-[#3d4a3a]">Asking Price</th>
+                      <th className="text-left p-4 font-semibold text-[#3d4a3a]">Contact</th>
                       <th className="text-left p-4 font-semibold text-[#3d4a3a]">Status</th>
                       <th className="text-left p-4 font-semibold text-[#3d4a3a]">Action</th>
                     </tr>
@@ -954,15 +956,38 @@ export default function DashboardPage() {
                       biddingRequests.map((req: BiddingRequest) => (
                         <>
                           <tr key={req.id} className="border-t border-[#e5e5e5] hover:bg-[#faf8f5] transition-colors">
-                            <td className="p-4 font-medium text-[#3d4a3a]">{req.customer_name}</td>
-                            <td className="p-4 text-sm text-[#666]">
-                              <div>{req.email}</div>
-                              {req.phone && <div className="text-xs text-[#999] mt-0.5">{req.phone}</div>}
+                            <td className="p-4">
+                              <div className="font-medium text-[#3d4a3a]">{req.customer_name}</div>
+                              <div className="text-xs text-[#666]">{req.email}</div>
+                              {req.phone && <div className="text-xs text-[#999]">{req.phone}</div>}
                             </td>
-                            <td className="p-4 text-sm text-[#666]">{req.furniture_type || '—'}</td>
+                            <td className="p-4 text-sm text-[#666]">
+                              <div>{req.furniture_type || '—'}</div>
+                              {req.description && <div className="text-xs text-[#999] mt-0.5 max-w-xs truncate">{req.description}</div>}
+                            </td>
                             <td className="p-4 text-sm text-[#666] capitalize">{req.condition || '—'}</td>
-                            <td className="p-4 text-sm text-[#666] max-w-xs">
-                              <p className="truncate">{req.description || '—'}</p>
+                            <td className="p-4">
+                              {req.desired_price ? (
+                                <span className="text-lg font-bold text-[#c9a962]">
+                                  £{parseFloat(String(req.desired_price)).toFixed(2)}
+                                </span>
+                              ) : <span className="text-[#999]">—</span>}
+                            </td>
+                            <td className="p-4">
+                              {req.whatsapp ? (
+                                <a
+                                  href={`https://wa.me/${req.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi ${req.customer_name}, I saw your ${req.furniture_type || 'furniture'} listing on Revival Studio. I'm interested in buying it for £${req.desired_price ? parseFloat(String(req.desired_price)).toFixed(2) : 'your asking price'}. Can we discuss?`)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#25D366] text-white rounded-xl text-xs font-semibold hover:bg-[#128C7E] transition-colors"
+                                >
+                                  💬 Chat on WhatsApp
+                                </a>
+                              ) : (
+                                <div className="text-xs text-[#666]">
+                                  {req.email && <a href={`mailto:${req.email}`} className="text-blue-600 hover:underline">{req.email}</a>}
+                                </div>
+                              )}
                             </td>
                             <td className="p-4">
                               <span className={`px-3 py-1 rounded-full text-xs font-medium ${

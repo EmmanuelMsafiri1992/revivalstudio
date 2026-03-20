@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import {
-  MapPin, Search, Loader2, ShoppingBag, Scale, Crown
+  MapPin, Search, Loader2, ShoppingBag, Scale, Crown, Navigation
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { ProductDetailModal } from '@/components/products/ProductDetailModal'
@@ -26,6 +26,7 @@ interface Product {
   images: string[] | null
   status: string
   featured: boolean
+  distance_miles?: number | null
   furniture_type?: { id: number; name: string; icon: string | null }
   outlet?: {
     id: number
@@ -48,6 +49,9 @@ export default function NearMePage() {
   const [productType, setProductType] = useState('')
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+  const [gpsLoading, setGpsLoading] = useState(false)
+  const [usingGps, setUsingGps] = useState(false)
+  const [coordsCache, setCoordsCache] = useState<{ lat: number; lng: number } | null>(null)
 
   const [products, setProducts] = useState<Product[]>([])
   const [total, setTotal] = useState(0)
@@ -70,6 +74,37 @@ export default function NearMePage() {
     setCheckingAuth(false)
   }, [router])
 
+  async function getPostcodeCoords(pc: string): Promise<{ lat: number; lng: number } | null> {
+    try {
+      const res = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc.replace(/\s+/g, ''))}`)
+      if (!res.ok) return null
+      const data = await res.json()
+      if (data.status === 200 && data.result) {
+        return { lat: data.result.latitude, lng: data.result.longitude }
+      }
+    } catch { /* ignore */ }
+    return null
+  }
+
+  function handleUseMyLocation() {
+    if (!navigator.geolocation) return
+    setGpsLoading(true)
+    setUsingGps(false)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoordsCache({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setUsingGps(true)
+        setPostcode('GPS Location')
+        setGpsLoading(false)
+      },
+      () => {
+        setGpsLoading(false)
+        alert('Could not get your location. Please enter your postcode manually.')
+      },
+      { timeout: 10000 }
+    )
+  }
+
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault()
     if (!postcode.trim()) return
@@ -77,13 +112,21 @@ export default function NearMePage() {
     setLoading(true)
     setSearched(true)
     try {
-      // Call near-me/search endpoint with params
       const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
+
+      // Get coordinates — from GPS cache or by geocoding the postcode
+      let coords = coordsCache
+      if (!coords && !usingGps) {
+        coords = await getPostcodeCoords(postcode.trim())
+      }
+
       const params = new URLSearchParams({
         postcode: postcode.trim().toUpperCase(),
         distance: distance.toString(),
         ...(productType.trim() && { product_name: productType.trim() }),
+        ...(coords && { lat: coords.lat.toString(), lng: coords.lng.toString() }),
       })
+
       const res = await fetch(`${API_BASE}/near-me/search?${params}`, {
         headers: { 'Accept': 'application/json' },
       })
@@ -176,14 +219,34 @@ export default function NearMePage() {
                     <MapPin className="w-4 h-4 inline mr-1 text-[#7a9b76]" />
                     Your Postcode *
                   </label>
-                  <input
-                    type="text"
-                    value={postcode}
-                    onChange={(e) => setPostcode(e.target.value.toUpperCase())}
-                    placeholder="e.g. SW1A 1AA"
-                    required
-                    className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none text-[#3d4a3a] font-mono tracking-wider"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={postcode}
+                      onChange={(e) => {
+                        setPostcode(e.target.value.toUpperCase())
+                        setUsingGps(false)
+                        setCoordsCache(null)
+                      }}
+                      placeholder="e.g. SW1A 1AA"
+                      required
+                      className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none text-[#3d4a3a] font-mono tracking-wider pr-12"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleUseMyLocation}
+                      disabled={gpsLoading}
+                      title="Use my current location"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7a9b76] hover:text-[#3d4a3a] transition-colors disabled:opacity-50"
+                    >
+                      {gpsLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Navigation className="w-5 h-5" />}
+                    </button>
+                  </div>
+                  {usingGps && (
+                    <p className="text-xs text-[#7a9b76] mt-1 flex items-center gap-1">
+                      <Navigation className="w-3 h-3" /> Using your GPS location
+                    </p>
+                  )}
                 </div>
 
                 {/* Distance */}
@@ -287,7 +350,9 @@ export default function NearMePage() {
                     <div className="absolute top-2 left-2">
                       <span className="px-2 py-1 bg-[#7a9b76] text-white rounded-lg text-xs font-bold flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
-                        Nearby
+                        {product.distance_miles != null
+                          ? `${product.distance_miles} mi`
+                          : 'Nearby'}
                       </span>
                     </div>
                     <div className="absolute top-2 right-2">

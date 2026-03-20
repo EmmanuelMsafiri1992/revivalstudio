@@ -27,6 +27,8 @@ class BiddingProController extends Controller
             'customer_name' => $request->customer_name,
             'email' => $request->email,
             'phone' => $request->phone,
+            'desired_price' => $request->desired_price,
+            'whatsapp' => $request->whatsapp,
             'status' => 'pending',
         ]);
 

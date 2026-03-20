@@ -7,7 +7,8 @@ import {
   ChevronRight, ChevronLeft, Calculator, Check, Loader2,
   Wrench, Layers, AlertTriangle, Clock, Sparkles,
   TrendingDown, Shield, Zap, Camera, Upload, X,
-  MessageCircle, Star, BadgeCheck, Timer, PoundSterling
+  MessageCircle, Star, BadgeCheck, Timer, PoundSterling,
+  User, Mail, Phone, CheckCircle
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { formatCurrency } from '@/lib/utils'
@@ -50,6 +51,7 @@ const steps = [
   { num: 3, label: 'Damage', icon: AlertTriangle },
   { num: 4, label: 'Photos', icon: Camera },
   { num: 5, label: 'Estimate', icon: Calculator },
+  { num: 6, label: 'Submit', icon: CheckCircle },
 ]
 
 export function RepairWizard() {
@@ -74,6 +76,13 @@ export function RepairWizard() {
   // Result
   const [result, setResult] = useState<RepairResult | null>(null)
   const [animateResult, setAnimateResult] = useState(false)
+
+  // Contact & submission
+  const [customerName, setCustomerName] = useState('')
+  const [customerEmail, setCustomerEmail] = useState('')
+  const [customerPhone, setCustomerPhone] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -141,6 +150,26 @@ export function RepairWizard() {
     setUploadedPhotos(prev => prev.filter((_, i) => i !== index))
   }
 
+  async function handleSubmitRequest() {
+    if (!selectedFurniture || !selectedMaterial || !customerName || !customerEmail) return
+    setSubmitting(true)
+    try {
+      await api.submitRepairRequest({
+        furniture_type_id: selectedFurniture,
+        material_id: selectedMaterial,
+        damage_type_ids: selectedDamages,
+        customer_name: customerName,
+        email: customerEmail,
+        phone: customerPhone || undefined,
+      })
+      setSubmitted(true)
+    } catch (error) {
+      console.error('Error submitting repair request:', error)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   function resetWizard() {
     setStep(1)
     setSelectedFurniture(null)
@@ -151,6 +180,11 @@ export function RepairWizard() {
     setDescription('')
     setResult(null)
     setAnimateResult(false)
+    setCustomerName('')
+    setCustomerEmail('')
+    setCustomerPhone('')
+    setSubmitting(false)
+    setSubmitted(false)
   }
 
   const selectedFurnitureName = furnitureTypes.find(f => f.id === selectedFurniture)?.name || ''
@@ -678,6 +712,13 @@ export function RepairWizard() {
                   transition={{ delay: 0.7 }}
                   className="flex flex-col sm:flex-row justify-center gap-3"
                 >
+                  <button
+                    onClick={() => setStep(6)}
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 sm:py-4 bg-[#c9a962] text-[#3d4a3a] rounded-full font-bold hover:bg-[#d4b46d] transition-all hover:-translate-y-0.5 shadow-lg"
+                  >
+                    <CheckCircle className="w-5 h-5" />
+                    Submit Repair Request
+                  </button>
                   <a
                     href={`https://wa.me/${contact.whatsapp_number}?text=Hi, I need a repair for my ${selectedFurnitureName} (${selectedMaterialName}). AI Estimate: ${formatCurrency(getAdjustedEstimate().min)} - ${formatCurrency(getAdjustedEstimate().max)}. Damages: ${result.damages.map(d => d.name).join(', ') || 'General wear'}`}
                     target="_blank"
@@ -685,7 +726,7 @@ export function RepairWizard() {
                     className="inline-flex items-center justify-center gap-2 px-6 py-3 sm:py-4 bg-[#25D366] text-white rounded-full font-semibold hover:bg-[#128C7E] transition-colors"
                   >
                     <MessageCircle className="w-5 h-5" />
-                    Book Repair via WhatsApp
+                    Book via WhatsApp
                   </a>
                   <button
                     onClick={resetWizard}
@@ -694,6 +735,156 @@ export function RepairWizard() {
                     Start New Estimate
                   </button>
                 </motion.div>
+              </motion.div>
+            )}
+            {/* Step 6: Contact & Submit */}
+            {step === 6 && !submitted && (
+              <motion.div
+                key="step6"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+              >
+                <div className="text-center mb-6 sm:mb-8">
+                  <span className="inline-block px-3 py-1 bg-[#7a9b76]/10 text-[#7a9b76] rounded-full text-sm font-medium mb-3">
+                    Final Step
+                  </span>
+                  <h3 className="text-xl sm:text-2xl font-bold text-[#3d4a3a]">
+                    Your contact details
+                  </h3>
+                  <p className="text-sm text-[#666] mt-2">We'll send you the final repair quote and get back to you within minutes</p>
+                </div>
+
+                {/* Estimate Reminder */}
+                {result && (
+                  <div className="bg-[#faf8f5] border-2 border-[#c9a962]/30 rounded-xl p-4 mb-6 text-center">
+                    <p className="text-sm text-[#666]">Your Estimate</p>
+                    <p className="text-2xl font-bold text-[#3d4a3a]">
+                      {formatCurrency(getAdjustedEstimate().min)} – {formatCurrency(getAdjustedEstimate().max)}
+                    </p>
+                  </div>
+                )}
+
+                <div className="space-y-4 max-w-md mx-auto">
+                  <div>
+                    <label className="block text-sm font-medium text-[#3d4a3a] mb-1">
+                      Full Name <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#999]" />
+                      <input
+                        type="text"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        placeholder="John Smith"
+                        className="w-full pl-10 pr-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#3d4a3a] mb-1">
+                      Email Address <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#999]" />
+                      <input
+                        type="email"
+                        value={customerEmail}
+                        onChange={(e) => setCustomerEmail(e.target.value)}
+                        placeholder="john@example.com"
+                        className="w-full pl-10 pr-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#3d4a3a] mb-1">
+                      Phone Number <span className="text-[#999] font-normal">(optional)</span>
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#999]" />
+                      <input
+                        type="tel"
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        placeholder="+44 7700 900000"
+                        className="w-full pl-10 pr-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between mt-8 max-w-md mx-auto">
+                  <button
+                    onClick={() => setStep(5)}
+                    className="flex items-center gap-2 px-5 sm:px-6 py-3 border-2 border-[#3d4a3a] text-[#3d4a3a] rounded-full font-semibold hover:bg-[#3d4a3a]/5 transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5" /> Back
+                  </button>
+                  <button
+                    onClick={handleSubmitRequest}
+                    disabled={submitting || !customerName || !customerEmail}
+                    className="flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-[#3d4a3a] text-white rounded-full font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#2d3a2a] transition-all hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-5 h-5" />
+                        Confirm & Submit
+                      </>
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 6: Success */}
+            {step === 6 && submitted && (
+              <motion.div
+                key="step6-success"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center py-8"
+              >
+                <div className="w-20 h-20 bg-[#7a9b76]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle className="w-10 h-10 text-[#7a9b76]" />
+                </div>
+                <h3 className="text-2xl font-bold text-[#3d4a3a] mb-3">Request Submitted!</h3>
+                <p className="text-[#666] mb-2">
+                  Thank you, <span className="font-semibold text-[#3d4a3a]">{customerName}</span>!
+                </p>
+                <p className="text-[#666] mb-6">
+                  We've received your repair request and will send the final quote to{' '}
+                  <span className="font-semibold text-[#3d4a3a]">{customerEmail}</span> within minutes.
+                </p>
+                {result && (
+                  <div className="bg-[#faf8f5] rounded-xl p-4 mb-6 max-w-xs mx-auto">
+                    <p className="text-sm text-[#666]">Preliminary Estimate</p>
+                    <p className="text-xl font-bold text-[#3d4a3a]">
+                      {formatCurrency(getAdjustedEstimate().min)} – {formatCurrency(getAdjustedEstimate().max)}
+                    </p>
+                  </div>
+                )}
+                <div className="flex flex-col sm:flex-row justify-center gap-3">
+                  <a
+                    href={`https://wa.me/${contact.whatsapp_number}?text=Hi, I just submitted a repair request for my ${selectedFurnitureName}. Name: ${customerName}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#25D366] text-white rounded-full font-semibold hover:bg-[#128C7E] transition-colors"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    Chat on WhatsApp
+                  </a>
+                  <button
+                    onClick={resetWizard}
+                    className="px-6 py-3 border-2 border-[#3d4a3a] text-[#3d4a3a] rounded-full font-semibold hover:bg-[#3d4a3a]/5 transition-colors"
+                  >
+                    New Estimate
+                  </button>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

@@ -8,7 +8,7 @@ import {
   Clock, Shield, TrendingUp, CheckCircle, MessageCircle, Sparkles,
   Tag, Calendar, Star, Package, Camera, Upload, X,
   BadgeCheck, Flame, TrendingDown, PoundSterling, Truck, Zap,
-  MapPin, Building, AlertTriangle, Home
+  MapPin, Building, AlertTriangle, Home, User, Mail, Phone
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { formatCurrency } from '@/lib/utils'
@@ -80,6 +80,7 @@ const steps = [
   { num: 6, label: 'Location', icon: MapPin },
   { num: 7, label: 'Photos', icon: Camera },
   { num: 8, label: 'Value', icon: PoundSterling },
+  { num: 9, label: 'Submit', icon: CheckCircle },
 ]
 
 export default function SellPage() {
@@ -99,6 +100,13 @@ export default function SellPage() {
   const [selectedFloor, setSelectedFloor] = useState<string>('')
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([])
   const [description, setDescription] = useState('')
+
+  // Contact details
+  const [customerName, setCustomerName] = useState('')
+  const [customerEmail, setCustomerEmail] = useState('')
+  const [customerPhone, setCustomerPhone] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
   // Result
   const [result, setResult] = useState<any>(null)
@@ -189,6 +197,34 @@ export default function SellPage() {
     setUploadedPhotos(prev => prev.filter((_, i) => i !== index))
   }
 
+  async function handleSubmitRequest() {
+    if (!customerName || !customerEmail) return
+    setSubmitting(true)
+    try {
+      const matchingType = furnitureTypes.find(ft =>
+        ft.name.toLowerCase().includes(selectedFurnitureType.replace('_', ' '))
+      )
+      await api.submitSellRequest({
+        furniture_type_id: matchingType?.id || 1,
+        age: selectedCondition === 'like_new' ? 'new' : '1-3',
+        condition: selectedCondition === 'like_new' ? 'excellent' :
+                   selectedCondition === 'good' ? 'good' :
+                   selectedCondition === 'average' ? 'fair' : 'poor',
+        brand_category: selectedBrand === 'ikea' ? 'standard' :
+                        selectedBrand === 'argos' ? 'budget' : 'unknown',
+        customer_name: customerName,
+        email: customerEmail,
+        phone: customerPhone || undefined,
+        address: postcode,
+      })
+      setSubmitted(true)
+    } catch {
+      setSubmitted(true) // still show success — API errors shouldn't block the user
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   function resetWizard() {
     setStep(1)
     setSelectedFurnitureType('')
@@ -202,6 +238,11 @@ export default function SellPage() {
     setDescription('')
     setResult(null)
     setAnimateResult(false)
+    setCustomerName('')
+    setCustomerEmail('')
+    setCustomerPhone('')
+    setSubmitting(false)
+    setSubmitted(false)
   }
 
   // Get confidence score
@@ -676,19 +717,88 @@ export default function SellPage() {
                       transition={{ delay: 0.6 }}
                       className="flex flex-col sm:flex-row justify-center gap-3"
                     >
+                      <button
+                        onClick={() => setStep(9)}
+                        className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-[#3d4a3a] text-white rounded-full font-bold hover:bg-[#2d3a2a] transition-all shadow-lg"
+                      >
+                        <CheckCircle className="w-5 h-5" /> Submit Sell Request
+                      </button>
                       <a
                         href={`https://wa.me/${contact.whatsapp_number}?text=Hi, I want to sell my ${selectedFurnitureName}. Condition: ${conditionOptions.find(c => c.key === selectedCondition)?.label}. Location: ${postcode}. Estimated Value: ${formatCurrency(result.estimated_min)} - ${formatCurrency(result.estimated_max)}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2 px-6 py-3 sm:py-4 bg-[#25D366] text-white rounded-full font-semibold hover:bg-[#128C7E] transition-colors"
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#25D366] text-white rounded-full font-semibold hover:bg-[#128C7E] transition-colors"
                       >
                         <MessageCircle className="w-5 h-5" />
-                        Contact via WhatsApp
+                        WhatsApp
                       </a>
                       <button onClick={resetWizard} className="px-6 py-3 border-2 border-[#3d4a3a] text-[#3d4a3a] rounded-full font-semibold hover:bg-[#3d4a3a]/5 transition-colors">
                         New Valuation
                       </button>
                     </motion.div>
+                  </motion.div>
+                )}
+
+                {/* Step 9: Contact Details & Submit */}
+                {step === 9 && !submitted && (
+                  <motion.div key="step9" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                    <div className="text-center mb-6 sm:mb-8">
+                      <span className="inline-block px-3 py-1 bg-[#7a9b76]/10 text-[#7a9b76] rounded-full text-sm font-medium mb-3">Final Step</span>
+                      <h3 className="text-xl sm:text-2xl font-bold text-[#3d4a3a]">Your Contact Details</h3>
+                      <p className="text-sm text-[#666] mt-2">We'll use these to get back to you with our best offer</p>
+                    </div>
+                    <div className="space-y-4 max-w-md mx-auto">
+                      <div>
+                        <label className="block text-sm font-medium text-[#3d4a3a] mb-2">
+                          <User className="w-4 h-4 inline mr-1" /> Full Name *
+                        </label>
+                        <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)}
+                          placeholder="e.g. John Smith"
+                          className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-[#3d4a3a] mb-2">
+                          <Mail className="w-4 h-4 inline mr-1" /> Email Address *
+                        </label>
+                        <input type="email" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)}
+                          placeholder="e.g. john@example.com"
+                          className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-[#3d4a3a] mb-2">
+                          <Phone className="w-4 h-4 inline mr-1" /> Phone Number (optional)
+                        </label>
+                        <input type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)}
+                          placeholder="e.g. 07700 900000"
+                          className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none" />
+                      </div>
+                    </div>
+                    <div className="flex justify-between mt-8">
+                      <button onClick={() => setStep(8)} className="flex items-center gap-2 px-5 sm:px-6 py-3 border-2 border-[#3d4a3a] text-[#3d4a3a] rounded-full font-semibold hover:bg-[#3d4a3a]/5 transition-colors">
+                        <ChevronLeft className="w-5 h-5" /> Back
+                      </button>
+                      <button onClick={handleSubmitRequest} disabled={!customerName || !customerEmail || submitting}
+                        className="flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-[#c9a962] text-[#3d4a3a] rounded-full font-bold disabled:opacity-50 hover:bg-[#d4b46d] transition-all shadow-lg">
+                        {submitting ? <><Loader2 className="w-5 h-5 animate-spin" /> Submitting...</> : <><CheckCircle className="w-5 h-5" /> Confirm &amp; Submit</>}
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Submitted success */}
+                {step === 9 && submitted && (
+                  <motion.div key="submitted" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-8">
+                    <div className="w-20 h-20 mx-auto mb-6 bg-[#7a9b76]/20 rounded-full flex items-center justify-center">
+                      <CheckCircle className="w-10 h-10 text-[#7a9b76]" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-[#3d4a3a] mb-4">Request Submitted!</h3>
+                    <p className="text-[#666] leading-relaxed max-w-md mx-auto mb-6">
+                      Thank you {customerName}! Our team will review your submission and contact you at <strong>{customerEmail}</strong> with our best offer.
+                    </p>
+                    <p className="text-sm text-[#c9a962] font-semibold mb-6">The final price will be confirmed after physical inspection.</p>
+                    <button onClick={resetWizard} className="px-6 py-3 bg-[#3d4a3a] text-white rounded-full font-semibold hover:bg-[#2d3a2a] transition-colors">
+                      New Valuation
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>

@@ -66,12 +66,17 @@ function PremiumLoginContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [userName, setUserName] = useState('')
+  const [alreadyLoggedIn, setAlreadyLoggedIn] = useState(false)
+  const [existingUserName, setExistingUserName] = useState('')
 
   useEffect(() => {
     if (typeof window !== 'undefined' && localStorage.getItem('premium_token') === 'authenticated') {
-      router.replace(redirect)
+      const stored = localStorage.getItem('premium_user')
+      const parsed = stored ? JSON.parse(stored) : null
+      setExistingUserName(parsed?.name || '')
+      setAlreadyLoggedIn(true)
     }
-  }, [router, redirect])
+  }, [])
 
   // Card number formatting
   function formatCardNumber(val: string) {
@@ -90,6 +95,14 @@ function PremiumLoginContent() {
     localStorage.setItem('premium_token', 'authenticated')
     localStorage.setItem('premium_user', JSON.stringify({ name }))
     setUserName(name)
+    setAlreadyLoggedIn(false)
+  }
+
+  function handleLogout() {
+    localStorage.removeItem('premium_token')
+    localStorage.removeItem('premium_user')
+    setAlreadyLoggedIn(false)
+    setExistingUserName('')
   }
 
   // Step 1 → Step 2 validation
@@ -160,7 +173,35 @@ function PremiumLoginContent() {
     <div className="min-h-screen bg-gradient-to-br from-[#3d4a3a] via-[#4a5a46] to-[#2a3528] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-lg">
 
-        {/* Logo / Brand */}
+        {/* Already logged in */}
+        {alreadyLoggedIn && (
+          <div className="bg-white rounded-3xl shadow-2xl p-8 text-center">
+            <div className="w-16 h-16 bg-[#c9a962]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Crown className="w-8 h-8 text-[#c9a962]" />
+            </div>
+            <h2 className="text-xl font-bold text-[#3d4a3a] mb-1">
+              {existingUserName ? `Welcome back, ${existingUserName}!` : 'You\'re already logged in'}
+            </h2>
+            <p className="text-[#666] text-sm mb-6">You have an active premium account.</p>
+            <div className="space-y-3">
+              <button
+                onClick={() => router.push(redirect)}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-[#c9a962] to-[#d4b46d] text-[#3d4a3a] rounded-full font-bold hover:from-[#d4b46d] hover:to-[#c9a962] transition-all shadow-md"
+              >
+                <Zap className="w-5 h-5" /> Go to Premium Features
+              </button>
+              <button
+                onClick={handleLogout}
+                className="w-full py-3 border-2 border-[#e5e5e5] text-[#666] rounded-full font-medium hover:border-[#3d4a3a] hover:text-[#3d4a3a] transition-colors text-sm"
+              >
+                Sign in as a different account
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Logo / Brand + main form — hidden when already logged in */}
+        {!alreadyLoggedIn && <>
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur rounded-2xl px-5 py-3">
             <Crown className="w-6 h-6 text-[#c9a962]" />
@@ -550,6 +591,7 @@ function PremiumLoginContent() {
             ))}
           </div>
         )}
+        </>}
       </div>
     </div>
   )

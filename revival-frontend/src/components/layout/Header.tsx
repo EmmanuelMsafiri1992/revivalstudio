@@ -247,9 +247,10 @@ function DesktopDropdown({
         {entry.groups?.map((group, gi) =>
           group.premium ? (
             <div key={gi}>
-              {/* Premium section header */}
-              <div
-                className="flex items-center gap-2 px-4 py-2.5"
+              {/* Premium section header — clicking goes to login */}
+              <Link
+                href="/premium-login"
+                className="flex items-center gap-2 px-4 py-2.5 hover:opacity-90 transition-opacity"
                 style={{ background: `linear-gradient(90deg, ${ACCENT} 0%, #d4b46d 100%)` }}
               >
                 <Crown className="w-3.5 h-3.5" style={{ color: PRIMARY }} />
@@ -259,7 +260,7 @@ function DesktopDropdown({
                 >
                   {group.label}
                 </span>
-              </div>
+              </Link>
               {group.items.map((item) => (
                 <DesktopDropdownItem key={item.href + item.label} item={item} pathname={pathname} />
               ))}
@@ -383,16 +384,18 @@ function MobileSection({
       {entry.groups?.map((group, gi) =>
         group.premium ? (
           <div key={gi}>
-            {/* Premium header bar */}
-            <div
-              className="flex items-center gap-2 px-4 py-2"
+            {/* Premium header bar — clicking goes to login */}
+            <Link
+              href="/premium-login"
+              onClick={onClose}
+              className="flex items-center gap-2 px-4 py-2 hover:opacity-90 transition-opacity"
               style={{ background: `linear-gradient(90deg, ${ACCENT} 0%, #d4b46d 100%)` }}
             >
               <Crown className="w-3.5 h-3.5" style={{ color: PRIMARY }} />
               <span className="text-xs font-bold uppercase tracking-wider" style={{ color: PRIMARY }}>
                 {group.label}
               </span>
-            </div>
+            </Link>
             {group.items.map((item) => (
               <MobileLinkRow
                 key={item.href + item.label}

@@ -112,27 +112,21 @@ export default function NearMePage() {
     setLoading(true)
     setSearched(true)
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
-
       // Get coordinates — from GPS cache or by geocoding the postcode
       let coords = coordsCache
       if (!coords && !usingGps) {
         coords = await getPostcodeCoords(postcode.trim())
       }
 
-      const params = new URLSearchParams({
+      const data = await api.searchNearMe({
         postcode: postcode.trim().toUpperCase(),
-        distance: distance.toString(),
-        ...(productType.trim() && { product_name: productType.trim() }),
-        ...(coords && { lat: coords.lat.toString(), lng: coords.lng.toString() }),
+        distance,
+        product_name: productType.trim() || undefined,
+        lat: coords?.lat,
+        lng: coords?.lng,
       })
-
-      const res = await fetch(`${API_BASE}/near-me/search?${params}`, {
-        headers: { 'Accept': 'application/json' },
-      })
-      const data = await res.json()
-      setProducts(data.data || data.products || [])
-      setTotal(data.total || (data.data || data.products || []).length)
+      setProducts(data.data || [])
+      setTotal(data.total || (data.data || []).length)
     } catch (error) {
       console.error('Near me search error:', error)
       setProducts([])

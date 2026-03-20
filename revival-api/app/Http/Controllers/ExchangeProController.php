@@ -58,6 +58,7 @@ class ExchangeProController extends Controller
             'address' => $request->address,
             'postcode' => $request->postcode,
             'description' => $request->description,
+            'estimated_value' => $request->estimated_value,
             'status' => 'pending',
         ]);
 

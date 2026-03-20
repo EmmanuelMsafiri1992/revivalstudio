@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -361,6 +361,16 @@ export default function DashboardPage() {
     }
   }
 
+  // Helper to build full image URL (images stored as '/storage/...' relative paths)
+  const getImageUrl = (img: string | null | undefined): string => {
+    if (!img) return '/products/placeholder.jpg'
+    if (img.startsWith('http')) return img
+    const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || 'https://api.revivalstudio.uk'
+    if (img.startsWith('/storage/')) return `${apiBase}${img}`
+    if (img.startsWith('/')) return img
+    return `${apiBase}/storage/${img}`
+  }
+
   async function handleBiddingOfferSubmit(requestId: number) {
     if (!offerPrice) return
     setOfferSubmitting(true)
@@ -641,7 +651,7 @@ export default function DashboardPage() {
                         <div className="relative h-32 bg-gray-100">
                           {product.images && product.images[0] ? (
                             <Image
-                              src={product.images[0]}
+                              src={getImageUrl(product.images[0])}
                               alt={product.name}
                               fill
                               className="object-cover"
@@ -721,7 +731,7 @@ export default function DashboardPage() {
                         <div className="relative h-40 bg-gray-100">
                           {product.images && product.images[0] ? (
                             <Image
-                              src={product.images[0]}
+                              src={getImageUrl(product.images[0])}
                               alt={product.name}
                               fill
                               className="object-cover"
@@ -954,8 +964,8 @@ export default function DashboardPage() {
                       </tr>
                     ) : (
                       biddingRequests.map((req: BiddingRequest) => (
-                        <>
-                          <tr key={req.id} className="border-t border-[#e5e5e5] hover:bg-[#faf8f5] transition-colors">
+                        <React.Fragment key={req.id}>
+                          <tr className="border-t border-[#e5e5e5] hover:bg-[#faf8f5] transition-colors">
                             <td className="p-4">
                               <div className="font-medium text-[#3d4a3a]">{req.customer_name}</div>
                               <div className="text-xs text-[#666]">{req.email}</div>
@@ -1025,7 +1035,7 @@ export default function DashboardPage() {
                             </td>
                           </tr>
                           {offerFormOpen === req.id && (
-                            <tr key={`offer-${req.id}`} className="border-t border-[#e5e5e5] bg-[#faf8f5]">
+                            <tr className="border-t border-[#e5e5e5] bg-[#faf8f5]">
                               <td colSpan={7} className="p-4">
                                 <div className="max-w-lg bg-white border border-[#e5e5e5] rounded-xl p-5 shadow-sm">
                                   <h4 className="font-semibold text-[#3d4a3a] mb-4 flex items-center gap-2">
@@ -1085,7 +1095,7 @@ export default function DashboardPage() {
                               </td>
                             </tr>
                           )}
-                        </>
+                        </React.Fragment>
                       ))
                     )}
                   </tbody>
@@ -1238,7 +1248,7 @@ export default function DashboardPage() {
                 <div className="flex flex-wrap gap-3">
                   {existingImages.map((img, idx) => (
                     <div key={idx} className="relative w-24 h-24 rounded-lg overflow-hidden">
-                      <Image src={img} alt="" fill className="object-cover" />
+                      <Image src={getImageUrl(img)} alt="" fill className="object-cover" />
                       <button
                         type="button"
                         onClick={() => editingProduct && handleDeleteImage(editingProduct.id, idx)}

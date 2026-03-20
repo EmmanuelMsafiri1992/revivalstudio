@@ -145,22 +145,16 @@ export default function ExchangeProPage() {
       const matchingType = furnitureTypes.find(ft =>
         ft.name.toLowerCase().includes(selectedFurnitureType.replace('_', ' '))
       )
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
-      const res = await fetch(`${API_BASE}/exchange-pro/calculate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
-          furniture_type_id: matchingType?.id || 1,
-          age: selectedCondition === 'like_new' ? 'new' : '1-3',
-          condition: selectedCondition === 'like_new' ? 'excellent' :
-                     selectedCondition === 'good' ? 'good' :
-                     selectedCondition === 'average' ? 'fair' : 'poor',
-          brand_category: selectedBrand === 'ikea' ? 'standard' :
-                          selectedBrand === 'argos' ? 'budget' : 'unknown',
-        }),
+      const res = await api.calculateExchangePro({
+        furniture_type_id: matchingType?.id || 1,
+        age: selectedCondition === 'like_new' ? 'new' : '1-3',
+        condition: selectedCondition === 'like_new' ? 'excellent' :
+                   selectedCondition === 'good' ? 'good' :
+                   selectedCondition === 'average' ? 'fair' : 'poor',
+        brand_category: selectedBrand === 'ikea' ? 'standard' :
+                        selectedBrand === 'argos' ? 'budget' : 'unknown',
       })
-      const data = await res.json()
-      setResult(data.data)
+      setResult(res.data)
     } catch {
       // Fallback with estimated values
       setResult({
@@ -180,24 +174,19 @@ export default function ExchangeProPage() {
   async function handleSubmit() {
     setSubmitting(true)
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
-      await fetch(`${API_BASE}/exchange-pro/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
-          furniture_type: selectedFurnitureType,
-          brand: selectedBrand,
-          condition: selectedCondition,
-          damages: selectedDamages,
-          delivery: selectedDelivery,
-          postcode,
-          floor: selectedFloor,
-          description,
-          customer_name: name,
-          email,
-          phone,
-        }),
-      })
+      await api.submitExchangePro({
+        furniture_type: selectedFurnitureType,
+        age: selectedCondition === 'like_new' ? 'new' : '1-3',
+        condition: selectedCondition,
+        brand_category: selectedBrand,
+        postcode,
+        description,
+        customer_name: name,
+        email,
+        phone,
+        address: postcode,
+        estimated_value: result ? Math.round(result.estimated_min * PREMIUM_MULTIPLIER) : undefined,
+      } as any)
       setSubmitted(true)
     } catch {
       setSubmitted(true)

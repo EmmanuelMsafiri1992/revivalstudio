@@ -986,12 +986,14 @@ class ApiClient {
   }
 
   // Near Me
-  async searchNearMe(data: { postcode: string; distance: number; product_name?: string }) {
+  async searchNearMe(data: { postcode: string; distance: number; product_name?: string; lat?: number; lng?: number }) {
     const params = new URLSearchParams()
     params.append('postcode', data.postcode)
     params.append('distance', data.distance.toString())
     if (data.product_name) params.append('product_name', data.product_name)
-    return this.request<{ success: boolean; data: any[] }>(`/near-me/search?${params.toString()}`)
+    if (data.lat !== undefined) params.append('lat', data.lat.toString())
+    if (data.lng !== undefined) params.append('lng', data.lng.toString())
+    return this.request<{ success: boolean; data: any[]; total: number; search_area: string; distance: number; using_gps: boolean }>(`/near-me/search?${params.toString()}`)
   }
 
   // Exchange Pro

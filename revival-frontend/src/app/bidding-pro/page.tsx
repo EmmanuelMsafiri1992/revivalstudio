@@ -153,26 +153,21 @@ export default function BiddingProPage() {
     e.preventDefault()
     setSubmitting(true)
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
-      await fetch(`${API_BASE}/bidding-pro/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
-          furniture_type: selectedFurnitureType,
-          brand: selectedBrand,
-          condition: selectedCondition,
-          damages: selectedDamages,
-          delivery: selectedDelivery,
-          postcode,
-          floor: selectedFloor,
-          description,
-          customer_name: name,
-          email,
-          phone,
-          whatsapp,
-          desired_price: desiredPrice ? parseFloat(desiredPrice) : undefined,
-        }),
-      })
+      await api.submitBiddingPro({
+        furniture_type: selectedFurnitureType,
+        brand: selectedBrand,
+        condition: selectedCondition,
+        damages: selectedDamages,
+        delivery: selectedDelivery,
+        postcode,
+        floor: selectedFloor,
+        description,
+        customer_name: name,
+        email,
+        phone,
+        whatsapp,
+        desired_price: desiredPrice ? parseFloat(desiredPrice) : undefined,
+      } as any)
       setSubmitted(true)
     } catch {
       setSubmitted(true)

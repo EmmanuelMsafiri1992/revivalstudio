@@ -19,7 +19,7 @@ class BiddingProController extends Controller
             'furniture_type_id' => $request->furniture_type_id,
             'brand' => $request->brand,
             'condition' => $request->condition,
-            'damages' => json_encode($request->damages ?? []),
+            'damages' => $request->damages ?? [],
             'delivery' => $request->delivery,
             'postcode' => $request->postcode,
             'floor' => $request->floor,

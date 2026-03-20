@@ -270,7 +270,7 @@ export default function AdminDashboardPage() {
           break
         case 'orders':
           const ordRes = await api.getAdminOrders({ status: statusFilter !== 'all' ? statusFilter : undefined })
-          setOrders(ordRes.data?.data || ordRes.data || [])
+          setOrders(ordRes.data?.data ?? [])
           break
         case 'site-settings':
           const ssRes = await api.getAdminSiteSettings()
@@ -597,7 +597,7 @@ export default function AdminDashboardPage() {
             {sidebarItems.map(item => (
               <li key={item.id}>
                 <button
-                  onClick={() => setActiveSection(item.id)}
+                  onClick={() => { setActiveSection(item.id); setStatusFilter('all') }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                     activeSection === item.id
                       ? 'bg-[#0f3460] text-white'
@@ -1937,7 +1937,7 @@ export default function AdminDashboardPage() {
                   <tbody className="divide-y divide-[#e5e5e5]">
                     {biddingProRequests.length === 0 ? (
                       <tr>
-                        <td colSpan={9} className="p-8 text-center text-[#666]">
+                        <td colSpan={8} className="p-8 text-center text-[#666]">
                           <Gavel className="w-16 h-16 mx-auto mb-4 text-[#e5e5e5]" />
                           <p>No bidding requests yet.</p>
                         </td>

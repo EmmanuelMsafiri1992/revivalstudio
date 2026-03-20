@@ -8,7 +8,7 @@ import {
   Bell, Search, User, TrendingUp, Shield, Armchair, Hammer, AlertTriangle,
   CheckCircle, Clock, XCircle, Eye, Edit2, Trash2, Plus, X, ShoppingBag, Star, Scale,
   Upload, Image as ImageIcon, Globe, MessageSquare, BarChart3, Save, Home, MapPin, Phone, Mail,
-  CreditCard, Receipt, ArrowLeftRight, Gavel, Leaf, SlidersHorizontal, KeyRound, RefreshCw, Copy, MessageCircle
+  CreditCard, Receipt, ArrowLeftRight, Gavel, Leaf, SlidersHorizontal, KeyRound, RefreshCw, Copy, MessageCircle, ExternalLink
 } from 'lucide-react'
 import Image from 'next/image'
 import { api } from '@/lib/api'
@@ -105,6 +105,8 @@ export default function AdminDashboardPage() {
   const [premiumCodes, setPremiumCodes] = useState<any[]>([])
   const [selectedExchangeReq, setSelectedExchangeReq] = useState<any>(null)
   const [selectedBiddingReq, setSelectedBiddingReq] = useState<any>(null)
+  const [selectedRoomPlan, setSelectedRoomPlan] = useState<any>(null)
+  const [selectedOrder, setSelectedOrder] = useState<any>(null)
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState('all')
@@ -614,7 +616,15 @@ export default function AdminDashboardPage() {
           </ul>
         </nav>
 
-        <div className="p-4 border-t border-white/10">
+        <div className="p-4 border-t border-white/10 space-y-2">
+          <button
+            onClick={() => window.open('/planner', '_blank')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 text-white/80 hover:text-white transition-all ${sidebarCollapsed ? 'justify-center' : ''}`}
+            title="Open Room Planner"
+          >
+            <ExternalLink className="w-5 h-5 flex-shrink-0" />
+            {!sidebarCollapsed && <span className="font-medium">Room Planner Tool</span>}
+          </button>
           <button
             onClick={handleLogout}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/20 text-white/80 hover:text-red-300 transition-all ${sidebarCollapsed ? 'justify-center' : ''}`}
@@ -1441,6 +1451,13 @@ export default function AdminDashboardPage() {
                   <h2 className="font-bold text-xl text-[#1a1a2e]">Room Plans</h2>
                   <p className="text-sm text-[#666] mt-1">Customer room planner submissions</p>
                 </div>
+                <button
+                  onClick={() => window.open('/planner', '_blank')}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-[#0f3460] text-white rounded-xl text-sm font-medium hover:bg-[#0a2540] transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Launch Room Planner
+                </button>
               </div>
 
               {/* Status Filter */}
@@ -1537,19 +1554,116 @@ export default function AdminDashboardPage() {
                             {new Date(plan.created_at).toLocaleDateString('en-GB')}
                           </td>
                           <td className="p-4">
-                            <button
-                              onClick={() => handleDeleteRoomPlan(plan.id)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => setSelectedRoomPlan(plan)}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#0f3460] text-white rounded-lg text-xs font-medium hover:bg-[#0a2540] transition-colors"
+                              >
+                                <Eye className="w-3 h-3" />
+                                View Plan
+                              </button>
+                              <button
+                                onClick={() => handleDeleteRoomPlan(plan.id)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* Room Plan Detail Modal */}
+          {selectedRoomPlan && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setSelectedRoomPlan(null)}>
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between p-6 border-b border-[#e5e5e5]">
+                  <div>
+                    <h3 className="font-bold text-lg text-[#1a1a2e]">Room Plan — {selectedRoomPlan.customer_name}</h3>
+                    <p className="text-sm text-[#666] mt-0.5">{new Date(selectedRoomPlan.created_at).toLocaleString('en-GB')}</p>
+                  </div>
+                  <button onClick={() => setSelectedRoomPlan(null)} className="p-2 hover:bg-[#f8f9fa] rounded-lg transition-colors">
+                    <X className="w-5 h-5 text-[#666]" />
+                  </button>
+                </div>
+                <div className="p-6 space-y-6">
+                  {/* Customer Info */}
+                  <div>
+                    <h4 className="font-semibold text-[#1a1a2e] mb-3 flex items-center gap-2"><User className="w-4 h-4" /> Customer Details</h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div><span className="text-[#999]">Name:</span> <span className="font-medium text-[#1a1a2e]">{selectedRoomPlan.customer_name}</span></div>
+                      <div><span className="text-[#999]">Email:</span> <a href={`mailto:${selectedRoomPlan.email}`} className="font-medium text-[#0f3460] hover:underline">{selectedRoomPlan.email}</a></div>
+                      <div><span className="text-[#999]">Phone:</span> <a href={`tel:${selectedRoomPlan.phone}`} className="font-medium text-[#0f3460] hover:underline">{selectedRoomPlan.phone}</a></div>
+                      <div><span className="text-[#999]">Address:</span> <span className="font-medium text-[#1a1a2e]">{selectedRoomPlan.house_number} {selectedRoomPlan.address_line1}, {selectedRoomPlan.city} {selectedRoomPlan.postcode}</span></div>
+                    </div>
+                  </div>
+                  {/* Room Spec */}
+                  <div>
+                    <h4 className="font-semibold text-[#1a1a2e] mb-3 flex items-center gap-2"><Home className="w-4 h-4" /> Room Specification</h4>
+                    <div className="grid grid-cols-4 gap-3">
+                      {[
+                        { label: 'Room Type', value: selectedRoomPlan.room_type?.replace(/([A-Z])/g, ' $1').trim() },
+                        { label: 'Size', value: selectedRoomPlan.room_size },
+                        { label: 'Style', value: selectedRoomPlan.style },
+                        { label: 'Budget', value: formatCurrency(selectedRoomPlan.budget || 0) },
+                      ].map(({ label, value }) => (
+                        <div key={label} className="bg-[#f8f9fa] rounded-xl p-3 text-center">
+                          <div className="text-xs text-[#999] mb-1">{label}</div>
+                          <div className="font-semibold text-[#1a1a2e] capitalize text-sm">{value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Personalised Plan */}
+                  {selectedRoomPlan.selected_items && selectedRoomPlan.selected_items.length > 0 ? (
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-semibold text-[#1a1a2e] flex items-center gap-2"><Package className="w-4 h-4" /> Personalised Furniture Plan ({selectedRoomPlan.selected_items.length} items)</h4>
+                        <div className="text-sm font-bold text-[#0f3460]">Total: {formatCurrency(selectedRoomPlan.total_cost || 0)}</div>
+                      </div>
+                      <div className="space-y-3">
+                        {selectedRoomPlan.selected_items.map((item: any, idx: number) => (
+                          <div key={idx} className="flex items-center gap-4 p-3 bg-[#f8f9fa] rounded-xl border border-[#e5e5e5]">
+                            {item.image ? (
+                              <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg border border-[#e5e5e5] flex-shrink-0" />
+                            ) : (
+                              <div className="w-16 h-16 bg-[#e5e5e5] rounded-lg flex items-center justify-center flex-shrink-0">
+                                <Package className="w-6 h-6 text-[#999]" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-[#1a1a2e]">{item.name}</div>
+                              <div className="text-xs text-[#666]">{item.furniture_type_icon} {item.furniture_type} · Style: {item.style}</div>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <div className="font-semibold text-[#0f3460]">{formatCurrency(item.adjusted_price || item.original_price || 0)}</div>
+                              {item.adjusted_price !== item.original_price && item.original_price && (
+                                <div className="text-xs text-[#999] line-through">{formatCurrency(item.original_price)}</div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className={`mt-4 p-3 rounded-xl text-sm font-medium text-center ${selectedRoomPlan.total_cost <= selectedRoomPlan.budget ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
+                        {selectedRoomPlan.total_cost <= selectedRoomPlan.budget
+                          ? `✓ Within budget — ${formatCurrency(selectedRoomPlan.budget - selectedRoomPlan.total_cost)} remaining`
+                          : `⚠ Over budget by ${formatCurrency(selectedRoomPlan.total_cost - selectedRoomPlan.budget)}`}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 text-[#999] bg-[#f8f9fa] rounded-xl">
+                      <Package className="w-10 h-10 mx-auto mb-2 text-[#e5e5e5]" />
+                      <p className="text-sm">No furniture items in plan (catalog may have been empty at time of submission)</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -1618,7 +1732,24 @@ export default function AdminDashboardPage() {
                             <div className="text-xs text-[#666]">{order.phone}</div>
                           </td>
                           <td className="p-4">
-                            <div className="text-sm font-medium text-[#1a1a2e]">{order.product?.name || 'N/A'}</div>
+                            <div className="flex items-center gap-3">
+                              {order.product?.images && order.product.images.length > 0 ? (
+                                <img
+                                  src={order.product.images[0]}
+                                  alt={order.product.name}
+                                  className="w-12 h-12 object-cover rounded-lg border border-[#e5e5e5] flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                                  onClick={() => setSelectedOrder(order)}
+                                />
+                              ) : (
+                                <div className="w-12 h-12 bg-[#f8f9fa] rounded-lg border border-[#e5e5e5] flex items-center justify-center flex-shrink-0">
+                                  <Package className="w-5 h-5 text-[#ccc]" />
+                                </div>
+                              )}
+                              <div>
+                                <div className="text-sm font-medium text-[#1a1a2e]">{order.product?.name || 'N/A'}</div>
+                                {order.product?.condition && <div className="text-xs text-[#666] capitalize">{order.product.condition}</div>}
+                              </div>
+                            </div>
                           </td>
                           <td className="p-4">
                             <div className="text-sm text-[#666]">
@@ -1663,6 +1794,80 @@ export default function AdminDashboardPage() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* Order Detail Modal */}
+          {selectedOrder && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setSelectedOrder(null)}>
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between p-6 border-b border-[#e5e5e5]">
+                  <div>
+                    <h3 className="font-bold text-lg text-[#1a1a2e]">Order {selectedOrder.order_number}</h3>
+                    <p className="text-sm text-[#666] mt-0.5">{new Date(selectedOrder.created_at).toLocaleString('en-GB')}</p>
+                  </div>
+                  <button onClick={() => setSelectedOrder(null)} className="p-2 hover:bg-[#f8f9fa] rounded-lg transition-colors">
+                    <X className="w-5 h-5 text-[#666]" />
+                  </button>
+                </div>
+                <div className="p-6 space-y-6">
+                  {/* Product */}
+                  <div>
+                    <h4 className="font-semibold text-[#1a1a2e] mb-3 flex items-center gap-2"><Package className="w-4 h-4" /> Product</h4>
+                    {selectedOrder.product ? (
+                      <div className="flex gap-4 bg-[#f8f9fa] rounded-xl p-4">
+                        {selectedOrder.product.images && selectedOrder.product.images.length > 0 ? (
+                          <div className="flex gap-2 flex-wrap">
+                            {selectedOrder.product.images.map((img: string, i: number) => (
+                              <a key={i} href={img} target="_blank" rel="noopener noreferrer">
+                                <img src={img} alt={`Product ${i + 1}`} className="w-24 h-24 object-cover rounded-lg border border-[#e5e5e5] hover:opacity-80 transition-opacity" />
+                              </a>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="w-24 h-24 bg-[#e5e5e5] rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Package className="w-8 h-8 text-[#999]" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <div className="font-semibold text-[#1a1a2e]">{selectedOrder.product.name}</div>
+                          {selectedOrder.product.brand && <div className="text-sm text-[#666]">Brand: {selectedOrder.product.brand}</div>}
+                          {selectedOrder.product.condition && <div className="text-sm text-[#666] capitalize">Condition: {selectedOrder.product.condition}</div>}
+                          {selectedOrder.product.description && <div className="text-xs text-[#999] mt-1 line-clamp-2">{selectedOrder.product.description}</div>}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-[#999] text-sm">Product details unavailable</p>
+                    )}
+                  </div>
+                  {/* Customer */}
+                  <div>
+                    <h4 className="font-semibold text-[#1a1a2e] mb-3 flex items-center gap-2"><User className="w-4 h-4" /> Customer</h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div><span className="text-[#999]">Name:</span> <span className="font-medium text-[#1a1a2e]">{selectedOrder.customer_name}</span></div>
+                      <div><span className="text-[#999]">Email:</span> <a href={`mailto:${selectedOrder.email}`} className="font-medium text-[#0f3460] hover:underline">{selectedOrder.email}</a></div>
+                      <div><span className="text-[#999]">Phone:</span> <a href={`tel:${selectedOrder.phone}`} className="font-medium text-[#0f3460] hover:underline">{selectedOrder.phone}</a></div>
+                      <div><span className="text-[#999]">Address:</span> <span className="font-medium text-[#1a1a2e]">{selectedOrder.house_number} {selectedOrder.address_line1}, {selectedOrder.city} {selectedOrder.postcode}</span></div>
+                    </div>
+                  </div>
+                  {/* Order Info */}
+                  <div>
+                    <h4 className="font-semibold text-[#1a1a2e] mb-3 flex items-center gap-2"><Receipt className="w-4 h-4" /> Order Summary</h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div><span className="text-[#999]">Total:</span> <span className="font-bold text-[#1a1a2e]">{formatCurrency(selectedOrder.total_amount || 0)}</span></div>
+                      <div><span className="text-[#999]">Payment:</span> <span className="font-medium text-[#1a1a2e] capitalize">{selectedOrder.payment_method?.replace(/_/g, ' ')}</span></div>
+                      <div><span className="text-[#999]">Payment Status:</span> <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[selectedOrder.payment_status] || 'bg-gray-100 text-gray-800'}`}>{selectedOrder.payment_status}</span></div>
+                      <div><span className="text-[#999]">Order Status:</span> <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[selectedOrder.order_status] || 'bg-gray-100 text-gray-800'}`}>{selectedOrder.order_status}</span></div>
+                    </div>
+                    {selectedOrder.notes && (
+                      <div className="mt-3">
+                        <span className="text-[#999] text-sm">Notes:</span>
+                        <p className="mt-1 text-sm text-[#1a1a2e] bg-[#f8f9fa] rounded-lg p-3">{selectedOrder.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}

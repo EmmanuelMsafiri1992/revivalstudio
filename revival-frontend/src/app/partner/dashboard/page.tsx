@@ -149,6 +149,9 @@ export default function DashboardPage() {
   const [offerSuccess, setOfferSuccess] = useState<number | null>(null)
   const [biddingSummaryReq, setBiddingSummaryReq] = useState<BiddingRequest | null>(null)
   const [summaryPhotoIndex, setSummaryPhotoIndex] = useState(0)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [notifRead, setNotifRead] = useState<Set<string>>(new Set())
+  const notifRef = useRef<HTMLDivElement>(null)
 
   // Product form state
   const [showProductForm, setShowProductForm] = useState(false)
@@ -186,6 +189,16 @@ export default function DashboardPage() {
   useEffect(() => {
     checkAuthAndLoadData()
   }, [])
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false)
+      }
+    }
+    if (notifOpen) document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [notifOpen])
 
   async function checkAuthAndLoadData() {
     const token = api.getToken()
@@ -502,10 +515,91 @@ export default function DashboardPage() {
                   className="pl-10 pr-4 py-2 border-2 border-[#e5e5e5] rounded-xl w-64 focus:border-[#7a9b76] focus:outline-none"
                 />
               </div>
-              <button className="relative p-2 hover:bg-[#faf8f5] rounded-xl transition-colors">
-                <Bell className="w-6 h-6 text-[#3d4a3a]" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
+              <div className="relative" ref={notifRef}>
+                <button
+                  onClick={() => setNotifOpen(o => !o)}
+                  className="relative p-2 hover:bg-[#faf8f5] rounded-xl transition-colors"
+                >
+                  <Bell className="w-6 h-6 text-[#3d4a3a]" />
+                  {(() => {
+                    const unread = [
+                      ...biddingRequests.map(r => `bid-${r.id}`),
+                    ].filter(k => !notifRead.has(k))
+                    return unread.length > 0 ? (
+                      <span className="absolute top-1 right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-0.5">
+                        {unread.length > 9 ? '9+' : unread.length}
+                      </span>
+                    ) : null
+                  })()}
+                </button>
+
+                {notifOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-[#e5e5e5] z-50 overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-[#e5e5e5]">
+                      <h4 className="font-semibold text-[#3d4a3a]">Notifications</h4>
+                      {biddingRequests.length > 0 && (
+                        <button
+                          onClick={() => setNotifRead(new Set(biddingRequests.map((r: any) => `bid-${r.id}`)))}
+                          className="text-xs text-[#7a9b76] hover:underline"
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="max-h-80 overflow-y-auto divide-y divide-[#f0f0f0]">
+                      {biddingRequests.length === 0 ? (
+                        <div className="flex flex-col items-center gap-2 py-10 text-[#999]">
+                          <Bell className="w-8 h-8 text-[#e5e5e5]" />
+                          <p className="text-sm">No notifications</p>
+                        </div>
+                      ) : (
+                        biddingRequests.map((req: any) => {
+                          const key = `bid-${req.id}`
+                          const isUnread = !notifRead.has(key)
+                          return (
+                            <button
+                              key={key}
+                              onClick={() => {
+                                setNotifRead(prev => new Set([...prev, key]))
+                                setBiddingSummaryReq(req)
+                                setSummaryPhotoIndex(0)
+                                setNotifOpen(false)
+                              }}
+                              className={`w-full text-left px-4 py-3 hover:bg-[#faf8f5] transition-colors flex items-start gap-3 ${isUnread ? 'bg-[#fffbf2]' : ''}`}
+                            >
+                              <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${isUnread ? 'bg-[#c9a962]' : 'bg-transparent'}`} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-[#3d4a3a] truncate">
+                                  New bid: {req.furniture_type || 'Furniture'} — {req.customer_name}
+                                </p>
+                                <p className="text-xs text-[#999] mt-0.5">
+                                  Asking £{req.desired_price ? parseFloat(String(req.desired_price)).toFixed(2) : '—'} · {req.condition || ''}
+                                </p>
+                                <p className="text-xs text-[#bbb] mt-0.5">
+                                  {new Date(req.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </p>
+                              </div>
+                              <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
+                                req.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'
+                              }`}>{req.status}</span>
+                            </button>
+                          )
+                        })
+                      )}
+                    </div>
+
+                    <div className="px-4 py-3 border-t border-[#e5e5e5] text-center">
+                      <button
+                        onClick={() => { setActiveSection('bidding'); setNotifOpen(false) }}
+                        className="text-sm text-[#7a9b76] font-medium hover:underline"
+                      >
+                        View all in Bidding Pro →
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
               <div className="flex items-center gap-3 pl-4 border-l border-[#e5e5e5]">
                 <div className="w-10 h-10 rounded-full bg-[#7a9b76] flex items-center justify-center">
                   <User className="w-5 h-5 text-white" />

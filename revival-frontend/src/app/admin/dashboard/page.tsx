@@ -805,12 +805,21 @@ export default function AdminDashboardPage() {
                           </span>
                         </td>
                         <td className="p-4">
-                          <button
-                            onClick={() => toggleOutletStatus(outlet)}
-                            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${outlet.active ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
-                          >
-                            {outlet.active ? 'Deactivate' : 'Activate'}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => { setModalType('outlet'); setEditItem(outlet); setShowModal(true) }}
+                              className="p-1.5 text-[#0f3460] hover:bg-[#0f3460]/10 rounded-lg transition-colors"
+                              title="Edit outlet"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => toggleOutletStatus(outlet)}
+                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${outlet.active ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
+                            >
+                              {outlet.active ? 'Deactivate' : 'Activate'}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -3537,7 +3546,15 @@ function Modal({
           })
         }
       } else if (type === 'outlet') {
-        if (!item) {
+        if (item) {
+          await api.updateAdminOutlet(item.id, {
+            name: formData.name,
+            email: formData.email,
+            location: formData.location,
+            phone: formData.phone,
+            address: formData.address,
+          })
+        } else {
           await api.createAdminOutlet({
             name: formData.name,
             email: formData.email,
@@ -4098,22 +4115,45 @@ function Modal({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Password</label>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-1">
+                  Password {item && <span className="text-[#999] font-normal">(leave blank to keep current)</span>}
+                </label>
                 <input
                   type="password"
                   value={formData.password || ''}
                   onChange={e => setFormData({ ...formData, password: e.target.value })}
                   required={!item}
+                  placeholder={item ? '••••••••' : ''}
                   className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Location</label>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Phone</label>
+                <input
+                  type="text"
+                  value={formData.phone || ''}
+                  onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="+44 7700 000000"
+                  className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Location / City</label>
                 <input
                   type="text"
                   value={formData.location || ''}
                   onChange={e => setFormData({ ...formData, location: e.target.value })}
                   required
+                  className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Address</label>
+                <input
+                  type="text"
+                  value={formData.address || ''}
+                  onChange={e => setFormData({ ...formData, address: e.target.value })}
+                  placeholder="123 High Street"
                   className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
                 />
               </div>

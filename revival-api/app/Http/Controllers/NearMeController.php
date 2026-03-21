@@ -48,26 +48,38 @@ class NearMeController extends Controller
         $distanceMiles = (float) $request->distance;
 
         if ($customerLat && $customerLng) {
-            // Real distance filtering: only load outlets that have coordinates,
-            // then filter in PHP using Haversine formula
-            $products = $query->whereHas('outlet', function ($q) {
-                $q->whereNotNull('latitude')->whereNotNull('longitude');
-            })->get();
+            // Load ALL available products (with and without outlet coordinates)
+            $allProducts = $query->get();
 
-            $filtered = $products->filter(function ($product) use ($customerLat, $customerLng, $distanceMiles) {
+            $postcodeArea = strtoupper(substr(str_replace(' ', '', $request->postcode), 0, 3));
+
+            $filtered = $allProducts->filter(function ($product) use ($customerLat, $customerLng, $distanceMiles, $postcodeArea) {
                 $outlet = $product->outlet;
-                if (!$outlet || !$outlet->latitude || !$outlet->longitude) return false;
+                if (!$outlet) return false;
 
-                $miles = $this->haversine(
-                    (float) $customerLat,
-                    (float) $customerLng,
-                    (float) $outlet->latitude,
-                    (float) $outlet->longitude
-                );
+                // Outlets with coordinates: use Haversine distance
+                if ($outlet->latitude && $outlet->longitude) {
+                    $miles = $this->haversine(
+                        (float) $customerLat,
+                        (float) $customerLng,
+                        (float) $outlet->latitude,
+                        (float) $outlet->longitude
+                    );
+                    $product->distance_miles = round($miles, 1);
+                    return $miles <= $distanceMiles;
+                }
 
-                $product->distance_miles = round($miles, 1);
-                return $miles <= $distanceMiles;
-            })->sortBy('distance_miles')->values();
+                // Outlets without coordinates: fall back to postcode prefix matching
+                if ($outlet->postcode) {
+                    $outletArea = strtoupper(substr(str_replace(' ', '', $outlet->postcode), 0, 3));
+                    if ($outletArea === $postcodeArea) {
+                        $product->distance_miles = null;
+                        return true;
+                    }
+                }
+
+                return false;
+            })->sortBy(fn($p) => $p->distance_miles ?? 9999)->values();
 
         } else {
             // Fallback: postcode area prefix matching

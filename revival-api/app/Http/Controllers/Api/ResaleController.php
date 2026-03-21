@@ -87,6 +87,7 @@ class ResaleController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
             'address' => $request->address,
+            'photos' => $request->photos ?? [],
             'estimated_min' => $estimate['estimated_min'],
             'estimated_max' => $estimate['estimated_max'],
             'status' => 'pending',

@@ -107,6 +107,7 @@ export default function AdminDashboardPage() {
   const [selectedBiddingReq, setSelectedBiddingReq] = useState<any>(null)
   const [selectedRoomPlan, setSelectedRoomPlan] = useState<any>(null)
   const [selectedOrder, setSelectedOrder] = useState<any>(null)
+  const [selectedSellReq, setSelectedSellReq] = useState<any>(null)
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState('all')
@@ -779,6 +780,7 @@ export default function AdminDashboardPage() {
                     <tr className="bg-[#f8f9fa]">
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Name</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Email</th>
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Phone</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Location</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Items</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Status</th>
@@ -790,6 +792,11 @@ export default function AdminDashboardPage() {
                       <tr key={outlet.id} className="border-t border-[#e5e5e5] hover:bg-[#f8f9fa]">
                         <td className="p-4 font-medium text-[#1a1a2e]">{outlet.name}</td>
                         <td className="p-4 text-[#666]">{outlet.email}</td>
+                        <td className="p-4 text-[#666]">
+                          {outlet.phone
+                            ? <a href={`tel:${outlet.phone}`} className="flex items-center gap-1 hover:text-[#0f3460]"><Phone className="w-3 h-3" />{outlet.phone}</a>
+                            : <span className="text-[#ccc]">—</span>}
+                        </td>
                         <td className="p-4 text-[#666]">{outlet.location}</td>
                         <td className="p-4 text-[#666]">{outlet.inventory_items_count || 0}</td>
                         <td className="p-4">
@@ -1082,6 +1089,13 @@ export default function AdminDashboardPage() {
                         </td>
                         <td className="p-4">
                           <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setSelectedSellReq(req)}
+                              className="p-1.5 text-[#0f3460] hover:bg-[#0f3460]/10 rounded-lg transition-colors"
+                              title="View details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
                             <select
                               value={req.status}
                               onChange={(e) => updateRequestStatus('sell', req.id, e.target.value)}
@@ -1106,6 +1120,106 @@ export default function AdminDashboardPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* Sell Request Detail Modal */}
+          {selectedSellReq && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between p-6 border-b border-[#e5e5e5]">
+                  <h3 className="font-bold text-lg text-[#1a1a2e]">Sell Request — {selectedSellReq.customer_name}</h3>
+                  <button onClick={() => setSelectedSellReq(null)} className="p-2 hover:bg-[#f8f9fa] rounded-xl transition-colors">
+                    <X className="w-5 h-5 text-[#666]" />
+                  </button>
+                </div>
+                <div className="p-6 space-y-6">
+                  {/* Photos */}
+                  {selectedSellReq.photos && selectedSellReq.photos.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-[#1a1a2e] mb-3">Photos</h4>
+                      <div className="grid grid-cols-3 gap-3">
+                        {selectedSellReq.photos.map((photo: string, i: number) => (
+                          <a key={i} href={photo} target="_blank" rel="noopener noreferrer">
+                            <img
+                              src={photo}
+                              alt={`Photo ${i + 1}`}
+                              className="w-full h-28 object-cover rounded-xl border border-[#e5e5e5] hover:opacity-80 transition-opacity"
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Item Details */}
+                  <div>
+                    <h4 className="font-semibold text-[#1a1a2e] mb-3">Item Details</h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      {[
+                        { label: 'Furniture Type', value: selectedSellReq.furniture_type?.name },
+                        { label: 'Condition', value: selectedSellReq.condition },
+                        { label: 'Age', value: selectedSellReq.age },
+                        { label: 'Brand Category', value: selectedSellReq.brand_category },
+                        { label: 'Original Price', value: selectedSellReq.original_price ? `£${parseFloat(selectedSellReq.original_price).toFixed(2)}` : null },
+                        { label: 'Estimate', value: `${formatCurrency(selectedSellReq.estimated_min)} – ${formatCurrency(selectedSellReq.estimated_max)}` },
+                      ].filter(f => f.value).map(f => (
+                        <div key={f.label} className="bg-[#f8f9fa] rounded-xl p-3">
+                          <div className="text-xs text-[#999] mb-0.5">{f.label}</div>
+                          <div className="font-medium text-[#1a1a2e] capitalize">{f.value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Customer Details */}
+                  <div>
+                    <h4 className="font-semibold text-[#1a1a2e] mb-3">Customer Details</h4>
+                    <div className="bg-[#f8f9fa] rounded-xl p-4 space-y-2 text-sm">
+                      <div className="font-medium text-[#1a1a2e]">{selectedSellReq.customer_name}</div>
+                      {selectedSellReq.email && (
+                        <a href={`mailto:${selectedSellReq.email}`} className="flex items-center gap-2 text-[#0f3460] hover:underline">
+                          <Mail className="w-4 h-4" />{selectedSellReq.email}
+                        </a>
+                      )}
+                      {selectedSellReq.phone && (
+                        <a href={`tel:${selectedSellReq.phone}`} className="flex items-center gap-2 text-[#666]">
+                          <Phone className="w-4 h-4" />{selectedSellReq.phone}
+                        </a>
+                      )}
+                      {selectedSellReq.address && (
+                        <div className="flex items-center gap-2 text-[#666]">
+                          <MapPin className="w-4 h-4" />{selectedSellReq.address}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Status */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-[#999] mr-2">Status:</span>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[selectedSellReq.status] || 'bg-gray-100 text-gray-800'}`}>
+                        {selectedSellReq.status}
+                      </span>
+                    </div>
+                    <select
+                      value={selectedSellReq.status}
+                      onChange={(e) => {
+                        updateRequestStatus('sell', selectedSellReq.id, e.target.value)
+                        setSelectedSellReq({ ...selectedSellReq, status: e.target.value })
+                      }}
+                      className="px-3 py-1.5 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="contacted">Contacted</option>
+                      <option value="collected">Collected</option>
+                      <option value="sold">Sold</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -1733,9 +1847,13 @@ export default function AdminDashboardPage() {
                           </td>
                           <td className="p-4">
                             <div className="flex items-center gap-3">
-                              {order.product?.images && order.product.images.length > 0 ? (
+                              {(() => {
+                              const imgs = Array.isArray(order.product?.images)
+                                ? order.product.images
+                                : (order.product?.images ? (() => { try { return JSON.parse(order.product.images) } catch { return [] } })() : [])
+                              return imgs.length > 0 ? (
                                 <img
-                                  src={order.product.images[0]}
+                                  src={getImageUrl(imgs[0])}
                                   alt={order.product.name}
                                   className="w-12 h-12 object-cover rounded-lg border border-[#e5e5e5] flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
                                   onClick={() => setSelectedOrder(order)}
@@ -1744,7 +1862,8 @@ export default function AdminDashboardPage() {
                                 <div className="w-12 h-12 bg-[#f8f9fa] rounded-lg border border-[#e5e5e5] flex items-center justify-center flex-shrink-0">
                                   <Package className="w-5 h-5 text-[#ccc]" />
                                 </div>
-                              )}
+                              )
+                              })()}
                               <div>
                                 <div className="text-sm font-medium text-[#1a1a2e]">{order.product?.name || 'N/A'}</div>
                                 {order.product?.condition && <div className="text-xs text-[#666] capitalize">{order.product.condition}</div>}
@@ -1817,11 +1936,15 @@ export default function AdminDashboardPage() {
                     <h4 className="font-semibold text-[#1a1a2e] mb-3 flex items-center gap-2"><Package className="w-4 h-4" /> Product</h4>
                     {selectedOrder.product ? (
                       <div className="flex gap-4 bg-[#f8f9fa] rounded-xl p-4">
-                        {selectedOrder.product.images && selectedOrder.product.images.length > 0 ? (
+                        {(() => {
+                          const orderImgs = Array.isArray(selectedOrder.product.images)
+                            ? selectedOrder.product.images
+                            : (selectedOrder.product.images ? (() => { try { return JSON.parse(selectedOrder.product.images) } catch { return [] } })() : [])
+                          return orderImgs.length > 0 ? (
                           <div className="flex gap-2 flex-wrap">
-                            {selectedOrder.product.images.map((img: string, i: number) => (
-                              <a key={i} href={img} target="_blank" rel="noopener noreferrer">
-                                <img src={img} alt={`Product ${i + 1}`} className="w-24 h-24 object-cover rounded-lg border border-[#e5e5e5] hover:opacity-80 transition-opacity" />
+                            {orderImgs.map((img: string, i: number) => (
+                              <a key={i} href={getImageUrl(img)} target="_blank" rel="noopener noreferrer">
+                                <img src={getImageUrl(img)} alt={`Product ${i + 1}`} className="w-24 h-24 object-cover rounded-lg border border-[#e5e5e5] hover:opacity-80 transition-opacity" />
                               </a>
                             ))}
                           </div>
@@ -1829,7 +1952,8 @@ export default function AdminDashboardPage() {
                           <div className="w-24 h-24 bg-[#e5e5e5] rounded-lg flex items-center justify-center flex-shrink-0">
                             <Package className="w-8 h-8 text-[#999]" />
                           </div>
-                        )}
+                        )
+                        })()}
                         <div className="flex-1 min-w-0 space-y-1">
                           <div className="font-semibold text-[#1a1a2e]">{selectedOrder.product.name}</div>
                           {selectedOrder.product.brand && <div className="text-sm text-[#666]">Brand: {selectedOrder.product.brand}</div>}

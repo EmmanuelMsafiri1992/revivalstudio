@@ -218,6 +218,7 @@ export default function SellPage() {
         email: customerEmail,
         phone: customerPhone || undefined,
         address: postcode,
+        photos: uploadedPhotos.length > 0 ? uploadedPhotos : undefined,
       })
       setSubmitted(true)
     } catch {

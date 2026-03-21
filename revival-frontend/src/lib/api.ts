@@ -171,6 +171,7 @@ class ApiClient {
     email: string
     phone?: string
     address?: string
+    photos?: string[]
   }) {
     return this.request<{ success: boolean; data: any; message: string }>('/resale/submit', {
       method: 'POST',

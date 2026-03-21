@@ -981,6 +981,14 @@ class ApiClient {
     )
   }
 
+  async deleteAdminOrder(id: number) {
+    return this.request<{ success: boolean; message: string }>(
+      `/admin/orders/${id}`,
+      { method: 'DELETE' },
+      true
+    )
+  }
+
   // Health check
   async healthCheck() {
     return this.request<{ success: boolean; message: string; version: string }>('/health')

@@ -107,6 +107,9 @@ export default function AdminDashboardPage() {
   const [selectedBiddingReq, setSelectedBiddingReq] = useState<any>(null)
   const [selectedRoomPlan, setSelectedRoomPlan] = useState<any>(null)
   const [selectedOrder, setSelectedOrder] = useState<any>(null)
+  const [editingOrder, setEditingOrder] = useState<any>(null)
+  const [orderEditForm, setOrderEditForm] = useState<any>({})
+  const [orderEditSaving, setOrderEditSaving] = useState(false)
   const [selectedSellReq, setSelectedSellReq] = useState<any>(null)
 
   // Filter states
@@ -511,6 +514,34 @@ export default function AdminDashboardPage() {
       loadSectionData('orders')
     } catch (error) {
       console.error('Error updating order:', error)
+    }
+  }
+
+  async function handleDeleteOrder(id: number) {
+    if (!confirm('Delete this order? This cannot be undone.')) return
+    try {
+      await api.deleteAdminOrder(id)
+      loadSectionData('orders')
+    } catch (error) {
+      console.error('Error deleting order:', error)
+    }
+  }
+
+  async function handleSaveOrderEdit() {
+    if (!editingOrder) return
+    setOrderEditSaving(true)
+    try {
+      await api.updateAdminOrder(editingOrder.id, {
+        order_status: orderEditForm.order_status,
+        payment_status: orderEditForm.payment_status,
+        notes: orderEditForm.notes,
+      })
+      setEditingOrder(null)
+      loadSectionData('orders')
+    } catch (error) {
+      console.error('Error saving order:', error)
+    } finally {
+      setOrderEditSaving(false)
     }
   }
 
@@ -1833,6 +1864,7 @@ export default function AdminDashboardPage() {
                       <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Payment</th>
                       <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Status</th>
                       <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Date</th>
+                      <th className="text-left p-4 text-sm font-semibold text-[#1a1a2e]">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#e5e5e5]">
@@ -1917,11 +1949,107 @@ export default function AdminDashboardPage() {
                           <td className="p-4 text-sm text-[#666]">
                             {new Date(order.created_at).toLocaleDateString('en-GB')}
                           </td>
+                          <td className="p-4">
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => setSelectedOrder(order)}
+                                title="View details"
+                                className="p-1.5 text-[#0f3460] hover:bg-[#0f3460]/10 rounded-lg transition-colors"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => { setEditingOrder(order); setOrderEditForm({ order_status: order.order_status, payment_status: order.payment_status, notes: order.notes || '' }) }}
+                                title="Edit order"
+                                className="p-1.5 text-[#666] hover:bg-gray-100 rounded-lg transition-colors"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteOrder(order.id)}
+                                title="Delete order"
+                                className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
                         </tr>
                       ))
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* Order Edit Modal */}
+          {editingOrder && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+                <div className="flex items-center justify-between p-6 border-b border-[#e5e5e5]">
+                  <div>
+                    <h3 className="font-bold text-lg text-[#1a1a2e]">Edit Order</h3>
+                    <p className="text-sm text-[#666] mt-0.5">{editingOrder.order_number}</p>
+                  </div>
+                  <button onClick={() => setEditingOrder(null)} className="p-2 hover:bg-[#f8f9fa] rounded-lg transition-colors">
+                    <X className="w-5 h-5 text-[#666]" />
+                  </button>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Order Status</label>
+                    <select
+                      value={orderEditForm.order_status || ''}
+                      onChange={e => setOrderEditForm({ ...orderEditForm, order_status: e.target.value })}
+                      className="w-full px-4 py-2.5 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="confirmed">Confirmed</option>
+                      <option value="shipped">Shipped</option>
+                      <option value="delivered">Delivered</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Payment Status</label>
+                    <select
+                      value={orderEditForm.payment_status || ''}
+                      onChange={e => setOrderEditForm({ ...orderEditForm, payment_status: e.target.value })}
+                      className="w-full px-4 py-2.5 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="paid">Paid</option>
+                      <option value="failed">Failed</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Internal Notes</label>
+                    <textarea
+                      value={orderEditForm.notes || ''}
+                      onChange={e => setOrderEditForm({ ...orderEditForm, notes: e.target.value })}
+                      rows={3}
+                      placeholder="Add a note about this order..."
+                      className="w-full px-4 py-2.5 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none resize-none text-sm"
+                    />
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={() => setEditingOrder(null)}
+                      className="flex-1 px-4 py-2.5 border-2 border-[#e5e5e5] text-[#666] rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveOrderEdit}
+                      disabled={orderEditSaving}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0f3460] text-white rounded-xl text-sm font-semibold hover:bg-[#1a1a2e] transition-colors disabled:opacity-50"
+                    >
+                      {orderEditSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                      Save Changes
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}

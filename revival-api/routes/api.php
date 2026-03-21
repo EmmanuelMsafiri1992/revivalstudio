@@ -192,6 +192,7 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
     Route::get('/orders', [AdminController::class, 'orders']);
     Route::get('/orders/{id}', [AdminController::class, 'showOrder']);
     Route::put('/orders/{id}', [AdminController::class, 'updateOrder']);
+    Route::delete('/orders/{id}', [AdminController::class, 'deleteOrder']);
 
     // Near Me requests management
     Route::get('/near-me-requests', [NearMeController::class, 'adminIndex']);

@@ -733,4 +733,21 @@ class AdminController extends Controller
             'data' => $order->fresh(['product.furnitureType', 'product.outlet']),
         ]);
     }
+
+    public function deleteOrder($id)
+    {
+        $order = Order::findOrFail($id);
+
+        // Make product available again if order is not delivered
+        if ($order->order_status !== 'delivered' && $order->product) {
+            $order->product->update(['status' => 'available']);
+        }
+
+        $order->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order deleted successfully',
+        ]);
+    }
 }

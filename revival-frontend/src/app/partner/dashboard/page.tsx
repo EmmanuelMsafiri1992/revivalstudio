@@ -70,9 +70,14 @@ interface BiddingRequest {
   whatsapp?: string
   desired_price?: number | string | null
   furniture_type?: string
+  brand?: string
   condition?: string
+  damages?: string[]
   description?: string
   postcode?: string
+  floor?: string | number | null
+  delivery?: string
+  photos?: string[]
   status: string
   created_at: string
 }
@@ -142,6 +147,8 @@ export default function DashboardPage() {
   const [offerMessage, setOfferMessage] = useState('')
   const [offerSubmitting, setOfferSubmitting] = useState(false)
   const [offerSuccess, setOfferSuccess] = useState<number | null>(null)
+  const [biddingSummaryReq, setBiddingSummaryReq] = useState<BiddingRequest | null>(null)
+  const [summaryPhotoIndex, setSummaryPhotoIndex] = useState(0)
 
   // Product form state
   const [showProductForm, setShowProductForm] = useState(false)
@@ -1015,23 +1022,32 @@ export default function DashboardPage() {
                               </span>
                             </td>
                             <td className="p-4">
-                              {offerSuccess === req.id ? (
-                                <span className="text-green-600 text-sm font-medium flex items-center gap-1">
-                                  <CheckCircle className="w-4 h-4" /> Offer sent
-                                </span>
-                              ) : (
+                              <div className="flex items-center gap-2">
                                 <button
-                                  onClick={() => {
-                                    setOfferFormOpen(offerFormOpen === req.id ? null : req.id)
-                                    setOfferPrice('')
-                                    setOfferMessage('')
-                                  }}
-                                  className="flex items-center gap-2 px-3 py-1.5 bg-[#c9a962] text-[#3d4a3a] rounded-lg text-sm font-medium hover:bg-[#d4b46d] transition-colors"
+                                  onClick={() => { setBiddingSummaryReq(req); setSummaryPhotoIndex(0) }}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 border-2 border-[#c9a962] text-[#c9a962] rounded-lg text-sm font-medium hover:bg-[#c9a962]/10 transition-colors"
                                 >
-                                  <Gavel className="w-4 h-4" />
-                                  Make Offer
+                                  <Eye className="w-4 h-4" />
+                                  View
                                 </button>
-                              )}
+                                {offerSuccess === req.id ? (
+                                  <span className="text-green-600 text-sm font-medium flex items-center gap-1">
+                                    <CheckCircle className="w-4 h-4" /> Sent
+                                  </span>
+                                ) : (
+                                  <button
+                                    onClick={() => {
+                                      setOfferFormOpen(offerFormOpen === req.id ? null : req.id)
+                                      setOfferPrice('')
+                                      setOfferMessage('')
+                                    }}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-[#c9a962] text-[#3d4a3a] rounded-lg text-sm font-medium hover:bg-[#d4b46d] transition-colors"
+                                  >
+                                    <Gavel className="w-4 h-4" />
+                                    Offer
+                                  </button>
+                                )}
+                              </div>
                             </td>
                           </tr>
                           {offerFormOpen === req.id && (
@@ -1100,6 +1116,211 @@ export default function DashboardPage() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* Bidding Pro Summary Modal */}
+          {biddingSummaryReq && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                {/* Header */}
+                <div className="flex items-center justify-between p-6 border-b border-[#e5e5e5]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#c9a962]/20 flex items-center justify-center">
+                      <Gavel className="w-5 h-5 text-[#c9a962]" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-[#3d4a3a]">Item Summary</h3>
+                      <p className="text-sm text-[#666]">Review details before making your offer</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setBiddingSummaryReq(null)} className="p-2 hover:bg-[#faf8f5] rounded-xl transition-colors">
+                    <X className="w-5 h-5 text-[#666]" />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-6">
+                  {/* Photo Gallery */}
+                  {biddingSummaryReq.photos && biddingSummaryReq.photos.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-[#3d4a3a] mb-3">Photos</h4>
+                      <div className="relative">
+                        <div className="aspect-[4/3] rounded-xl overflow-hidden bg-[#faf8f5] flex items-center justify-center">
+                          <img
+                            src={getImageUrl(biddingSummaryReq.photos[summaryPhotoIndex])}
+                            alt={`Photo ${summaryPhotoIndex + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        {biddingSummaryReq.photos.length > 1 && (
+                          <>
+                            <button
+                              onClick={() => setSummaryPhotoIndex(i => (i - 1 + biddingSummaryReq.photos!.length) % biddingSummaryReq.photos!.length)}
+                              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 rounded-full flex items-center justify-center hover:bg-white shadow"
+                            >
+                              <ChevronLeft className="w-5 h-5 text-[#3d4a3a]" />
+                            </button>
+                            <button
+                              onClick={() => setSummaryPhotoIndex(i => (i + 1) % biddingSummaryReq.photos!.length)}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 rounded-full flex items-center justify-center hover:bg-white shadow"
+                            >
+                              <ChevronRight className="w-5 h-5 text-[#3d4a3a]" />
+                            </button>
+                            <div className="flex gap-1.5 mt-2 justify-center">
+                              {biddingSummaryReq.photos.map((_, i) => (
+                                <button
+                                  key={i}
+                                  onClick={() => setSummaryPhotoIndex(i)}
+                                  className={`w-2 h-2 rounded-full transition-colors ${i === summaryPhotoIndex ? 'bg-[#c9a962]' : 'bg-[#e5e5e5]'}`}
+                                />
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      {biddingSummaryReq.photos.length > 1 && (
+                        <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+                          {biddingSummaryReq.photos.map((photo, i) => (
+                            <button
+                              key={i}
+                              onClick={() => setSummaryPhotoIndex(i)}
+                              className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${i === summaryPhotoIndex ? 'border-[#c9a962]' : 'border-transparent'}`}
+                            >
+                              <img src={getImageUrl(photo)} alt="" className="w-full h-full object-cover" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Item Details */}
+                  <div>
+                    <h4 className="font-semibold text-[#3d4a3a] mb-3">Item Details</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { label: 'Type', value: biddingSummaryReq.furniture_type },
+                        { label: 'Brand', value: biddingSummaryReq.brand },
+                        { label: 'Condition', value: biddingSummaryReq.condition },
+                        { label: 'Asking Price', value: biddingSummaryReq.desired_price ? `£${parseFloat(String(biddingSummaryReq.desired_price)).toFixed(2)}` : null },
+                        { label: 'Postcode', value: biddingSummaryReq.postcode },
+                        { label: 'Floor', value: biddingSummaryReq.floor != null ? String(biddingSummaryReq.floor) : null },
+                        { label: 'Delivery', value: biddingSummaryReq.delivery },
+                      ].filter(f => f.value).map(f => (
+                        <div key={f.label} className="bg-[#faf8f5] rounded-xl p-3">
+                          <div className="text-xs text-[#999] mb-0.5">{f.label}</div>
+                          <div className="font-medium text-[#3d4a3a] capitalize">{f.value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Damages */}
+                  {biddingSummaryReq.damages && biddingSummaryReq.damages.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-[#3d4a3a] mb-3">Reported Damages</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {biddingSummaryReq.damages.map((d, i) => (
+                          <span key={i} className="px-3 py-1 bg-red-50 text-red-700 rounded-full text-sm capitalize">{d}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Description */}
+                  {biddingSummaryReq.description && (
+                    <div>
+                      <h4 className="font-semibold text-[#3d4a3a] mb-2">Description</h4>
+                      <p className="text-sm text-[#666] bg-[#faf8f5] rounded-xl p-4 leading-relaxed">{biddingSummaryReq.description}</p>
+                    </div>
+                  )}
+
+                  {/* Customer Contact */}
+                  <div>
+                    <h4 className="font-semibold text-[#3d4a3a] mb-3">Customer Contact</h4>
+                    <div className="bg-[#faf8f5] rounded-xl p-4 space-y-2">
+                      <div className="font-medium text-[#3d4a3a]">{biddingSummaryReq.customer_name}</div>
+                      {biddingSummaryReq.email && <div className="text-sm text-[#666]">{biddingSummaryReq.email}</div>}
+                      {biddingSummaryReq.phone && <div className="text-sm text-[#666]">{biddingSummaryReq.phone}</div>}
+                      {biddingSummaryReq.whatsapp && (
+                        <a
+                          href={`https://wa.me/${biddingSummaryReq.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi ${biddingSummaryReq.customer_name}, I saw your ${biddingSummaryReq.furniture_type || 'furniture'} listing on Revival Studio and I'm interested in making an offer.`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#25D366] text-white rounded-xl text-xs font-semibold hover:bg-[#128C7E] transition-colors"
+                        >
+                          💬 Chat on WhatsApp
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Counter Offer Form */}
+                  <div className="border-t border-[#e5e5e5] pt-5">
+                    <h4 className="font-semibold text-[#3d4a3a] mb-4 flex items-center gap-2">
+                      <Gavel className="w-4 h-4 text-[#c9a962]" />
+                      Submit Counter Offer
+                    </h4>
+                    {offerSuccess === biddingSummaryReq.id ? (
+                      <div className="flex items-center gap-2 text-green-600 font-medium">
+                        <CheckCircle className="w-5 h-5" /> Offer submitted successfully!
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-[#3d4a3a] mb-1">
+                            Your Offer Price (£) <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666] font-medium">£</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={offerPrice}
+                              onChange={(e) => setOfferPrice(e.target.value)}
+                              placeholder="0.00"
+                              className="w-full pl-7 pr-4 py-2.5 border-2 border-[#e5e5e5] rounded-xl focus:border-[#c9a962] focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-[#3d4a3a] mb-1">
+                            Message <span className="text-[#999] font-normal">(optional)</span>
+                          </label>
+                          <textarea
+                            value={offerMessage}
+                            onChange={(e) => setOfferMessage(e.target.value)}
+                            placeholder="Add a note for the customer..."
+                            rows={3}
+                            className="w-full px-4 py-2.5 border-2 border-[#e5e5e5] rounded-xl focus:border-[#c9a962] focus:outline-none resize-none text-sm"
+                          />
+                        </div>
+                        <div className="flex gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setBiddingSummaryReq(null)}
+                            className="px-4 py-2 border-2 border-[#e5e5e5] text-[#666] rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            disabled={offerSubmitting || !offerPrice}
+                            onClick={async () => {
+                              await handleBiddingOfferSubmit(biddingSummaryReq.id)
+                            }}
+                            className="flex items-center gap-2 px-5 py-2 bg-[#3d4a3a] text-white rounded-xl text-sm font-semibold hover:bg-[#2d3a2a] transition-colors disabled:opacity-50"
+                          >
+                            {offerSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                            Submit Offer
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}

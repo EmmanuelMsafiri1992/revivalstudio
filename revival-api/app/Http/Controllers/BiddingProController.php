@@ -40,6 +40,20 @@ class BiddingProController extends Controller
         ]);
     }
 
+    public function trackByEmail(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $requests = BiddingProRequest::with(['offers' => function ($q) {
+            $q->with('outlet:id,name,phone,email')->orderBy('created_at', 'desc');
+        }])
+            ->where('email', $request->email)
+            ->latest()
+            ->get();
+
+        return response()->json(['success' => true, 'data' => $requests]);
+    }
+
     public function adminIndex()
     {
         $requests = BiddingProRequest::with('offers')->latest()->get();

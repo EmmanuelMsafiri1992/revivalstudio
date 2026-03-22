@@ -111,6 +111,7 @@ export default function AdminDashboardPage() {
   const [orderEditForm, setOrderEditForm] = useState<any>({})
   const [orderEditSaving, setOrderEditSaving] = useState(false)
   const [selectedSellReq, setSelectedSellReq] = useState<any>(null)
+  const [selectedRepairReq, setSelectedRepairReq] = useState<any>(null)
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState('all')
@@ -1043,6 +1044,13 @@ export default function AdminDashboardPage() {
                         </td>
                         <td className="p-4">
                           <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setSelectedRepairReq(req)}
+                              className="p-1.5 text-[#0f3460] hover:bg-[#0f3460]/10 rounded-lg transition-colors"
+                              title="View details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
                             <select
                               value={req.status}
                               onChange={(e) => updateRequestStatus('repair', req.id, e.target.value)}
@@ -1256,6 +1264,112 @@ export default function AdminDashboardPage() {
                       <option value="contacted">Contacted</option>
                       <option value="collected">Collected</option>
                       <option value="sold">Sold</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Repair Request Detail Modal */}
+          {selectedRepairReq && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between p-6 border-b border-[#e5e5e5]">
+                  <h3 className="font-bold text-lg text-[#1a1a2e]">Repair Request — {selectedRepairReq.customer_name}</h3>
+                  <button onClick={() => setSelectedRepairReq(null)} className="p-2 hover:bg-[#f8f9fa] rounded-xl transition-colors">
+                    <X className="w-5 h-5 text-[#666]" />
+                  </button>
+                </div>
+                <div className="p-6 space-y-6">
+                  {/* Photos */}
+                  {selectedRepairReq.photos && selectedRepairReq.photos.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-[#1a1a2e] mb-3">Photos</h4>
+                      <div className="grid grid-cols-3 gap-3">
+                        {selectedRepairReq.photos.map((photo: string, i: number) => (
+                          <a key={i} href={photo} target="_blank" rel="noopener noreferrer">
+                            <img
+                              src={photo}
+                              alt={`Photo ${i + 1}`}
+                              className="w-full h-28 object-cover rounded-xl border border-[#e5e5e5] hover:opacity-80 transition-opacity"
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Item Details */}
+                  <div>
+                    <h4 className="font-semibold text-[#1a1a2e] mb-3">Item Details</h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      {[
+                        { label: 'Furniture Type', value: selectedRepairReq.furniture_type?.name },
+                        { label: 'Material', value: selectedRepairReq.material?.name },
+                        { label: 'Damage Types', value: Array.isArray(selectedRepairReq.damage_type_ids) && selectedRepairReq.damage_type_ids.length > 0 ? selectedRepairReq.damage_type_ids.join(', ') : null },
+                        { label: 'Estimate', value: `${formatCurrency(selectedRepairReq.estimated_min)} – ${formatCurrency(selectedRepairReq.estimated_max)}` },
+                      ].filter(f => f.value).map(f => (
+                        <div key={f.label} className="bg-[#f8f9fa] rounded-xl p-3">
+                          <div className="text-xs text-[#999] mb-0.5">{f.label}</div>
+                          <div className="font-medium text-[#1a1a2e] capitalize">{f.value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Customer Details */}
+                  <div>
+                    <h4 className="font-semibold text-[#1a1a2e] mb-3">Customer Details</h4>
+                    <div className="bg-[#f8f9fa] rounded-xl p-4 space-y-2 text-sm">
+                      <div className="font-medium text-[#1a1a2e]">{selectedRepairReq.customer_name}</div>
+                      {selectedRepairReq.email && (
+                        <a href={`mailto:${selectedRepairReq.email}`} className="flex items-center gap-2 text-[#0f3460] hover:underline">
+                          <Mail className="w-4 h-4" />{selectedRepairReq.email}
+                        </a>
+                      )}
+                      {selectedRepairReq.phone && (
+                        <a href={`tel:${selectedRepairReq.phone}`} className="flex items-center gap-2 text-[#666]">
+                          <Phone className="w-4 h-4" />{selectedRepairReq.phone}
+                        </a>
+                      )}
+                      {selectedRepairReq.address && (
+                        <div className="flex items-center gap-2 text-[#666]">
+                          <MapPin className="w-4 h-4" />{selectedRepairReq.address}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Notes */}
+                  {selectedRepairReq.notes && (
+                    <div>
+                      <h4 className="font-semibold text-[#1a1a2e] mb-2">Admin Notes</h4>
+                      <p className="text-sm text-[#666] bg-[#f8f9fa] rounded-xl p-3">{selectedRepairReq.notes}</p>
+                    </div>
+                  )}
+
+                  {/* Status */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-[#999] mr-2">Status:</span>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[selectedRepairReq.status] || 'bg-gray-100 text-gray-800'}`}>
+                        {selectedRepairReq.status}
+                      </span>
+                    </div>
+                    <select
+                      value={selectedRepairReq.status}
+                      onChange={(e) => {
+                        updateRequestStatus('repair', selectedRepairReq.id, e.target.value)
+                        setSelectedRepairReq({ ...selectedRepairReq, status: e.target.value })
+                      }}
+                      className="px-3 py-1.5 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#0f3460]"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="contacted">Contacted</option>
+                      <option value="scheduled">Scheduled</option>
+                      <option value="completed">Completed</option>
                       <option value="cancelled">Cancelled</option>
                     </select>
                   </div>

@@ -7,6 +7,9 @@ import { X, Leaf, Wind, Truck, TrendingDown, TreePine } from 'lucide-react'
 interface Product {
   id: number
   name: string
+  co2_new?: number | null
+  co2_refurbished?: number | null
+  co2_saved?: number | null
   furniture_type?: {
     id: number
     name: string
@@ -105,7 +108,21 @@ export function EmissionModal({ product, isOpen, onClose }: EmissionModalProps) 
 
       setLoading(true)
 
-      // Try API first
+      // Use product's own CO2 data if available (set by admin per-product)
+      if (product.co2_new && product.co2_refurbished && product.co2_saved) {
+        setEmissionData({
+          product_name: product.name,
+          new_co2: Number(product.co2_new),
+          refurbished_co2: Number(product.co2_refurbished),
+          transport_co2: 0,
+          net_co2_saved: Number(product.co2_saved),
+        })
+        setDataSource('api')
+        setLoading(false)
+        return
+      }
+
+      // Try API (CO2 emissions table matched by product name)
       try {
         const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
         const productName = encodeURIComponent(product.name)
@@ -113,14 +130,15 @@ export function EmissionModal({ product, isOpen, onClose }: EmissionModalProps) 
 
         if (response.ok) {
           const json = await response.json()
-          if (json.data || json.new_co2 !== undefined) {
-            const data = json.data || json
+          const items = Array.isArray(json.data) ? json.data : (json.data ? [json.data] : [])
+          if (items.length > 0) {
+            const data = items[0]
             setEmissionData({
               product_name: data.product_name || product.name,
-              new_co2: data.new_co2,
-              refurbished_co2: data.refurbished_co2,
-              transport_co2: data.transport_co2,
-              net_co2_saved: data.net_co2_saved,
+              new_co2: Number(data.new_co2),
+              refurbished_co2: Number(data.refurbished_co2),
+              transport_co2: Number(data.transport_co2),
+              net_co2_saved: Number(data.net_co2_saved),
             })
             setDataSource('api')
             setLoading(false)

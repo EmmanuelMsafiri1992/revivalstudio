@@ -54,7 +54,11 @@
       "Bash(ls:*)",
       "Bash(./node_modules/.bin/tsc --noEmit)",
       "Bash(./revival-frontend/node_modules/.bin/tsc --noEmit -p revival-frontend/tsconfig.json)",
-      "Bash(find /c/laragon/www/NewUkClient/revival-api -name routes.php -o -name *routes*)"
+      "Bash(find /c/laragon/www/NewUkClient/revival-api -name routes.php -o -name *routes*)",
+      "Bash(git status:*)",
+      "Bash(find /c/laragon/www/NewUkClient -type f -name *repair* -o -name *sell* -o *emission* -o *bid*)",
+      "Bash(find /c/laragon/www/NewUkClient/revival-frontend/src/components -type f -name *.tsx)",
+      "Bash(find /c/laragon/www/NewUkClient/revival-api -type f -name *.php)"
     ]
   }
 }

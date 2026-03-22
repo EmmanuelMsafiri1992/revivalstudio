@@ -79,6 +79,7 @@ Route::get('/near-me/search', [NearMeController::class, 'search']);
 Route::post('/exchange-pro/calculate', [ExchangeProController::class, 'calculate']);
 Route::post('/exchange-pro/submit', [ExchangeProController::class, 'submit']);
 Route::post('/bidding-pro/submit', [BiddingProController::class, 'submit']);
+Route::get('/bidding-pro/track', [BiddingProController::class, 'trackByEmail']);
 Route::get('/co2-emissions', [Co2EmissionController::class, 'index']);
 
 // Outlet authentication

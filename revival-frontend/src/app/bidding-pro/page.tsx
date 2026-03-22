@@ -7,7 +7,7 @@ import {
   ChevronRight, ChevronLeft, Check, Loader2,
   Sparkles, Tag, Star, Package, Camera, Upload, X,
   PoundSterling, Truck, MapPin, Building, AlertTriangle,
-  Crown, Gavel, User, Mail, Phone, CheckCircle
+  Crown, Gavel, User, Mail, Phone, CheckCircle, Search
 } from 'lucide-react'
 import { api } from '@/lib/api'
 
@@ -101,6 +101,12 @@ export default function BiddingProPage() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
+  // Track bidding requests by email
+  const [trackEmail, setTrackEmail] = useState('')
+  const [trackLoading, setTrackLoading] = useState(false)
+  const [trackedRequests, setTrackedRequests] = useState<any[] | null>(null)
+  const [trackError, setTrackError] = useState('')
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('premium_token')
@@ -147,6 +153,21 @@ export default function BiddingProPage() {
 
   function removePhoto(index: number) {
     setUploadedPhotos(prev => prev.filter((_, i) => i !== index))
+  }
+
+  async function handleTrackBidding(e: React.FormEvent) {
+    e.preventDefault()
+    setTrackLoading(true)
+    setTrackError('')
+    setTrackedRequests(null)
+    try {
+      const res = await api.trackBiddingByEmail(trackEmail)
+      setTrackedRequests(res.data || [])
+    } catch {
+      setTrackError('Could not fetch your requests. Please check your email and try again.')
+    } finally {
+      setTrackLoading(false)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -228,6 +249,90 @@ export default function BiddingProPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Track My Bidding Request */}
+      <section className="py-8 sm:py-10 px-4 bg-white border-b border-[#e5e5e5]">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-6">
+            <h2 className="text-xl font-bold text-[#3d4a3a]">Track Your Bidding Request</h2>
+            <p className="text-sm text-[#666] mt-1">Already submitted? Enter your email to see partner offers.</p>
+          </div>
+          <form onSubmit={handleTrackBidding} className="flex gap-3">
+            <input
+              type="email"
+              value={trackEmail}
+              onChange={e => setTrackEmail(e.target.value)}
+              required
+              placeholder="your@email.com"
+              className="flex-1 px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#7a9b76] focus:outline-none text-sm"
+            />
+            <button
+              type="submit"
+              disabled={trackLoading}
+              className="px-6 py-3 bg-[#3d4a3a] text-white rounded-xl font-semibold hover:bg-[#2d3a2a] transition-colors text-sm disabled:opacity-50 flex items-center gap-2"
+            >
+              {trackLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+              Check Offers
+            </button>
+          </form>
+          {trackError && <p className="text-red-500 text-sm mt-3 text-center">{trackError}</p>}
+          {trackedRequests !== null && (
+            <div className="mt-6 space-y-4">
+              {trackedRequests.length === 0 ? (
+                <p className="text-center text-[#666] text-sm py-4">No bidding requests found for this email.</p>
+              ) : (
+                trackedRequests.map((req: any) => (
+                  <div key={req.id} className="bg-[#faf8f5] rounded-2xl p-5 border border-[#e5e5e5]">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h4 className="font-semibold text-[#3d4a3a]">{req.furniture_type || 'Furniture Item'}</h4>
+                        <p className="text-xs text-[#999] mt-0.5">Submitted: {new Date(req.created_at).toLocaleDateString()}</p>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        req.status === 'offers_received' ? 'bg-green-100 text-green-700' :
+                        req.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-gray-100 text-gray-600'
+                      }`}>
+                        {req.status === 'offers_received' ? '🎉 Offers Received!' : req.status === 'pending' ? '⏳ Waiting for Offers' : req.status}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-[#666] mb-4">
+                      {req.condition && <span>Condition: <strong className="text-[#3d4a3a]">{req.condition}</strong></span>}
+                      {req.desired_price && <span>Asking: <strong className="text-[#c9a962]">£{parseFloat(req.desired_price).toFixed(2)}</strong></span>}
+                    </div>
+                    {req.offers && req.offers.length > 0 ? (
+                      <div>
+                        <h5 className="text-sm font-semibold text-[#3d4a3a] mb-3 flex items-center gap-2">
+                          <Gavel className="w-4 h-4 text-[#c9a962]" /> Partner Counter Offers ({req.offers.length})
+                        </h5>
+                        <div className="space-y-3">
+                          {req.offers.map((offer: any) => (
+                            <div key={offer.id} className="bg-white rounded-xl p-4 border border-[#e5e5e5] shadow-sm">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="font-semibold text-[#3d4a3a] text-sm">{offer.outlet?.name || 'Revival Partner'}</span>
+                                <span className="text-lg font-bold text-[#c9a962]">£{parseFloat(offer.offered_price).toFixed(2)}</span>
+                              </div>
+                              {offer.message && <p className="text-xs text-[#666] mt-1">{offer.message}</p>}
+                              {offer.outlet?.phone && (
+                                <a href={`tel:${offer.outlet.phone}`} className="mt-2 inline-flex items-center gap-1 text-xs text-[#0f3460] hover:underline">
+                                  <Phone className="w-3 h-3" /> Contact: {offer.outlet.phone}
+                                </a>
+                              )}
+                              <p className="text-xs text-[#999] mt-1">Received: {new Date(offer.created_at).toLocaleDateString()}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-[#999] text-center py-2">No offers yet. Partners will contact you on WhatsApp when they make an offer.</p>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </section>
 

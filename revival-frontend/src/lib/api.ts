@@ -1065,6 +1065,10 @@ class ApiClient {
     })
   }
 
+  async trackBiddingByEmail(email: string) {
+    return this.request<{ success: boolean; data: any[] }>(`/bidding-pro/track?email=${encodeURIComponent(email)}`)
+  }
+
   // CO2 Emissions
   async getCo2Emissions(product_name?: string) {
     const params = product_name ? `?product_name=${encodeURIComponent(product_name)}` : ''

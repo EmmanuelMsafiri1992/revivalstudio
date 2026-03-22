@@ -30,6 +30,9 @@ interface Product {
   images: string[] | null
   status: string
   featured: boolean
+  co2_new?: number | null
+  co2_refurbished?: number | null
+  co2_saved?: number | null
   furniture_type?: { id: number; name: string; icon: string | null }
   outlet?: {
     id: number; name: string; email?: string; phone?: string | null

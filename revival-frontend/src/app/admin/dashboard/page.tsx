@@ -1009,6 +1009,7 @@ export default function AdminDashboardPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="bg-[#f8f9fa]">
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Photo</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Customer</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Furniture</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Address</th>
@@ -1020,6 +1021,15 @@ export default function AdminDashboardPage() {
                   <tbody>
                     {repairRequests.map(req => (
                       <tr key={req.id} className="border-t border-[#e5e5e5] hover:bg-[#f8f9fa]">
+                        <td className="p-4">
+                          {req.photos && req.photos.length > 0 ? (
+                            <button onClick={() => setSelectedRepairReq(req)}>
+                              <img src={req.photos[0]} alt="Repair photo" className="w-14 h-14 object-cover rounded-xl border border-[#e5e5e5]" />
+                            </button>
+                          ) : (
+                            <div className="w-14 h-14 bg-[#f8f9fa] rounded-xl border border-[#e5e5e5] flex items-center justify-center text-xl">🪑</div>
+                          )}
+                        </td>
                         <td className="p-4">
                           <div className="font-medium text-[#1a1a2e]">{req.customer_name}</div>
                           <div className="text-sm text-[#666]">{req.email}</div>
@@ -1100,6 +1110,7 @@ export default function AdminDashboardPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="bg-[#f8f9fa]">
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Photo</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Customer</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Furniture</th>
                       <th className="text-left p-4 font-semibold text-[#1a1a2e]">Address</th>
@@ -1112,6 +1123,15 @@ export default function AdminDashboardPage() {
                   <tbody>
                     {sellRequests.map(req => (
                       <tr key={req.id} className="border-t border-[#e5e5e5] hover:bg-[#f8f9fa]">
+                        <td className="p-4">
+                          {req.photos && req.photos.length > 0 ? (
+                            <button onClick={() => setSelectedSellReq(req)}>
+                              <img src={req.photos[0]} alt="Sell photo" className="w-14 h-14 object-cover rounded-xl border border-[#e5e5e5]" />
+                            </button>
+                          ) : (
+                            <div className="w-14 h-14 bg-[#f8f9fa] rounded-xl border border-[#e5e5e5] flex items-center justify-center text-xl">🪑</div>
+                          )}
+                        </td>
                         <td className="p-4">
                           <div className="font-medium text-[#1a1a2e]">{req.customer_name}</div>
                           <div className="text-sm text-[#666]">{req.email}</div>
@@ -3670,7 +3690,16 @@ function Modal({
 
   // Reset form when item changes (switching between create/edit)
   useEffect(() => {
-    setFormData(item || {})
+    if (!item && type === 'product') {
+      // New product: auto-assign to discounted outlet so it shows in Discounted Pro
+      const discountedOutlet = outlets.find(o =>
+        (o.email && o.email.toLowerCase().includes('discounted')) ||
+        (o.name && o.name.toLowerCase().includes('discount'))
+      )
+      setFormData({ status: 'available', condition: 'good', quantity: 1, outlet_id: discountedOutlet?.id || '' })
+    } else {
+      setFormData(item || {})
+    }
     setSelectedImages([])
     if (item && type === 'product') {
       const images = Array.isArray(item.images) ? item.images : (item.images ? JSON.parse(item.images) : [])
@@ -3678,7 +3707,7 @@ function Modal({
     } else {
       setExistingImages([])
     }
-  }, [item, type])
+  }, [item, type, outlets])
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -3963,17 +3992,22 @@ function Modal({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Partner Outlet</label>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Assign To</label>
                   <select
                     value={formData.outlet_id || ''}
                     onChange={e => setFormData({ ...formData, outlet_id: e.target.value })}
                     className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
                   >
-                    <option value="">Admin (No outlet)</option>
+                    <option value="">Marketplace (No outlet)</option>
                     {outlets.map(outlet => (
-                      <option key={outlet.id} value={outlet.id}>{outlet.name}</option>
+                      <option key={outlet.id} value={outlet.id}>
+                        {outlet.email && outlet.email.toLowerCase().includes('discounted') ? '🏷️ Discounted Pro — ' : ''}{outlet.name}
+                      </option>
                     ))}
                   </select>
+                  <p className="text-xs text-[#999] mt-1">
+                    Products assigned to the Discounted outlet appear in Discounted Pro section.
+                  </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Status</label>

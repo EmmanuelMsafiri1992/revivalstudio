@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\RoomPlan;
+use App\Models\RoomPlannerStyle;
 use App\Services\RoomPlannerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -56,6 +57,12 @@ class RoomPlannerController extends Controller
             'success' => true,
             'data' => $result,
         ]);
+    }
+
+    public function styles(): JsonResponse
+    {
+        $styles = RoomPlannerStyle::active()->orderBy('sort_order')->get();
+        return response()->json(['success' => true, 'data' => $styles]);
     }
 
     public function submit(Request $request): JsonResponse

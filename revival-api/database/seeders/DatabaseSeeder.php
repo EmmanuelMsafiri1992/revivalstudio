@@ -18,6 +18,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             FurnitureDataSeeder::class,
             AdminSeeder::class,
+            ResaleFactorsSeeder::class,
+            RoomPlannerStylesSeeder::class,
         ]);
     }
 }

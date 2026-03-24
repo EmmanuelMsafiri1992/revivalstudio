@@ -52,6 +52,7 @@ Route::post('/resale/calculate', [ResaleController::class, 'calculate']);
 Route::post('/resale/submit', [ResaleController::class, 'submit']);
 
 // Public routes - Room planner
+Route::get('/room-planner-styles', [RoomPlannerController::class, 'styles']);
 Route::post('/planner/generate', [RoomPlannerController::class, 'generate']);
 Route::post('/planner/submit', [RoomPlannerController::class, 'submit']);
 
@@ -194,6 +195,18 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
     Route::get('/orders/{id}', [AdminController::class, 'showOrder']);
     Route::put('/orders/{id}', [AdminController::class, 'updateOrder']);
     Route::delete('/orders/{id}', [AdminController::class, 'deleteOrder']);
+
+    // Resale factors management
+    Route::get('/resale-factors', [AdminController::class, 'resaleFactors']);
+    Route::post('/resale-factors', [AdminController::class, 'createResaleFactor']);
+    Route::put('/resale-factors/{id}', [AdminController::class, 'updateResaleFactor']);
+    Route::delete('/resale-factors/{id}', [AdminController::class, 'deleteResaleFactor']);
+
+    // Room planner styles management
+    Route::get('/room-planner-styles', [AdminController::class, 'roomPlannerStyles']);
+    Route::post('/room-planner-styles', [AdminController::class, 'createRoomPlannerStyle']);
+    Route::put('/room-planner-styles/{id}', [AdminController::class, 'updateRoomPlannerStyle']);
+    Route::delete('/room-planner-styles/{id}', [AdminController::class, 'deleteRoomPlannerStyle']);
 
     // Near Me requests management
     Route::get('/near-me-requests', [NearMeController::class, 'adminIndex']);

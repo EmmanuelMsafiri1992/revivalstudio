@@ -1212,6 +1212,64 @@ class ApiClient {
       body: JSON.stringify(data),
     })
   }
+
+  // Admin: Resale Factors
+  async adminGetResaleFactors() {
+    return this.request<{ success: boolean; data: any[] }>('/admin/resale-factors', {}, true)
+  }
+
+  async adminCreateResaleFactor(data: { type: string; key: string; name: string; factor: number; sort_order?: number; active?: boolean }) {
+    return this.request<{ success: boolean; data: any }>(
+      '/admin/resale-factors',
+      { method: 'POST', body: JSON.stringify(data) },
+      true
+    )
+  }
+
+  async adminUpdateResaleFactor(id: number, data: Partial<{ type: string; key: string; name: string; factor: number; sort_order: number; active: boolean }>) {
+    return this.request<{ success: boolean; data: any }>(
+      `/admin/resale-factors/${id}`,
+      { method: 'PUT', body: JSON.stringify(data) },
+      true
+    )
+  }
+
+  async adminDeleteResaleFactor(id: number) {
+    return this.request<{ success: boolean }>(
+      `/admin/resale-factors/${id}`,
+      { method: 'DELETE' },
+      true
+    )
+  }
+
+  // Admin: Room Planner Styles
+  async adminGetRoomPlannerStyles() {
+    return this.request<{ success: boolean; data: any[] }>('/admin/room-planner-styles', {}, true)
+  }
+
+  async adminCreateRoomPlannerStyle(data: { key: string; name: string; price_multiplier: number; sort_order?: number; active?: boolean }) {
+    return this.request<{ success: boolean; data: any }>(
+      '/admin/room-planner-styles',
+      { method: 'POST', body: JSON.stringify(data) },
+      true
+    )
+  }
+
+  async adminUpdateRoomPlannerStyle(id: number, data: Partial<{ key: string; name: string; price_multiplier: number; sort_order: number; active: boolean }>) {
+    return this.request<{ success: boolean; data: any }>(
+      `/admin/room-planner-styles/${id}`,
+      { method: 'PUT', body: JSON.stringify(data) },
+      true
+    )
+  }
+
+  async adminDeleteRoomPlannerStyle(id: number) {
+    return this.request<{ success: boolean }>(
+      `/admin/room-planner-styles/${id}`,
+      { method: 'DELETE' },
+      true
+    )
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL)

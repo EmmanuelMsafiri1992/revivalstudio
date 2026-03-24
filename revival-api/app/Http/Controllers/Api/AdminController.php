@@ -11,9 +11,13 @@ use App\Models\Order;
 use App\Models\Outlet;
 use App\Models\PaymentMethod;
 use App\Models\RepairRequest;
+use App\Models\ResaleFactor;
 use App\Models\RoomPlan;
+use App\Models\RoomPlannerStyle;
 use App\Models\SellRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class AdminController extends Controller
@@ -749,5 +753,91 @@ class AdminController extends Controller
             'success' => true,
             'message' => 'Order deleted successfully',
         ]);
+    }
+
+    // --- Resale Factors ---
+    public function resaleFactors(): JsonResponse
+    {
+        $factors = ResaleFactor::orderBy('type')->orderBy('sort_order')->get();
+        return response()->json(['success' => true, 'data' => $factors]);
+    }
+
+    public function createResaleFactor(Request $request): JsonResponse
+    {
+        $v = Validator::make($request->all(), [
+            'type'       => 'required|in:age,condition,brand',
+            'key'        => 'required|string|max:50',
+            'name'       => 'required|string|max:100',
+            'factor'     => 'required|numeric|min:0|max:10',
+            'sort_order' => 'nullable|integer',
+            'active'     => 'nullable|boolean',
+        ]);
+        if ($v->fails()) return response()->json(['success' => false, 'errors' => $v->errors()], 422);
+        $factor = ResaleFactor::create($request->only(['type', 'key', 'name', 'factor', 'sort_order', 'active']));
+        return response()->json(['success' => true, 'data' => $factor], 201);
+    }
+
+    public function updateResaleFactor(Request $request, int $id): JsonResponse
+    {
+        $factor = ResaleFactor::findOrFail($id);
+        $v = Validator::make($request->all(), [
+            'type'       => 'sometimes|in:age,condition,brand',
+            'key'        => 'sometimes|string|max:50',
+            'name'       => 'sometimes|string|max:100',
+            'factor'     => 'sometimes|numeric|min:0|max:10',
+            'sort_order' => 'nullable|integer',
+            'active'     => 'nullable|boolean',
+        ]);
+        if ($v->fails()) return response()->json(['success' => false, 'errors' => $v->errors()], 422);
+        $factor->update($request->only(['type', 'key', 'name', 'factor', 'sort_order', 'active']));
+        return response()->json(['success' => true, 'data' => $factor]);
+    }
+
+    public function deleteResaleFactor(int $id): JsonResponse
+    {
+        ResaleFactor::findOrFail($id)->delete();
+        return response()->json(['success' => true, 'message' => 'Deleted']);
+    }
+
+    // --- Room Planner Styles ---
+    public function roomPlannerStyles(): JsonResponse
+    {
+        $styles = RoomPlannerStyle::orderBy('sort_order')->get();
+        return response()->json(['success' => true, 'data' => $styles]);
+    }
+
+    public function createRoomPlannerStyle(Request $request): JsonResponse
+    {
+        $v = Validator::make($request->all(), [
+            'key'              => 'required|string|max:50|unique:room_planner_styles,key',
+            'name'             => 'required|string|max:100',
+            'price_multiplier' => 'required|numeric|min:0|max:10',
+            'sort_order'       => 'nullable|integer',
+            'active'           => 'nullable|boolean',
+        ]);
+        if ($v->fails()) return response()->json(['success' => false, 'errors' => $v->errors()], 422);
+        $style = RoomPlannerStyle::create($request->only(['key', 'name', 'price_multiplier', 'sort_order', 'active']));
+        return response()->json(['success' => true, 'data' => $style], 201);
+    }
+
+    public function updateRoomPlannerStyle(Request $request, int $id): JsonResponse
+    {
+        $style = RoomPlannerStyle::findOrFail($id);
+        $v = Validator::make($request->all(), [
+            'key'              => 'sometimes|string|max:50|unique:room_planner_styles,key,' . $id,
+            'name'             => 'sometimes|string|max:100',
+            'price_multiplier' => 'sometimes|numeric|min:0|max:10',
+            'sort_order'       => 'nullable|integer',
+            'active'           => 'nullable|boolean',
+        ]);
+        if ($v->fails()) return response()->json(['success' => false, 'errors' => $v->errors()], 422);
+        $style->update($request->only(['key', 'name', 'price_multiplier', 'sort_order', 'active']));
+        return response()->json(['success' => true, 'data' => $style]);
+    }
+
+    public function deleteRoomPlannerStyle(int $id): JsonResponse
+    {
+        RoomPlannerStyle::findOrFail($id)->delete();
+        return response()->json(['success' => true, 'message' => 'Deleted']);
     }
 }

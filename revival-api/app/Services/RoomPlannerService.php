@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\FurnitureCatalog;
 use App\Models\FurnitureType;
+use App\Models\RoomPlannerStyle;
 
 class RoomPlannerService
 {
@@ -36,19 +37,42 @@ class RoomPlannerService
     ];
 
     protected array $roomSizes = [
-        'small' => ['name' => 'Small (up to 12m²)', 'maxItems' => 4],
-        'medium' => ['name' => 'Medium (12-20m²)', 'maxItems' => 6],
-        'large' => ['name' => 'Large (20m²+)', 'maxItems' => 10],
+        'small'  => ['name' => 'Small (up to 12m²)',  'maxItems' => 4],
+        'medium' => ['name' => 'Medium (12-20m²)',     'maxItems' => 6],
+        'large'  => ['name' => 'Large (20m²+)',        'maxItems' => 10],
     ];
 
-    protected array $styles = [
-        'modern' => ['name' => 'Modern', 'priceMultiplier' => 1.1],
-        'classic' => ['name' => 'Classic', 'priceMultiplier' => 1.0],
-        'midCentury' => ['name' => 'Mid-Century', 'priceMultiplier' => 1.2],
+    // Fallback styles used only when DB has no records
+    private array $fallbackStyles = [
+        'modern'       => ['name' => 'Modern',       'priceMultiplier' => 1.1],
+        'classic'      => ['name' => 'Classic',      'priceMultiplier' => 1.0],
+        'midCentury'   => ['name' => 'Mid-Century',  'priceMultiplier' => 1.2],
         'scandinavian' => ['name' => 'Scandinavian', 'priceMultiplier' => 1.15],
-        'industrial' => ['name' => 'Industrial', 'priceMultiplier' => 1.05],
-        'rustic' => ['name' => 'Rustic', 'priceMultiplier' => 0.95],
+        'industrial'   => ['name' => 'Industrial',   'priceMultiplier' => 1.05],
+        'rustic'       => ['name' => 'Rustic',       'priceMultiplier' => 0.95],
     ];
+
+    private function getStylesFromDb(): array
+    {
+        $rows = RoomPlannerStyle::active()->orderBy('sort_order')->get();
+
+        if ($rows->isEmpty()) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($rows as $row) {
+            $result[$row->key] = ['name' => $row->name, 'priceMultiplier' => $row->price_multiplier];
+        }
+
+        return $result;
+    }
+
+    private function resolvedStyles(): array
+    {
+        $db = $this->getStylesFromDb();
+        return $db ?: $this->fallbackStyles;
+    }
 
     public function generatePlan(
         string $roomType,
@@ -56,9 +80,11 @@ class RoomPlannerService
         string $style,
         ?float $budget = null
     ): array {
-        $roomConfig = $this->roomTypes[$roomType] ?? $this->roomTypes['livingRoom'];
-        $sizeConfig = $this->roomSizes[$roomSize] ?? $this->roomSizes['medium'];
-        $styleConfig = $this->styles[$style] ?? $this->styles['modern'];
+        $roomConfig  = $this->roomTypes[$roomType]  ?? $this->roomTypes['livingRoom'];
+        $sizeConfig  = $this->roomSizes[$roomSize]  ?? $this->roomSizes['medium'];
+
+        $styles      = $this->resolvedStyles();
+        $styleConfig = $styles[$style] ?? $styles['modern'] ?? ['name' => $style, 'priceMultiplier' => 1.0];
 
         // Get furniture types for this room
         $furnitureTypes = FurnitureType::whereIn('slug', $roomConfig['suggestedTypes'])
@@ -79,15 +105,15 @@ class RoomPlannerService
         // Apply style price multiplier
         $items = $suggestions->map(function ($item) use ($styleConfig) {
             return [
-                'id' => $item->id,
-                'name' => $item->name,
-                'furniture_type' => $item->furnitureType?->name,
+                'id'                  => $item->id,
+                'name'                => $item->name,
+                'furniture_type'      => $item->furnitureType?->name,
                 'furniture_type_icon' => $item->furnitureType?->icon,
-                'original_price' => $item->price,
-                'adjusted_price' => round($item->price * $styleConfig['priceMultiplier'], 2),
-                'style' => $item->style,
-                'image' => $item->image,
-                'selected' => true,
+                'original_price'      => $item->price,
+                'adjusted_price'      => round($item->price * $styleConfig['priceMultiplier'], 2),
+                'style'               => $item->style,
+                'image'               => $item->image,
+                'selected'            => true,
             ];
         });
 
@@ -100,20 +126,20 @@ class RoomPlannerService
                 'icon' => $roomConfig['icon'],
             ],
             'size' => [
-                'key' => $roomSize,
-                'name' => $sizeConfig['name'],
+                'key'      => $roomSize,
+                'name'     => $sizeConfig['name'],
                 'maxItems' => $sizeConfig['maxItems'],
             ],
             'style' => [
-                'key' => $style,
-                'name' => $styleConfig['name'],
+                'key'             => $style,
+                'name'            => $styleConfig['name'],
                 'priceMultiplier' => $styleConfig['priceMultiplier'],
             ],
-            'budget' => $budget,
-            'items' => $items->toArray(),
-            'total_cost' => $totalCost,
+            'budget'        => $budget,
+            'items'         => $items->toArray(),
+            'total_cost'    => $totalCost,
             'within_budget' => $budget ? $totalCost <= $budget : true,
-            'currency' => 'GBP',
+            'currency'      => 'GBP',
         ];
     }
 
@@ -129,6 +155,6 @@ class RoomPlannerService
 
     public function getStyles(): array
     {
-        return $this->styles;
+        return $this->resolvedStyles();
     }
 }

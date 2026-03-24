@@ -8,7 +8,8 @@ import {
   Bell, Search, User, TrendingUp, Shield, Armchair, Hammer, AlertTriangle,
   CheckCircle, Clock, XCircle, Eye, Edit2, Trash2, Plus, X, ShoppingBag, Star, Scale,
   Upload, Image as ImageIcon, Globe, MessageSquare, BarChart3, Save, Home, MapPin, Phone, Mail,
-  CreditCard, Receipt, ArrowLeftRight, Gavel, Leaf, SlidersHorizontal, KeyRound, RefreshCw, Copy, MessageCircle, ExternalLink
+  CreditCard, Receipt, ArrowLeftRight, Gavel, Leaf, SlidersHorizontal, KeyRound, RefreshCw, Copy, MessageCircle, ExternalLink,
+  TrendingDown, Palette
 } from 'lucide-react'
 import Image from 'next/image'
 import { api } from '@/lib/api'
@@ -38,6 +39,8 @@ const sidebarItems = [
   { id: 'sell-requests', label: 'Sell Requests', icon: DollarSign },
   { id: 'room-plans', label: 'Room Plans', icon: Home },
   { id: 'planner-settings', label: 'Planner Settings', icon: SlidersHorizontal },
+  { id: 'resale-factors', label: 'Resale Factors', icon: TrendingDown },
+  { id: 'room-planner-styles', label: 'Planner Styles', icon: Palette },
   { id: 'inventory', label: 'Inventory', icon: BoxIcon },
   { id: 'furniture-types', label: 'Furniture Types', icon: Armchair },
   { id: 'materials', label: 'Materials', icon: Hammer },
@@ -103,6 +106,16 @@ export default function AdminDashboardPage() {
   const [biddingProRequests, setBiddingProRequests] = useState<any[]>([])
   const [co2Emissions, setCo2Emissions] = useState<any[]>([])
   const [premiumCodes, setPremiumCodes] = useState<any[]>([])
+  const [resaleFactors, setResaleFactors] = useState<any[]>([])
+  const [roomPlannerStyles, setRoomPlannerStyles] = useState<any[]>([])
+  // modal states for resale factors
+  const [showResaleFactorModal, setShowResaleFactorModal] = useState(false)
+  const [editingResaleFactor, setEditingResaleFactor] = useState<any>(null)
+  const [resaleFactorForm, setResaleFactorForm] = useState({ type: 'age', key: '', name: '', factor: 1.0, sort_order: 0, active: true })
+  // modal states for room planner styles
+  const [showPlannerStyleModal, setShowPlannerStyleModal] = useState(false)
+  const [editingPlannerStyle, setEditingPlannerStyle] = useState<any>(null)
+  const [plannerStyleForm, setPlannerStyleForm] = useState({ key: '', name: '', price_multiplier: 1.0, sort_order: 0, active: true })
   const [selectedExchangeReq, setSelectedExchangeReq] = useState<any>(null)
   const [selectedBiddingReq, setSelectedBiddingReq] = useState<any>(null)
   const [selectedRoomPlan, setSelectedRoomPlan] = useState<any>(null)
@@ -323,6 +336,14 @@ export default function AdminDashboardPage() {
         case 'premium-codes':
           const pcRes = await api.getAdminPremiumCodes()
           setPremiumCodes(pcRes.data || [])
+          break
+        case 'resale-factors':
+          const rfRes = await api.adminGetResaleFactors()
+          setResaleFactors(rfRes.data || [])
+          break
+        case 'room-planner-styles':
+          const rpsRes = await api.adminGetRoomPlannerStyles()
+          setRoomPlannerStyles(rpsRes.data || [])
           break
       }
     } catch (error) {
@@ -570,6 +591,86 @@ export default function AdminDashboardPage() {
       loadSectionData('bidding-pro')
     } catch (error) {
       console.error('Error updating bidding-pro request:', error)
+    }
+  }
+
+  async function handleSaveResaleFactor() {
+    try {
+      if (editingResaleFactor) {
+        await api.adminUpdateResaleFactor(editingResaleFactor.id, {
+          type: resaleFactorForm.type,
+          key: resaleFactorForm.key,
+          name: resaleFactorForm.name,
+          factor: parseFloat(String(resaleFactorForm.factor)) || 1.0,
+          sort_order: resaleFactorForm.sort_order,
+          active: resaleFactorForm.active,
+        })
+      } else {
+        await api.adminCreateResaleFactor({
+          type: resaleFactorForm.type,
+          key: resaleFactorForm.key,
+          name: resaleFactorForm.name,
+          factor: parseFloat(String(resaleFactorForm.factor)) || 1.0,
+          sort_order: resaleFactorForm.sort_order,
+          active: resaleFactorForm.active,
+        })
+      }
+      setShowResaleFactorModal(false)
+      setEditingResaleFactor(null)
+      setResaleFactorForm({ type: 'age', key: '', name: '', factor: 1.0, sort_order: 0, active: true })
+      loadSectionData('resale-factors')
+    } catch (error: any) {
+      console.error('Error saving resale factor:', error)
+      alert(error?.message || 'Failed to save resale factor')
+    }
+  }
+
+  async function handleDeleteResaleFactor(id: number) {
+    if (!confirm('Are you sure you want to delete this resale factor?')) return
+    try {
+      await api.adminDeleteResaleFactor(id)
+      loadSectionData('resale-factors')
+    } catch (error) {
+      console.error('Error deleting resale factor:', error)
+    }
+  }
+
+  async function handleSavePlannerStyle() {
+    try {
+      if (editingPlannerStyle) {
+        await api.adminUpdateRoomPlannerStyle(editingPlannerStyle.id, {
+          key: plannerStyleForm.key,
+          name: plannerStyleForm.name,
+          price_multiplier: parseFloat(String(plannerStyleForm.price_multiplier)) || 1.0,
+          sort_order: plannerStyleForm.sort_order,
+          active: plannerStyleForm.active,
+        })
+      } else {
+        await api.adminCreateRoomPlannerStyle({
+          key: plannerStyleForm.key,
+          name: plannerStyleForm.name,
+          price_multiplier: parseFloat(String(plannerStyleForm.price_multiplier)) || 1.0,
+          sort_order: plannerStyleForm.sort_order,
+          active: plannerStyleForm.active,
+        })
+      }
+      setShowPlannerStyleModal(false)
+      setEditingPlannerStyle(null)
+      setPlannerStyleForm({ key: '', name: '', price_multiplier: 1.0, sort_order: 0, active: true })
+      loadSectionData('room-planner-styles')
+    } catch (error: any) {
+      console.error('Error saving planner style:', error)
+      alert(error?.message || 'Failed to save planner style')
+    }
+  }
+
+  async function handleDeletePlannerStyle(id: number) {
+    if (!confirm('Are you sure you want to delete this planner style?')) return
+    try {
+      await api.adminDeleteRoomPlannerStyle(id)
+      loadSectionData('room-planner-styles')
+    } catch (error) {
+      console.error('Error deleting planner style:', error)
     }
   }
 
@@ -1651,6 +1752,314 @@ export default function AdminDashboardPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* Resale Factors Section */}
+          {activeSection === 'resale-factors' && (
+            <div className="bg-white rounded-2xl shadow-sm">
+              <div className="p-6 border-b border-[#e5e5e5] flex justify-between items-center">
+                <div>
+                  <h2 className="font-bold text-lg text-[#1a1a2e]">Resale Factors</h2>
+                  <p className="text-sm text-[#666] mt-1">Manage age, condition, and brand factors used in resale price calculations</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setEditingResaleFactor(null)
+                    setResaleFactorForm({ type: 'age', key: '', name: '', factor: 1.0, sort_order: 0, active: true })
+                    setShowResaleFactorModal(true)
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#0f3460] text-white rounded-xl hover:bg-[#1a1a2e] transition-colors"
+                >
+                  <Plus className="w-4 h-4" /> Add Factor
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-[#f8f9fa]">
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Type</th>
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Key</th>
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Name</th>
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Factor</th>
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Active</th>
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {resaleFactors.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-8 text-center text-[#999]">No resale factors found.</td>
+                      </tr>
+                    ) : resaleFactors.map(rf => (
+                      <tr key={rf.id} className="border-t border-[#e5e5e5] hover:bg-[#f8f9fa]">
+                        <td className="p-4">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${rf.type === 'age' ? 'bg-blue-100 text-blue-800' : rf.type === 'condition' ? 'bg-purple-100 text-purple-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                            {rf.type}
+                          </span>
+                        </td>
+                        <td className="p-4 font-mono text-sm text-[#666]">{rf.key}</td>
+                        <td className="p-4 font-medium text-[#1a1a2e]">{rf.name}</td>
+                        <td className="p-4 text-[#666]">{rf.factor}x</td>
+                        <td className="p-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${rf.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                            {rf.active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="p-4 flex gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingResaleFactor(rf)
+                              setResaleFactorForm({ type: rf.type, key: rf.key, name: rf.name, factor: rf.factor, sort_order: rf.sort_order, active: rf.active })
+                              setShowResaleFactorModal(true)
+                            }}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteResaleFactor(rf.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Resale Factor Modal */}
+          {showResaleFactorModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl w-full max-w-md p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-[#1a1a2e]">{editingResaleFactor ? 'Edit' : 'Add'} Resale Factor</h3>
+                  <button onClick={() => setShowResaleFactorModal(false)} className="p-2 hover:bg-[#f8f9fa] rounded-lg">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Type</label>
+                    <select
+                      value={resaleFactorForm.type}
+                      onChange={e => setResaleFactorForm({ ...resaleFactorForm, type: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                    >
+                      <option value="age">Age</option>
+                      <option value="condition">Condition</option>
+                      <option value="brand">Brand</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Key</label>
+                    <input
+                      type="text"
+                      value={resaleFactorForm.key}
+                      onChange={e => setResaleFactorForm({ ...resaleFactorForm, key: e.target.value })}
+                      placeholder="e.g. new, excellent, designer"
+                      className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Name</label>
+                    <input
+                      type="text"
+                      value={resaleFactorForm.name}
+                      onChange={e => setResaleFactorForm({ ...resaleFactorForm, name: e.target.value })}
+                      placeholder="e.g. Like New (< 1 year)"
+                      className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Factor</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="10"
+                      value={resaleFactorForm.factor}
+                      onChange={e => setResaleFactorForm({ ...resaleFactorForm, factor: parseFloat(e.target.value) || 1.0 })}
+                      className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                    />
+                    <p className="text-xs text-[#999] mt-1">Multiplier applied to base value (e.g. 0.70 = 70%)</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Sort Order</label>
+                    <input
+                      type="number"
+                      value={resaleFactorForm.sort_order}
+                      onChange={e => setResaleFactorForm({ ...resaleFactorForm, sort_order: parseInt(e.target.value) || 0 })}
+                      className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="rf_active"
+                      checked={resaleFactorForm.active}
+                      onChange={e => setResaleFactorForm({ ...resaleFactorForm, active: e.target.checked })}
+                      className="w-5 h-5 rounded border-2 border-[#e5e5e5] text-[#0f3460] focus:ring-[#0f3460]"
+                    />
+                    <label htmlFor="rf_active" className="text-sm font-medium text-[#1a1a2e]">Active</label>
+                  </div>
+                  <button
+                    onClick={handleSaveResaleFactor}
+                    className="w-full py-3 bg-[#0f3460] text-white rounded-xl font-semibold hover:bg-[#1a1a2e] transition-colors"
+                  >
+                    {editingResaleFactor ? 'Update' : 'Create'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Room Planner Styles Section */}
+          {activeSection === 'room-planner-styles' && (
+            <div className="bg-white rounded-2xl shadow-sm">
+              <div className="p-6 border-b border-[#e5e5e5] flex justify-between items-center">
+                <div>
+                  <h2 className="font-bold text-lg text-[#1a1a2e]">Room Planner Styles</h2>
+                  <p className="text-sm text-[#666] mt-1">Manage styles available in the room planner and their price multipliers</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setEditingPlannerStyle(null)
+                    setPlannerStyleForm({ key: '', name: '', price_multiplier: 1.0, sort_order: 0, active: true })
+                    setShowPlannerStyleModal(true)
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#0f3460] text-white rounded-xl hover:bg-[#1a1a2e] transition-colors"
+                >
+                  <Plus className="w-4 h-4" /> Add Style
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-[#f8f9fa]">
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Key</th>
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Name</th>
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Price Multiplier</th>
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Active</th>
+                      <th className="text-left p-4 font-semibold text-[#1a1a2e]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {roomPlannerStyles.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="p-8 text-center text-[#999]">No planner styles found.</td>
+                      </tr>
+                    ) : roomPlannerStyles.map(ps => (
+                      <tr key={ps.id} className="border-t border-[#e5e5e5] hover:bg-[#f8f9fa]">
+                        <td className="p-4 font-mono text-sm text-[#666]">{ps.key}</td>
+                        <td className="p-4 font-medium text-[#1a1a2e]">{ps.name}</td>
+                        <td className="p-4 text-[#666]">{ps.price_multiplier}x</td>
+                        <td className="p-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${ps.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                            {ps.active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="p-4 flex gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingPlannerStyle(ps)
+                              setPlannerStyleForm({ key: ps.key, name: ps.name, price_multiplier: ps.price_multiplier, sort_order: ps.sort_order, active: ps.active })
+                              setShowPlannerStyleModal(true)
+                            }}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeletePlannerStyle(ps.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Room Planner Style Modal */}
+          {showPlannerStyleModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl w-full max-w-md p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-[#1a1a2e]">{editingPlannerStyle ? 'Edit' : 'Add'} Planner Style</h3>
+                  <button onClick={() => setShowPlannerStyleModal(false)} className="p-2 hover:bg-[#f8f9fa] rounded-lg">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Key</label>
+                    <input
+                      type="text"
+                      value={plannerStyleForm.key}
+                      onChange={e => setPlannerStyleForm({ ...plannerStyleForm, key: e.target.value })}
+                      placeholder="e.g. modern, scandinavian"
+                      className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Name</label>
+                    <input
+                      type="text"
+                      value={plannerStyleForm.name}
+                      onChange={e => setPlannerStyleForm({ ...plannerStyleForm, name: e.target.value })}
+                      placeholder="e.g. Modern, Scandinavian"
+                      className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Price Multiplier</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="10"
+                      value={plannerStyleForm.price_multiplier}
+                      onChange={e => setPlannerStyleForm({ ...plannerStyleForm, price_multiplier: parseFloat(e.target.value) || 1.0 })}
+                      className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                    />
+                    <p className="text-xs text-[#999] mt-1">Applied to catalog item prices in this style (e.g. 1.1 = 10% premium)</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-1">Sort Order</label>
+                    <input
+                      type="number"
+                      value={plannerStyleForm.sort_order}
+                      onChange={e => setPlannerStyleForm({ ...plannerStyleForm, sort_order: parseInt(e.target.value) || 0 })}
+                      className="w-full px-4 py-3 border-2 border-[#e5e5e5] rounded-xl focus:border-[#0f3460] focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="ps_active"
+                      checked={plannerStyleForm.active}
+                      onChange={e => setPlannerStyleForm({ ...plannerStyleForm, active: e.target.checked })}
+                      className="w-5 h-5 rounded border-2 border-[#e5e5e5] text-[#0f3460] focus:ring-[#0f3460]"
+                    />
+                    <label htmlFor="ps_active" className="text-sm font-medium text-[#1a1a2e]">Active</label>
+                  </div>
+                  <button
+                    onClick={handleSavePlannerStyle}
+                    className="w-full py-3 bg-[#0f3460] text-white rounded-xl font-semibold hover:bg-[#1a1a2e] transition-colors"
+                  >
+                    {editingPlannerStyle ? 'Update' : 'Create'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
